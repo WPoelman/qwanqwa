@@ -103,7 +103,7 @@ dir(lm.id_mapping)
 ]
 ```
 
-... and more, [here](docs/example.md) are some full examples.
+... and more, [here](docs/examples.md) are some full examples.
 
 ## Sources
 ### LinguaMeta
