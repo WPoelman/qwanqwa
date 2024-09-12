@@ -15,6 +15,13 @@ Planned:
 * Typological features: `grambank`, `wals`, `uriel`
 * A graph-based view to traverse between languoids (family trees, geo areas, shared features etc.)
 
+## Languoids
+In `qq`, language-like entities as referred to as [*Languoids*](http://www.glottopedia.de/index.php/Languoid), since it includes dialects, macro-languages and language areas.
+Not all languoids have coverage for all features.
+
+Number of languoids: 7511
+
+
 ## Usage
 **Important**: `qq` makes a strict distinction between `None` (*don't know*) and `False` (*it is not the case*). Make sure to keep this in mind when checking boolean values for truthiness, so avoid `if not script.is_canonical:`, but instead explicitly check `if script.is_canonical is None:` if you're interested in missing values for example.
 
