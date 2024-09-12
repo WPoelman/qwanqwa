@@ -1,4 +1,4 @@
-# QQ: Language Metadata
+# QQ (QwanQua): Language Metadata
 This is a language metadata toolkit to make it easier to work with a large variety of metadata from a single interface.
 Currently this metadata includes:
 
@@ -24,7 +24,7 @@ from qq.linguameta import LinguaMeta, LanguoidID
 # Load from the pre-compiled database
 lm = LinguaMeta.from_db()
 
-# Access languoid info using whatever ID you have
+# Access Languoid info using whatever ID you have
 nl1 = lm.get('nl', key_type=LanguoidID.BCP_47)
 nl2 = lm.get('nld', key_type=LanguoidID.ISO_639_3)
 
@@ -117,7 +117,7 @@ Individual sources (taken from LinguaMeta README):
 * License: CC BY-SA 4.0
 
 ## Name
-**Q**wan**q**wa is a phonetic spelling of 'ቋንቋ', which means 'language' in Amharic.
+**Q**wan**q**wa is a phonetic spelling of 'ቋንቋ', which means *language* in Amharic.
 
 ## License
 CC BY-SA 4.0
