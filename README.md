@@ -1,4 +1,4 @@
-# QQ (QwanQua): Language Metadata
+# **Q**wan**q**ua (`qq`): Language Metadata
 This is a language metadata toolkit to make it easier to work with a large variety of metadata from a single interface.
 Currently this metadata includes:
 
@@ -14,6 +14,8 @@ Planned:
 * Linking with [CLLD](https://github.com/clld) datasets
 * Typological features: `grambank`, `wals`, `uriel`
 * A graph-based view to traverse between languoids (family trees, geo areas, shared features etc.)
+
+**Name**: **Q**wan**q**wa is a phonetic spelling of 'ቋንቋ', which means *language* in Amharic; `qq` is nice and short to type.
 
 ## Languoids
 In `qq`, language-like entities as referred to as [*Languoids*](http://www.glottopedia.de/index.php/Languoid), since it includes dialects, macro-languages and language areas.
@@ -126,9 +128,6 @@ Individual sources (taken from LinguaMeta README):
 ### Wikipedia
 * Source: https://meta.wikimedia.org/wiki/List_of_Wikipedias
 * License: CC BY-SA 4.0
-
-## Name
-**Q**wan**q**wa is a phonetic spelling of 'ቋንቋ', which means *language* in Amharic.
 
 ## License
 CC BY-SA 4.0
