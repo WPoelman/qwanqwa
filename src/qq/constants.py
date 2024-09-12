@@ -3,9 +3,10 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
+LOCAL_DATA_DIR = Path(__file__).parent / "data"
 
 # LinguaMeta
-LINGUAMETA_DUMP_PATH = DATA_DIR / "db.gz"
+LINGUAMETA_DUMP_PATH = LOCAL_DATA_DIR / "db.gz"
 LINGUAMETA_JSON_PATH = DATA_DIR / "linguameta/linguameta/data"
 LINGUAMETA_OVERVIEW_PATH = DATA_DIR / "linguameta/linguameta/linguameta.tsv"
 LINGUAMETA_LOCALES_PATH = DATA_DIR / "linguameta/linguameta/locales.json"

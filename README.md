@@ -23,6 +23,10 @@ Number of languoids: 7511
 
 
 ## Usage
+```
+pip install git+https://github.com/WPoelman/qq
+```
+
 **Important**: `qq` makes a strict distinction between `None` (*don't know*) and `False` (*it is not the case*). Make sure to keep this in mind when checking boolean values for truthiness, so avoid `if not script.is_canonical:`, but instead explicitly check `if script.is_canonical is None:` if you're interested in missing values for example.
 
 ```python

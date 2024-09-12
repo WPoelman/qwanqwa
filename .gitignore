@@ -162,5 +162,4 @@ cython_debug/
 #.idea/
 
 .python-version
-data/*
-!data/db.gz
+data
