@@ -42,8 +42,9 @@ class LanguoidID(StrEnum):
 MISSING_PLACEHOLDER = "xxxx"
 
 
-def convert_default(value: Any) -> str | None:
-    return None if value == MISSING_PLACEHOLDER else value
+def format_script_iso(value: str | None) -> str | None:
+    """Convert the missing script to None for consistency and title case code since that's what ISO 15924 should be."""
+    return None if (value == MISSING_PLACEHOLDER) or (value is None) else value.title()
 
 
 def split_string(value: list | str | None) -> str | None:
@@ -121,7 +122,7 @@ class NameData(SourceBasedFeature):
 
 
 class Script(SourceBasedFeature):
-    iso_15924_code: Annotated[ISO_15924 | None, BeforeValidator(convert_default)] = None
+    iso_15924_code: Annotated[ISO_15924 | None, BeforeValidator(format_script_iso)] = None
     is_canonical: bool | None = None
     is_historical: bool | None = None
     is_religious: bool | None = None
@@ -214,7 +215,13 @@ class Languoid(BaseModel):
 
     @property
     def canonical_scripts(self) -> list[Script]:
-        return [lsl.script for lsl in self.language_script_locale if lsl.script and lsl.script.is_canonical]
+        result, seen = [], set()
+        # TODO: this is a messy solution, make Script hashable based on iso code?
+        for lsl in self.language_script_locale:
+            if lsl.script and lsl.script.is_canonical and (lsl.script.iso_15924_code not in seen):
+                result.append(lsl.script)
+                seen.add(lsl.script.iso_15924_code)
+        return result
 
 
 class LocalePopulation(SourceBasedFeature):
