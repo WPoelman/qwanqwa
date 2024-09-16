@@ -3,11 +3,11 @@ import json
 import os
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Generator
+from typing import Generator
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, BeforeValidator
+from pydantic import AfterValidator, BaseModel, BeforeValidator
 from typing_extensions import Annotated
 
 from qq.constants import LINGUAMETA_DUMP_PATH, LinguaMetaPaths
@@ -99,8 +99,12 @@ def get_endangerment(value: Endangerment | str | None) -> str | None:
         return Endangerment.from_description(value)
 
 
+def add_linguameta_source(value: str) -> str:
+    return value if value.startswith("LINGUAMETA-") else f"LINGUAMETA-{value}"
+
+
 class SourceBasedFeature(BaseModel):
-    source: str
+    source: Annotated[str, AfterValidator(add_linguameta_source)]
 
 
 class LanguageScope(SourceBasedFeature):
@@ -332,6 +336,7 @@ class LinguaMeta:
     def _parse_languoids(paths: LinguaMetaPaths) -> Generator[Languoid, None, None]:
         wikipedia_mapping = json.loads(Path(paths.wikipedia).read_bytes())
         wikipedia_by_iso = {value["alpha3"]: key for key, value in wikipedia_mapping.items()}
+
         overview_data = (
             pd.read_csv(
                 paths.overview,
@@ -345,10 +350,37 @@ class LinguaMeta:
             .rename(columns={"endangerment_status": "endangerment_status_description"})
             .T.to_dict()
         )
+
+        glotscript_df = (
+            pd.read_csv(
+                paths.glotscript,
+                sep="\t",
+                index_col="ISO639-3",
+                keep_default_na=False,
+            )
+            .fillna(np.nan)
+            .replace([np.nan, ""], [None, None])
+        )
+        glotscript_df["ISO15924-Main"] = glotscript_df["ISO15924-Main"].str.split(", ")
+        glotscript_data = glotscript_df.T.to_dict()
+
         for file in Path(paths.json).glob("*.json"):
             bcp_47 = file.stem
             overview = overview_data[bcp_47]
-            wiki = {"wikipedia_id": wikipedia_by_iso.get(overview.get("iso_639_3_code", None), None)}
+            iso_639_3 = overview.get("iso_639_3_code", None)
+            wiki = {"wikipedia_id": wikipedia_by_iso.get(iso_639_3, None)}
+
+            # Try to get additional writing system data
+            # TODO put glotscript content into it's own pydantic classes and merge later
+            # TODO prove proper source for glotscript as well
+            if overview["writing_systems"] and iso_639_3 in glotscript_data:
+                original = set(overview["writing_systems"].split(", "))
+                if scripts := glotscript_data[iso_639_3]["ISO15924-Main"]:
+                    new = set(scripts)
+                else:
+                    new = set()
+                overview["writing_systems"] = sorted(list(original | new))
+
             contents = overview | json.loads(file.read_bytes()) | wiki  # ordering is important here
             yield Languoid(**contents)
 

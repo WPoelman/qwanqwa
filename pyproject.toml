@@ -32,7 +32,7 @@ dev = ["ruff==0.6.4"]
 where = ["src"]
 
 [tool.setuptools.package-data]
-qq = ["data/db.gz"]
+qq = ["data/db.json.gz"]
 
 [tool.ruff]
 line-length = 120

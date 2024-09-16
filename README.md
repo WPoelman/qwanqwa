@@ -113,8 +113,8 @@ dir(lm.id_mapping)
 * Github: https://github.com/google-research/url-nlp/tree/main/linguameta
 * License: CC BY-SA 4.0
 
-Individual sources (taken from LinguaMeta README):
-| JSON value          | Source                                | License type      | Link                                                                                |
+Individual sources (taken from LinguaMeta [README](https://github.com/google-research/url-nlp/blob/main/linguameta/README.md)):
+| LinguaMeta ID       | Source                                | License type      | Link                                                                                |
 | ------------------- | ------------------------------------- | ----------------- | ----------------------------------------------------------------------------------- |
 | ``CLDR``            | Unicode CLDR                          | non-standard      | [License](https://www.unicode.org/license.txt)                                      |
 | ``GLOTTOLOG``       | Glottolog                             | CC BY 4.0         | [Site homepage](https://glottolog.org/)                                             |
@@ -128,6 +128,19 @@ Individual sources (taken from LinguaMeta README):
 ### Wikipedia
 * Source: https://meta.wikimedia.org/wiki/List_of_Wikipedias
 * License: CC BY-SA 4.0
+
+### GlotScript
+* Paper: https://aclanthology.org/2024.lrec-main.687/
+* Github: https://github.com/cisnlp/GlotScript
+* License: CC BY-SA 4.0
+
+Individual sources (taken from GlotScript [README](https://github.com/cisnlp/GlotScript/blob/main/metadata/README.md)):
+- [Wikipedia](https://en.wikipedia.org/wiki/ISO_639:xxx): Since Wikipedia writing system metadata is not easily redistributed, we provide our crawled version of the Writing System Text from Wikipedia in the [sources folder](https://github.com/cisnlp/GlotScript/blob/main/metadata/sources/wikipedia.csv).
+- [ScriptSource](https://scriptsource.org/)
+- [Unicode CLDR](https://github.com/unicode-org/cldr-json/blob/main/cldr-json/cldr-core/supplemental/likelySubtags.json)
+- [LangTag](https://raw.githubusercontent.com/silnrsi/langtags/master/pub/langtags.json)
+- [LREC_2800](https://raw.githubusercontent.com/google-research/url-nlp/main/language_metadata/data.tsv)
+- [Omniglot](https://www.omniglot.com/writing/langalph.htm)
 
 ## License
 CC BY-SA 4.0
