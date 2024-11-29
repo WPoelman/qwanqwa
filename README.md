@@ -1,4 +1,4 @@
-# **Q**wan**q**ua (`qq`): Language Metadata
+# Qwanqwa (`qq`): Language Metadata
 This is a language metadata toolkit to make it easier to work with a large variety of metadata from a single interface.
 Currently this metadata includes:
 
