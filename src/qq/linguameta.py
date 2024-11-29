@@ -5,6 +5,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Generator
 
+
 import numpy as np
 import pandas as pd
 from pydantic import AfterValidator, BaseModel, BeforeValidator
@@ -12,21 +13,20 @@ from typing_extensions import Annotated
 
 from qq.constants import LINGUAMETA_DUMP_PATH, LinguaMetaPaths
 
-# TODO: probably don't use these 3.12 features to make versioning a bit more lenient.
-type PathLike = str | os.PathLike
+PathLike = str | os.PathLike
 
 
 # Languoid identifiers
-type BCP_47 = str
-type ISO_639_3 = str
-type ISO_639_2B = str
-type Glottocode = str
-type Wikidata_ID = str
-type Wikipedia_ID = str  # TODO: move elsewhere since it's not from linguameta?
+BCP_47 = str
+ISO_639_3 = str
+ISO_639_2B = str
+Glottocode = str
+Wikidata_ID = str
+Wikipedia_ID = str  # TODO: move elsewhere since it's not from linguameta?
 # Script identifier
-type ISO_15924 = str
+ISO_15924 = str
 # Territory identifier
-type ISO_3166 = str
+ISO_3166 = str
 
 
 class LanguoidID(StrEnum):
@@ -145,7 +145,7 @@ class SpeakerData(SourceBasedFeature):
     number_of_speakers: int
 
 
-class OfficalStatus(SourceBasedFeature):
+class OfficialStatus(SourceBasedFeature):
     has_official_status: bool | None = None
     has_regional_official_status: bool | None = None
     has_de_facto_official_status: bool | None = None
@@ -160,7 +160,7 @@ class LanguageScriptLocale(BaseModel):
     script: Script | None = None
     locale: SimpleLocale | None = None
     speaker_data: SpeakerData | None = None
-    official_status: OfficalStatus | None = None
+    official_status: OfficialStatus | None = None
     geolocation: Geolocation | None = None
 
 
@@ -273,6 +273,11 @@ class IDMapping:
         self.wikidata2bcp = {v: k for k, v in self.bcp2wikidata.items()}
         self.wikipedia2bcp = {v: k for k, v in self.bcp2wikipedia.items()}
 
+        self.glottocode2iso_639_3_code = {
+            k: self.bcp2iso_639_3_code[v] for k, v in self.glottocode2bcp.items() if v in self.bcp2iso_639_3_code
+        }
+        self.iso_639_3_code2glottocode = {v: k for k, v in self.glottocode2iso_639_3_code.items()}
+
 
 class LinguaMeta:
     """A class to interact with [LinguaMeta](https://aclanthology.org/2024.lrec-main.921/)."""
@@ -372,7 +377,7 @@ class LinguaMeta:
 
             # Try to get additional writing system data
             # TODO put glotscript content into it's own pydantic classes and merge later
-            # TODO prove proper source for glotscript as well
+            # TODO provide proper source for glotscript as well
             if overview["writing_systems"] and iso_639_3 in glotscript_data:
                 original = set(overview["writing_systems"].split(", "))
                 if scripts := glotscript_data[iso_639_3]["ISO15924-Main"]:
