@@ -10,7 +10,7 @@ Currently this metadata includes:
 
 Planned:
 * Phylogenetic information
-* Additional identifiers
+* Additional identifiers (NLLB)
 * Linking with [CLLD](https://github.com/clld) datasets
 * Typological features: `grambank`, `wals`, `uriel`
 * A graph-based view to traverse between languoids (family trees, geo areas, shared features etc.)
@@ -38,11 +38,14 @@ from qq.linguameta import LinguaMeta, LanguoidID
 lm = LinguaMeta.from_db()
 
 # Access Languoid info using whatever ID you have
-nl1 = lm.get('nl', key_type=LanguoidID.BCP_47)
-nl2 = lm.get('nld', key_type=LanguoidID.ISO_639_3)
+nl1 = lm.get('nl', key_type=LanguoidID.BCP_47_CODE)
+nl2 = lm.get('nld', key_type=LanguoidID.ISO_639_3_CODE)
+# The `guess` method tries all known key types, be careful though
+# since this can result in unexpected results.
+nl3 = lm.guess('dut') # Happens to be ISO_639_2B
 
-# This will give the same Languoid
-assert nl1 == nl2
+# In this case, these will give the same Languoid
+assert nl1 == nl2 == nl3
 > True
 
 am = lm.get('am') # Default key_type is BCP_47
@@ -91,16 +94,24 @@ am.canonical_scripts
 # Mapping between codes
 dir(lm.id_mapping)
 > [
-    'bcp2glottocode',
-    'bcp2iso_639_2b_code',
-    'bcp2iso_639_3_code',
-    'bcp2wikidata',
-    'bcp2wikipedia',
-    'glottocode2bcp',
-    'iso_639_2b_code2bcp',
-    'iso_639_3_code2bcp',
-    'wikidata2bcp',
-    'wikipedia2bcp',
+    'bcp_47_code2glottocode',
+    'bcp_47_code2iso_639_2b_code',
+    'bcp_47_code2iso_639_3_code',
+    'bcp_47_code2wikidata_id',
+    'bcp_47_code2wikipedia_id',
+    'glottocode2bcp_47_code',
+    'glottocode2iso_639_2b_code',
+    'glottocode2iso_639_3_code',
+    'glottocode2wikidata_id',
+    'glottocode2wikipedia_id',
+    'iso_639_2b_code2bcp_47_code',
+    'iso_639_2b_code2glottocode',
+    'iso_639_2b_code2iso_639_3_code',
+    'iso_639_2b_code2wikidata_id',
+    'iso_639_2b_code2wikipedia_id',
+    'iso_639_3_code2bcp_47_code',
+    'iso_639_3_code2glottocode',
+    'iso_639_3_code2iso_639_2b_code',
     ...
 ]
 ```
