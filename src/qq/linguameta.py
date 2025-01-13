@@ -38,7 +38,7 @@ class LanguoidID(str, Enum):
     Wikipedia_ID = "Wikipedia_ID"  # TODO: move elsewhere since it's not from linguameta?
 
 
-# all ids as propery names (as used in Languoid and IDMapping for example)
+# All ids as property names (as used in Languoid and IDMapping for example)
 ALL_IDS = [lang.lower() for lang in LanguoidID._member_names_]
 
 
@@ -318,7 +318,6 @@ class LinguaMeta:
     def dump(self, path: PathLike = LINGUAMETA_DUMP_PATH) -> Path:
         """Dump the contents to a gzipped json file."""
 
-        # TODO: turn LingaMeta into a pydantic object so this is not necessary?
         output = {
             "languoids": {k: v.model_dump() for k, v in self.languoids.items()},
             "locales": {k: v.model_dump() for k, v in self.locales.items()},
@@ -361,8 +360,8 @@ class LinguaMeta:
         glotscript_data = glotscript_df.T.to_dict()
 
         for file in Path(paths.json).glob("*.json"):
-            bcp_47_CODE = file.stem
-            overview = overview_data[bcp_47_CODE]
+            bcp_47 = file.stem
+            overview = overview_data[bcp_47]
             iso_639_3 = overview.get("iso_639_3_code", None)
             wiki = {"wikipedia_id": wikipedia_by_iso.get(iso_639_3, None)}
 
