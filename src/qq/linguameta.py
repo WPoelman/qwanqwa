@@ -1,10 +1,10 @@
 import gzip
 import json
 import os
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 from typing import Generator
-
+import itertools
 
 import numpy as np
 import pandas as pd
@@ -17,25 +17,29 @@ PathLike = str | os.PathLike
 
 
 # Languoid identifiers
-BCP_47 = str
-ISO_639_3 = str
-ISO_639_2B = str
+BCP_47_CODE = str
+ISO_639_3_CODE = str
+ISO_639_2B_CODE = str
 Glottocode = str
 Wikidata_ID = str
 Wikipedia_ID = str  # TODO: move elsewhere since it's not from linguameta?
 # Script identifier
-ISO_15924 = str
+ISO_15924_CODE = str
 # Territory identifier
-ISO_3166 = str
+ISO_3166_CODE = str
 
 
-class LanguoidID(StrEnum):
-    BCP_47 = "BCP_47"
-    ISO_639_3 = "ISO_639_3"
-    ISO_639_2B = "ISO_639_2B"
+class LanguoidID(str, Enum):
+    BCP_47_CODE = "BCP_47_CODE"
+    ISO_639_3_CODE = "ISO_639_3_CODE"
+    ISO_639_2B_CODE = "ISO_639_2B_CODE"
     Glottocode = "Glottocode"
     Wikidata_ID = "Wikidata_ID"
     Wikipedia_ID = "Wikipedia_ID"  # TODO: move elsewhere since it's not from linguameta?
+
+
+# all ids as propery names (as used in Languoid and IDMapping for example)
+ALL_IDS = [lang.lower() for lang in LanguoidID._member_names_]
 
 
 # For missing locales and scripts.
@@ -55,14 +59,14 @@ def split_string(value: list | str | None) -> str | None:
     return [val.strip() for val in value.split(", ") if val]
 
 
-class Scope(StrEnum):
+class Scope(str, Enum):
     """The Scope of a Languoid describes what it covers."""
 
     LANGUAGE = "LANGUAGE"
     MACROLANGUAGE = "MACROLANGUAGE"
 
 
-class Endangerment(StrEnum):
+class Endangerment(str, Enum):
     """Endangerment status of a Languoid as classified by the UNESCO Atlas of the World's Languages."""
 
     SAFE = "SAFE"  # Safe; not endangered
@@ -120,13 +124,13 @@ class LanguageDescription(SourceBasedFeature):
 
 
 class NameData(SourceBasedFeature):
-    bcp_47_code: BCP_47
+    bcp_47_code: BCP_47_CODE
     name: str | None = None
     is_canonical: bool | None = None
 
 
 class Script(SourceBasedFeature):
-    iso_15924_code: Annotated[ISO_15924 | None, BeforeValidator(format_script_iso)] = None
+    iso_15924_code: Annotated[ISO_15924_CODE | None, BeforeValidator(format_script_iso)] = None
     is_canonical: bool | None = None
     is_historical: bool | None = None
     is_religious: bool | None = None
@@ -138,7 +142,7 @@ class Script(SourceBasedFeature):
 
 
 class SimpleLocale(SourceBasedFeature):
-    iso_3166_code: ISO_3166
+    iso_3166_code: ISO_3166_CODE
 
 
 class SpeakerData(SourceBasedFeature):
@@ -164,7 +168,7 @@ class LanguageScriptLocale(BaseModel):
     geolocation: Geolocation | None = None
 
 
-def to_name_dict(values: dict[BCP_47, NameData] | list[dict] | None) -> dict[BCP_47, NameData] | None:
+def to_name_dict(values: dict[BCP_47_CODE, NameData] | list[dict] | None) -> dict[BCP_47_CODE, NameData] | None:
     if not values:
         return None
     if isinstance(values, dict):
@@ -177,10 +181,10 @@ class Languoid(BaseModel):
     # Possible workflow: parse languoids from all sources separately and merge when creating the graph.
 
     # From LinguaMeta json files
-    bcp_47_code: BCP_47
-    deprecated_bcp_47_code: BCP_47 | None = None
-    iso_639_3_code: ISO_639_3 | None = None
-    iso_639_2b_code: ISO_639_2B | None = None
+    bcp_47_code: BCP_47_CODE
+    deprecated_bcp_47_code: BCP_47_CODE | None = None
+    iso_639_3_code: ISO_639_3_CODE | None = None
+    iso_639_2b_code: ISO_639_2B_CODE | None = None
     glottocode: Glottocode | None = None
     wikidata_id: Wikidata_ID | None = None
     # From Wikipedia
@@ -189,11 +193,11 @@ class Languoid(BaseModel):
     # From LinguaMeta json files -- continued
     total_population: int | None = None  # same as estimated_number_of_speakers in overview
     language_scope: LanguageScope | None = None
-    macrolanguage_bcp_47_code: BCP_47 | None = None
-    individual_language_bcp_47_codes: list[BCP_47] | None = None
+    macrolanguage_bcp_47_code: BCP_47_CODE | None = None
+    individual_language_bcp_47_codes: list[BCP_47_CODE] | None = None
     endangerment_status: EndangermentStatus | None = None
     language_description: LanguageDescription | None = None
-    name_data: Annotated[dict[BCP_47, NameData] | None, BeforeValidator(to_name_dict)] = None
+    name_data: Annotated[dict[BCP_47_CODE, NameData] | None, BeforeValidator(to_name_dict)] = None
     language_script_locale: list[LanguageScriptLocale] | None = None
 
     # From LinguaMeta overview tsv
@@ -246,37 +250,20 @@ class FullLocale(BaseModel):
 
 
 class IDMapping:
-    def __init__(self, languoids: dict[BCP_47, Languoid]) -> None:
+    def __init__(self, languoids: dict[BCP_47_CODE, Languoid]) -> None:
         # Some convenience mappings for quick access.
 
-        self.bcp2glottocode: dict[BCP_47, Glottocode] = dict()
-        self.bcp2iso_639_3_code: dict[BCP_47, ISO_639_3] = dict()
-        self.bcp2iso_639_2b_code: dict[BCP_47, ISO_639_2B] = dict()
-        self.bcp2wikidata: dict[BCP_47, Wikidata_ID] = dict()
-        self.bcp2wikipedia: dict[BCP_47, Wikipedia_ID] = dict()
+        all_pairs = list(itertools.permutations(ALL_IDS, 2))
+        dicts = {f"{a}2{b}": dict() for a, b in all_pairs}
 
-        for bcp, lang in languoids.items():
-            if lang.glottocode:
-                self.bcp2glottocode[bcp] = lang.glottocode
-            if lang.iso_639_3_code:
-                self.bcp2iso_639_3_code[bcp] = lang.iso_639_3_code
-            if lang.iso_639_2b_code:
-                self.bcp2iso_639_2b_code[bcp] = lang.iso_639_2b_code
-            if lang.wikidata_id:
-                self.bcp2wikidata[bcp] = lang.wikidata_id
-            if lang.wikipedia_id:
-                self.bcp2wikipedia[bcp] = lang.wikidata_id
+        for lang in languoids.values():
+            for a, b in all_pairs:
+                if (code_a := getattr(lang, a)) and (code_b := getattr(lang, b)):
+                    dicts[f"{a}2{b}"][code_a] = code_b
+                    dicts[f"{b}2{a}"][code_b] = code_a
 
-        self.glottocode2bcp = {v: k for k, v in self.bcp2glottocode.items()}
-        self.iso_639_3_code2bcp = {v: k for k, v in self.bcp2iso_639_3_code.items()}
-        self.iso_639_2b_code2bcp = {v: k for k, v in self.bcp2iso_639_2b_code.items()}
-        self.wikidata2bcp = {v: k for k, v in self.bcp2wikidata.items()}
-        self.wikipedia2bcp = {v: k for k, v in self.bcp2wikipedia.items()}
-
-        self.glottocode2iso_639_3_code = {
-            k: self.bcp2iso_639_3_code[v] for k, v in self.glottocode2bcp.items() if v in self.bcp2iso_639_3_code
-        }
-        self.iso_639_3_code2glottocode = {v: k for k, v in self.glottocode2iso_639_3_code.items()}
+        for key, value in dicts.items():
+            setattr(self, key, value)
 
 
 class LinguaMeta:
@@ -284,8 +271,8 @@ class LinguaMeta:
 
     def __init__(
         self,
-        languoids: dict[BCP_47, Languoid],
-        locales: dict[ISO_3166, FullLocale] | None = None,
+        languoids: dict[BCP_47_CODE, Languoid],
+        locales: dict[ISO_3166_CODE, FullLocale] | None = None,
     ) -> None:
         self.languoids = languoids
         self.id_mapping = IDMapping(self.languoids)
@@ -308,23 +295,27 @@ class LinguaMeta:
             locales={code: FullLocale(**loc) for code, loc in contents["locales"].items()},
         )
 
-    def get(self, key: str, key_type: LanguoidID = LanguoidID.BCP_47) -> Languoid:
+    def get(self, key: str, key_type: LanguoidID = LanguoidID.BCP_47_CODE) -> Languoid:
         """Get a Languoid from a given key."""
-        try:
-            if key_type == LanguoidID.BCP_47:
-                return self.languoids[key]
-            elif key_type == LanguoidID.ISO_639_3:
-                return self.languoids[self.id_mapping.iso_639_3_code2bcp[key]]
-            elif key_type == LanguoidID.ISO_639_2B:
-                return self.languoids[self.id_mapping.iso_639_2b_code2bcp[key]]
-            elif key_type == LanguoidID.Glottocode:
-                return self.languoids[self.id_mapping.glottocode2bcp[key]]
-            elif key_type == LanguoidID.Wikidata_ID:
-                return self.languoids[self.id_mapping.wikidata2bcp[key]]
-        except KeyError:
-            raise KeyError(f"Languoid for key {key} ({key_type}) not found.")
 
-    def dump(self, path: PathLike) -> Path:
+        try:
+            if key_type == LanguoidID.BCP_47_CODE:
+                return self.languoids[key]
+            mapping_key = f"{key_type.lower()}2bcp_47_code"
+            return self.languoids[getattr(self.id_mapping, mapping_key)[key]]
+        except KeyError as exc:
+            raise KeyError(f"Languoid for key {key} ({key_type}) not found.") from exc
+
+    def guess(self, key: str) -> Languoid:
+        """Try all known code types and get the best guess, use at your own risk!"""
+        for code_name in LanguoidID.__dict__["_member_names_"]:
+            try:
+                return self.get(key, LanguoidID[code_name])
+            except KeyError:
+                pass
+        raise KeyError(f"Languoid for key {key} not found for any know code type.")
+
+    def dump(self, path: PathLike = LINGUAMETA_DUMP_PATH) -> Path:
         """Dump the contents to a gzipped json file."""
 
         # TODO: turn LingaMeta into a pydantic object so this is not necessary?
@@ -370,8 +361,8 @@ class LinguaMeta:
         glotscript_data = glotscript_df.T.to_dict()
 
         for file in Path(paths.json).glob("*.json"):
-            bcp_47 = file.stem
-            overview = overview_data[bcp_47]
+            bcp_47_CODE = file.stem
+            overview = overview_data[bcp_47_CODE]
             iso_639_3 = overview.get("iso_639_3_code", None)
             wiki = {"wikipedia_id": wikipedia_by_iso.get(iso_639_3, None)}
 
