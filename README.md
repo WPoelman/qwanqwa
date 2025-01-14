@@ -32,23 +32,23 @@ pip install git+https://github.com/WPoelman/qwanqwa
 **Important**: `qq` makes a strict distinction between `None` (*don't know*) and `False` (*it is not the case*). Make sure to keep this in mind when checking boolean values for truthiness, so if you're interested in missing values for example, avoid `if not script.is_canonical:`, but instead explicitly check `if script.is_canonical is None:`.
 
 ```python
-from qq.linguameta import LinguaMeta, LanguoidID
+from qq import LanguageData, TagType
 
 # Load from the pre-compiled database
-lm = LinguaMeta.from_db()
+ld = LanguageData.from_db()
 
-# Access Languoid info using whatever ID you have
-nl1 = lm.get('nl', key_type=LanguoidID.BCP_47_CODE)
-nl2 = lm.get('nld', key_type=LanguoidID.ISO_639_3_CODE)
-# The `guess` method tries all known official key types,
-# be careful though since this can result in unexpected results.
-nl3 = lm.guess('dut') # Happens to be ISO_639_2B
+# Access Languoid info using whatever official tag you have
+nl1 = ld.get('nl', tag_type=TagType.BCP_47_CODE)
+nl2 = ld.get('nld', tag_type=TagType.ISO_639_3_CODE)
+# The `guess` method tries all known official tag types,
+# be careful though since this can give unexpected resutls.
+nl3 = ld.guess('dut')  # happens to be TagType.ISO_639_2_B
 
 # In this case, these will give the same Languoid
 assert nl1 == nl2 == nl3
 > True
 
-am = lm.get('am') # Default key_type is BCP_47
+am = ld.get('am') # Default key_type is BCP_47
 
 # Language identifiers
 am.iso_639_3_code
@@ -98,7 +98,7 @@ am.canonical_scripts
 ]
 
 # Mapping between codes
-dir(lm.id_mapping)
+dir(ld.tag_conversion)
 > [
     'bcp_47_code2glottocode',
     'bcp_47_code2iso_639_2b_code',

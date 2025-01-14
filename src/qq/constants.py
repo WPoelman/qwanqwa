@@ -19,7 +19,7 @@ GLOTSCRIPT_MAPPING = DATA_DIR / "glotscript/codes.tsv"
 
 
 @dataclass
-class LinguaMetaPaths:
+class LanguageDataPaths:
     json = LINGUAMETA_JSON_PATH
     locales = LINGUAMETA_LOCALES_PATH
     overview = LINGUAMETA_OVERVIEW_PATH

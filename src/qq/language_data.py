@@ -11,7 +11,7 @@ import pandas as pd
 from pydantic import AfterValidator, BaseModel, BeforeValidator
 from typing_extensions import Annotated
 
-from qq.constants import LINGUAMETA_DUMP_PATH, LinguaMetaPaths
+from qq.constants import LINGUAMETA_DUMP_PATH, LanguageDataPaths
 
 PathLike = str | os.PathLike
 
@@ -34,7 +34,7 @@ NLLB_STYLE_CODE_BCP_47 = str
 NLLB_STYLE_CODE_ISO_639_3 = str
 
 
-class LanguoidID(str, Enum):
+class TagType(str, Enum):
     BCP_47_CODE = "BCP_47_CODE"
     ISO_639_3_CODE = "ISO_639_3_CODE"
     ISO_639_2B_CODE = "ISO_639_2B_CODE"
@@ -43,8 +43,8 @@ class LanguoidID(str, Enum):
     Wikipedia_ID = "Wikipedia_ID"  # TODO: move elsewhere since it's not from linguameta?
 
 
-# All ids as property names (as used in Languoid and IDMapping for example)
-ALL_IDS = [lang.lower() for lang in LanguoidID._member_names_]
+# All ids as property names (as used in Languoid and TagConversion for example)
+ALL_OFFICIAL_TAGS = [lang.lower() for lang in TagType._member_names_]
 
 
 # For missing locales and scripts.
@@ -261,11 +261,11 @@ class FullLocale(BaseModel):
     regional_group: str | None = None
 
 
-class IDMapping:
+class TagConversion:
     def __init__(self, languoids: dict[BCP_47_CODE, Languoid]) -> None:
         # Some convenience mappings for quick access.
 
-        all_pairs = list(itertools.permutations(ALL_IDS, 2))
+        all_pairs = list(itertools.permutations(ALL_OFFICIAL_TAGS, 2))
         dicts = {f"{a}2{b}": dict() for a, b in all_pairs}
 
         for lang in languoids.values():
@@ -278,8 +278,8 @@ class IDMapping:
             setattr(self, key, value)
 
 
-class LinguaMeta:
-    """A class to interact with [LinguaMeta](https://aclanthology.org/2024.lrec-main.921/)."""
+class LanguageData:
+    """A class to interact with language data from various sources."""
 
     def __init__(
         self,
@@ -287,11 +287,11 @@ class LinguaMeta:
         locales: dict[ISO_3166_CODE, FullLocale] | None = None,
     ) -> None:
         self.languoids = languoids
-        self.id_mapping = IDMapping(self.languoids)
+        self.tag_conversion = TagConversion(self.languoids)
         self.locales = locales  # TODO: move locales to their own class?
 
     @classmethod
-    def from_raw(cls, paths: LinguaMetaPaths = LinguaMetaPaths()):
+    def from_raw(cls, paths: LanguageDataPaths = LanguageDataPaths()):
         """Build the LinguaMeta content from the raw json files."""
         return cls(
             languoids={lang.bcp_47_code: lang for lang in cls._parse_languoids(paths)},
@@ -307,25 +307,49 @@ class LinguaMeta:
             locales={code: FullLocale(**loc) for code, loc in contents["locales"].items()},
         )
 
-    def get(self, key: str, key_type: LanguoidID = LanguoidID.BCP_47_CODE) -> Languoid:
-        """Get a Languoid from a given key."""
+    def get(self, tag: str, tag_type: TagType = TagType.BCP_47_CODE) -> Languoid:
+        """Get a Languoid from a given tag. Only supports official language identifiers."""
 
         try:
-            if key_type == LanguoidID.BCP_47_CODE:
-                return self.languoids[key]
-            mapping_key = f"{key_type.lower()}2bcp_47_code"
-            return self.languoids[getattr(self.id_mapping, mapping_key)[key]]
+            if tag_type == TagType.BCP_47_CODE:
+                return self.languoids[tag]
+            mapping_key = f"{tag_type.lower()}2bcp_47_code"
+            return self.languoids[getattr(self.tag_conversion, mapping_key)[tag]]
         except KeyError as exc:
-            raise KeyError(f"Languoid for key {key} ({key_type}) not found.") from exc
+            raise KeyError(f"Languoid for tag {tag} ({tag_type}) not found.") from exc
 
-    def guess(self, key: str) -> Languoid:
-        """Try all known code types and get the best guess, use at your own risk!"""
-        for code_name in LanguoidID.__dict__["_member_names_"]:
+    def guess(self, tag: str) -> Languoid:
+        """Try all known official indentifier types and get the best guess, use at your own risk!"""
+        for code_name in TagType.__dict__["_member_names_"]:
             try:
-                return self.get(key, LanguoidID[code_name])
+                return self.get(tag, TagType[code_name])
             except KeyError:
                 pass
-        raise KeyError(f"Languoid for key {key} not found for any know code type.")
+        raise KeyError(f"Languoid for tag {tag} not found for any know code type.")
+
+    def get_by_nllb(self, tag: str, tag_type: TagType = TagType.BCP_47_CODE) -> Languoid:
+        """Get a Languoid using a combined NLLB-style identifier."""
+        if tag_type not in (TagType.BCP_47_CODE, TagType.ISO_639_3_CODE):
+            raise ValueError(f"The NLLB style tags only support bcp-47 and iso-639-3, not {tag_type}.")
+
+        lang, script = tag.split("_", 2)
+        candidate = self.get(lang, tag_type)
+
+        # TODO: this can be neater
+        found = False
+        if tag_type == TagType.BCP_47_CODE:
+            if tag in candidate.nllb_style_codes_bcp_47:
+                found = True
+        elif tag_type == TagType.ISO_639_3_CODE:
+            if tag in candidate.nllb_style_codes_iso_639_3:
+                found = True
+        else:
+            pass  # unreachable
+
+        if not found:
+            raise ValueError(f"Possible candidate found for {lang}, but script {script} not found")
+
+        return candidate
 
     def dump(self, path: PathLike = LINGUAMETA_DUMP_PATH) -> Path:
         """Dump the contents to a gzipped json file."""
@@ -340,7 +364,7 @@ class LinguaMeta:
         return out_file
 
     @staticmethod
-    def _parse_languoids(paths: LinguaMetaPaths) -> Generator[Languoid, None, None]:
+    def _parse_languoids(paths: LanguageDataPaths) -> Generator[Languoid, None, None]:
         wikipedia_mapping = json.loads(Path(paths.wikipedia).read_bytes())
         wikipedia_by_iso = {value["alpha3"]: key for key, value in wikipedia_mapping.items()}
 
@@ -401,5 +425,5 @@ class LinguaMeta:
             yield Languoid(**contents)
 
     @staticmethod
-    def _parse_locales(paths: LinguaMetaPaths) -> Generator[FullLocale, None, None]:
+    def _parse_locales(paths: LanguageDataPaths) -> Generator[FullLocale, None, None]:
         yield from (FullLocale(**content) for content in json.loads(Path(paths.locales).read_bytes())["locale_map"])
