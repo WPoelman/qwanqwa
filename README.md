@@ -48,7 +48,7 @@ nl3 = ld.guess('dut')  # happens to be TagType.ISO_639_2_B
 assert nl1 == nl2 == nl3
 > True
 
-am = ld.get('am') # Default key_type is BCP_47
+am = ld.get('am') # Default tag_type is BCP_47
 
 # Language identifiers
 am.iso_639_3_code
