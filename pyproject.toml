@@ -26,6 +26,7 @@ dependencies = [
 dev = [
     "ruff==0.6.4",
     "pre-commit==4.0.1",
+    "devtools==0.12.2",
 ]
 
 [project.urls]

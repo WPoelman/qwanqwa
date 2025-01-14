@@ -3,6 +3,15 @@ repos:
     rev: v0.0.1
     hooks:
     -   id: sync-pre-commit-deps
+- repo: local
+  hooks:
+    - id: update-release
+      name: update-release
+      entry: python scripts/release.py
+      language: system
+      types: [python]
+      pass_filenames: false
+      always_run: true
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:

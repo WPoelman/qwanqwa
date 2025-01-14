@@ -1,4 +1,4 @@
-# Full examples
+# Full example
 ## Languoid
 Only `name_data` is truncated.
 
@@ -10,6 +10,12 @@ Languoid(
     iso_639_2b_code=None,
     glottocode='amha1245',
     wikidata_id='Q28244',
+    nllb_style_codes_iso_639_3=[
+        'amh_Ethi',
+    ],
+    nllb_style_codes_bcp_47=[
+        'am_Ethi',
+    ],
     wikipedia_id='am',
     total_population=36000000,
     language_scope=LanguageScope(
@@ -24,22 +30,16 @@ Languoid(
         description='Semitic language of Ethiopia',
     ),
     name_data={
-        'ab': NameData(
-            source='LINGUAMETA-CLDR',
-            bcp_47_code='ab',
-            name='амхар',
-            is_canonical=True,
-        ),
-        'af': NameData(
-            source='LINGUAMETA-CLDR',
-            bcp_47_code='af',
-            name='Amharies',
-            is_canonical=True,
-        ),
         'am': NameData(
             source='LINGUAMETA-GOOGLE_RESEARCH',
             bcp_47_code='am',
             name='አማርኛ',
+            is_canonical=True,
+        ),
+        'fr': NameData(
+            source='LINGUAMETA-CLDR',
+            bcp_47_code='fr',
+            name='amharique',
             is_canonical=True,
         ),
         'en': NameData(

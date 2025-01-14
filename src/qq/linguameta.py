@@ -27,6 +27,11 @@ Wikipedia_ID = str  # TODO: move elsewhere since it's not from linguameta?
 ISO_15924_CODE = str
 # Territory identifier
 ISO_3166_CODE = str
+# This is a combination of ISO 693 or BCP 47 and ISO 15924 -> zho_Hans or zho_Hant for example
+# Technically similar to the first parts of an IETF Tag https://en.wikipedia.org/wiki/IETF_language_tag
+# but instead follows 'conventions' from NLP research, such as used in Glotscript, GlotID, NLLB, Goldfish, etc.
+NLLB_STYLE_CODE_BCP_47 = str
+NLLB_STYLE_CODE_ISO_639_3 = str
 
 
 class LanguoidID(str, Enum):
@@ -44,6 +49,8 @@ ALL_IDS = [lang.lower() for lang in LanguoidID._member_names_]
 
 # For missing locales and scripts.
 MISSING_PLACEHOLDER = "xxxx"
+# Braille ISO 15924 script code
+BRAILLE = "Brai"
 
 
 def format_script_iso(value: str | None) -> str | None:
@@ -187,6 +194,11 @@ class Languoid(BaseModel):
     iso_639_2b_code: ISO_639_2B_CODE | None = None
     glottocode: Glottocode | None = None
     wikidata_id: Wikidata_ID | None = None
+
+    # To be created from linguameta and glotscript
+    nllb_style_codes_iso_639_3: list[NLLB_STYLE_CODE_ISO_639_3] | None = None
+    nllb_style_codes_bcp_47: list[NLLB_STYLE_CODE_BCP_47] | None = None
+
     # From Wikipedia
     wikipedia_id: Wikipedia_ID | None = None
     # TODO: we might as well add all information from here: https://en.wikipedia.org/wiki/List_of_Wikipedias#Active_editions
@@ -364,19 +376,28 @@ class LinguaMeta:
             overview = overview_data[bcp_47]
             iso_639_3 = overview.get("iso_639_3_code", None)
             wiki = {"wikipedia_id": wikipedia_by_iso.get(iso_639_3, None)}
+            # TODO: this is a bit of a mess
+            nllb_codes = {"nllb_style_codes_iso_639_3": None, "nllb_style_codes_bcp_47": None}
 
-            # Try to get additional writing system data
             # TODO put glotscript content into it's own pydantic classes and merge later
             # TODO provide proper source for glotscript as well
-            if overview["writing_systems"] and iso_639_3 in glotscript_data:
-                original = set(overview["writing_systems"].split(", "))
-                if scripts := glotscript_data[iso_639_3]["ISO15924-Main"]:
-                    new = set(scripts)
-                else:
-                    new = set()
-                overview["writing_systems"] = sorted(list(original | new))
+            if overview["writing_systems"]:
+                # Create proper format
+                original_scripts = set(overview["writing_systems"].split(", "))
+                overview["writing_systems"] = sorted(list(set(original_scripts)))
 
-            contents = overview | json.loads(file.read_bytes()) | wiki  # ordering is important here
+                # Try to get additional writing system data
+                if iso_639_3 in glotscript_data:
+                    if new_scripts := glotscript_data[iso_639_3]["ISO15924-Main"]:
+                        overview["writing_systems"] = sorted(list(original_scripts | set(new_scripts)))
+                        # We consider glotscript as the authority when creating these nllb style codes.
+                        # And we're not including Braille for the time being.
+                        nllb_scripts = [scr for scr in sorted(new_scripts) if scr != BRAILLE]
+                        nllb_codes["nllb_style_codes_iso_639_3"] = [f"{iso_639_3}_{scr}" for scr in nllb_scripts]
+                        nllb_codes["nllb_style_codes_bcp_47"] = [f"{bcp_47}_{scr}" for scr in nllb_scripts]
+
+            # ordering is important here
+            contents = overview | json.loads(file.read_bytes()) | wiki | nllb_codes
             yield Languoid(**contents)
 
     @staticmethod

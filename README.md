@@ -2,7 +2,8 @@
 This is a language metadata toolkit to make it easier to work with a large variety of metadata from a single interface.
 Currently this metadata includes:
 
-* Identifiers and related information: `iso-639-3`, `bcp-47`, Glottocode, Wikidata, Wikipedia
+* Official identifiers: `iso-639-3`, `bcp-47`, Glottocode, Wikidata, Wikipedia
+* Non-official identifiers: NLLB-style codes (`zho_Hans`, `zho_Hant`, etc.)[^1]
 * Geographic information
 * Speaker information
 * Writing systems
@@ -10,7 +11,6 @@ Currently this metadata includes:
 
 Planned:
 * Phylogenetic information
-* Additional identifiers (NLLB)
 * Linking with [CLLD](https://github.com/clld) datasets
 * Typological features: `grambank`, `wals`, `uriel`
 * A graph-based view to traverse between languoids (family trees, geo areas, shared features etc.)
@@ -29,7 +29,7 @@ Number of languoids: 7511
 pip install git+https://github.com/WPoelman/qwanqwa
 ```
 
-**Important**: `qq` makes a strict distinction between `None` (*don't know*) and `False` (*it is not the case*). Make sure to keep this in mind when checking boolean values for truthiness, so avoid `if not script.is_canonical:`, but instead explicitly check `if script.is_canonical is None:` if you're interested in missing values for example.
+**Important**: `qq` makes a strict distinction between `None` (*don't know*) and `False` (*it is not the case*). Make sure to keep this in mind when checking boolean values for truthiness, so if you're interested in missing values for example, avoid `if not script.is_canonical:`, but instead explicitly check `if script.is_canonical is None:`.
 
 ```python
 from qq.linguameta import LinguaMeta, LanguoidID
@@ -40,8 +40,8 @@ lm = LinguaMeta.from_db()
 # Access Languoid info using whatever ID you have
 nl1 = lm.get('nl', key_type=LanguoidID.BCP_47_CODE)
 nl2 = lm.get('nld', key_type=LanguoidID.ISO_639_3_CODE)
-# The `guess` method tries all known key types, be careful though
-# since this can result in unexpected results.
+# The `guess` method tries all known official key types,
+# be careful though since this can result in unexpected results.
 nl3 = lm.guess('dut') # Happens to be ISO_639_2B
 
 # In this case, these will give the same Languoid
@@ -59,6 +59,12 @@ am.wikidata_id
 > 'Q28244',
 am.wikipedia_id
 > 'am'
+
+# Also some non-standard identifiers, often used in NLP research
+am.nllb_style_codes_iso_639_3
+> ['amh_Ethi']
+am.nllb_style_codes_bcp_47
+> ['am_Ethi']
 
 # Names in different languages
 am.endonym
@@ -116,7 +122,9 @@ dir(lm.id_mapping)
 ]
 ```
 
-... and more, [here](docs/examples.md) are some full examples.
+... and more, [here](docs/example.md) are some full examples.
+
+[^1]: This is a combination of an `iso-693-3` or `bcp-47` language tag and `iso-15924` script tag. This is similar to the first parts of an [IETF Tag](https://en.wikipedia.org/wiki/IETF_language_tag), which, confusingly, can also be referred to as a `bcp-47` tag on its own. This is done in NLLB for instance. This is not wrong, but because data in `qq` is based on LinguaMeta, who interpret just the first part of a IETF tag to be a `bcp-47` tag, we're sticking to  LinguaMeta's interpretation of `bcp-47` and refer to the combined tag as `nllb_style`. The `iso-15924` part of the `nllb_style` tags are based on Glotscript, excluding Braille.
 
 ## Sources
 ### LinguaMeta
