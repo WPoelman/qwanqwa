@@ -14,6 +14,7 @@ Planned:
 * Linking with [CLLD](https://github.com/clld) datasets
 * Typological features: `grambank`, `wals`, `uriel`
 * A graph-based view to traverse between languoids (family trees, geo areas, shared features etc.)
+* Historical languages
 
 **Name**: **Q**wan**q**wa is a phonetic spelling of 'ቋንቋ', which means *language* in Amharic; `qq` is nice and short to type.
 

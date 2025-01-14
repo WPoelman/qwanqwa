@@ -410,15 +410,16 @@ class LanguageData:
                 original_scripts = set(overview["writing_systems"].split(", "))
                 overview["writing_systems"] = sorted(list(set(original_scripts)))
 
-                # Try to get additional writing system data
-                if iso_639_3 in glotscript_data:
-                    if new_scripts := glotscript_data[iso_639_3]["ISO15924-Main"]:
-                        overview["writing_systems"] = sorted(list(original_scripts | set(new_scripts)))
-                        # We consider glotscript as the authority when creating these nllb style codes.
-                        # And we're not including Braille for the time being.
-                        nllb_scripts = [scr for scr in sorted(new_scripts) if scr != BRAILLE]
-                        nllb_codes["nllb_style_codes_iso_639_3"] = [f"{iso_639_3}_{scr}" for scr in nllb_scripts]
-                        nllb_codes["nllb_style_codes_bcp_47"] = [f"{bcp_47}_{scr}" for scr in nllb_scripts]
+            # Try to get additional writing system data, even if it's missing from linguameta
+            if iso_639_3 in glotscript_data:
+                if new_scripts := glotscript_data[iso_639_3]["ISO15924-Main"]:
+                    current_scripts = set(overview["writing_systems"]) if overview["writing_systems"] else set()
+                    overview["writing_systems"] = sorted(list(current_scripts | set(new_scripts)))
+                    # We consider glotscript as the authority when creating these nllb style codes.
+                    # And we're not including Braille for the time being.
+                    nllb_scripts = [scr for scr in sorted(new_scripts) if scr != BRAILLE]
+                    nllb_codes["nllb_style_codes_iso_639_3"] = [f"{iso_639_3}_{scr}" for scr in nllb_scripts]
+                    nllb_codes["nllb_style_codes_bcp_47"] = [f"{bcp_47}_{scr}" for scr in nllb_scripts]
 
             # ordering is important here
             contents = overview | json.loads(file.read_bytes()) | wiki | nllb_codes
