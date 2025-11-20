@@ -16,17 +16,17 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "numpy==2.1.1",
-    "pandas==2.2.2",
-    "pydantic==2.9.1",
-    "typing_extensions==4.12.2",
+    "numpy>=2.1.1",
+    "pandas>=2.2.2",
+    "pydantic>=2.9.1",
+    "typing_extensions>=4.12.2",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "ruff==0.6.4",
-    "pre-commit==4.0.1",
-    "devtools==0.12.2",
+    "ruff>=0.6.4",
+    "pre-commit>=4.0.1",
+    "devtools>=0.12.2",
 ]
 
 [project.urls]
