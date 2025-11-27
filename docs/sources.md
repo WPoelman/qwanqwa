@@ -5,7 +5,7 @@
 * Paper: https://aclanthology.org/2024.lrec-main.921/
 * Github: https://github.com/google-research/url-nlp/tree/main/linguameta
 * License: CC BY-SA 4.0
-* Last updated: version from 12-12-2024
+* Last updated: 27-11-2025
 
 Individual sources (taken from LinguaMeta [README](https://github.com/google-research/url-nlp/blob/main/linguameta/README.md)):
 | LinguaMeta ID       | Source                                | License type      | Link                                                                                |
@@ -44,3 +44,9 @@ Individual sources (taken from GlotScript [README](https://github.com/cisnlp/Glo
 * Download website: https://glottolog.org/meta/downloads
 * License: CC BY 4.0
 * Last updated: version 5.1 from 29-10-2024
+
+## `pycountry`
+* Github: https://github.com/pycountry/pycountry
+* Data (from Debian): https://salsa.debian.org/iso-codes-team/iso-codes
+* License: LGPL-2.1
+* Last updated: 27-11-2025

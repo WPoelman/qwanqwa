@@ -22,7 +22,7 @@ Planned:
 In `qq`, language-like entities as referred to as [*Languoids*](http://www.glottopedia.de/index.php/Languoid), since it includes dialects, macro-languages and language areas.
 Not all languoids have coverage for all features.
 
-Number of languoids: 7511
+Number of languoids: 7848
 
 
 ## Usage
