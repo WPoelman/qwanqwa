@@ -378,7 +378,7 @@ class LanguageData:
 
     @staticmethod
     def _parse_languoids(paths: LanguageDataPaths) -> Generator[Languoid, None, None]:
-        iso_639_3_to_2 = {item["alpha_3"]: item for item in json.loads(paths.iso_639_3_to_2.read_bytes())["639-3"]}
+        # iso_639_3_to_2 = {item["alpha_3"]: item for item in json.loads(paths.iso_639_3_to_2.read_bytes())["639-3"]}
 
         wikipedia_mapping = json.loads(paths.wikipedia.read_bytes())
         wikipedia_by_iso = {value["alpha3"]: key for key, value in wikipedia_mapping.items()}
@@ -431,13 +431,14 @@ class LanguageData:
             if not (iso_639_3 := row.get("iso639P3code", None)):
                 continue
 
-            if not (iso_item := iso_639_3_to_2.get(iso_639_3, None)):
-                print(f"WHO IS THIS: {iso_639_3}")
-                continue
+            # if not (iso_item := iso_639_3_to_2.get(iso_639_3, None)):
+            #     print(f"WHO IS THIS: {iso_639_3}")
+            #     continue
+            bcp_47_guess = None
 
             # BCP_47 is the *shortest* iso code, per the spec. We have access to ISO-639-2 through pycountry.
             # This might not be 100% correct, but it's good enough to have some access.
-            bcp_47_guess = iso_item.get("alpha_2", iso_639_3)
+            # bcp_47_guess = iso_item.get("alpha_2", iso_639_3)
 
             overview_no_linguameta = {
                 "bcp_47_code": bcp_47_guess,
@@ -459,7 +460,8 @@ class LanguageData:
                     overview_no_linguameta["nllb_style_codes_iso_639_3"] = [
                         f"{iso_639_3}_{scr}" for scr in nllb_scripts
                     ]
-            glottolog_entries[bcp_47_guess] = overview_no_linguameta
+            if bcp_47_guess:
+                glottolog_entries[bcp_47_guess] = overview_no_linguameta
 
         for file in Path(paths.json).glob("*.json"):
             bcp_47 = file.stem

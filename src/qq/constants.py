@@ -17,7 +17,23 @@ LINGUAMETA_LOCALES_PATH = DATA_DIR / "linguameta/locales.json"
 LINGUAMETA_SCRIPTS_PATH = DATA_DIR / "linguameta/scripts.json"
 
 # pycountry
-ISO_639_3_TO_2_MAPPING = DATA_DIR / "pycountry/src/pycountry/databases/iso639-3.json"
+PYCOUNTRY_ISO_639_3 = DATA_DIR / "pycountry/src/pycountry/databases/iso639-3.json"
+PYCOUNTRY_ISO_639_5 = DATA_DIR / "pycountry/src/pycountry/databases/iso639-5.json"
+PYCOUNTRY_ISO_3166_1 = DATA_DIR / "pycountry/src/pycountry/databases/iso3166-1.json"
+PYCOUNTRY_ISO_3166_2 = DATA_DIR / "pycountry/src/pycountry/databases/iso3166-2.json"
+PYCOUNTRY_ISO_3166_3 = DATA_DIR / "pycountry/src/pycountry/databases/iso3166-3.json"
+PYCOUNTRY_ISO_15924 = DATA_DIR / "pycountry/src/pycountry/databases/iso15924.json"
+
+
+@dataclass
+class PycountryPaths:
+    iso_639_3 = PYCOUNTRY_ISO_639_3
+    iso_639_5 = PYCOUNTRY_ISO_639_5
+    iso_3166_1 = PYCOUNTRY_ISO_3166_1
+    iso_3166_2 = PYCOUNTRY_ISO_3166_2
+    iso_3166_3 = PYCOUNTRY_ISO_3166_3
+    iso_15924 = PYCOUNTRY_ISO_15924
+
 
 # Wikipedia
 WIKIPEDIA_MAPPING = DATA_DIR / "wikipedia-mapping.json"
@@ -38,4 +54,3 @@ class LanguageDataPaths:
     wikipedia = WIKIPEDIA_MAPPING
     glotscript = GLOTSCRIPT_MAPPING
     glottolog = GLOTTOLOG_PATH
-    iso_639_3_to_2 = ISO_639_3_TO_2_MAPPING

@@ -19,6 +19,7 @@ dependencies = [
     "numpy>=2.1.1",
     "pandas>=2.2.2",
     "pydantic>=2.9.1",
+    "sqlmodel>=0.0.27",
     "typing_extensions>=4.12.2",
 ]
 
