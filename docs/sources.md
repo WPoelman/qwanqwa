@@ -44,3 +44,9 @@ Individual sources (taken from GlotScript [README](https://github.com/cisnlp/Glo
 * Download website: https://glottolog.org/meta/downloads
 * License: CC BY 4.0
 * Last updated: version 5.1 from 29-10-2024
+
+## `pycountry`
+* Github: https://github.com/pycountry/pycountry
+* Data (from Debian): https://salsa.debian.org/iso-codes-team/iso-codes
+* License: LGPL-2.1
+* Last updated: version from 22-05-2025

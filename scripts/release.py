@@ -1,11 +1,9 @@
-from pathlib import Path
-from devtools import pformat
 import re
-from qq import LanguageData
 
-PROJECT_ROOT = Path(__file__).parent.parent
-EXAMPLE_FILE = PROJECT_ROOT / "docs/example.md"
-README_FILE = PROJECT_ROOT / "README.md"
+from devtools import pformat
+
+from qq import LanguageData
+from qq.constants import EXAMPLE_PATH, README_PATH
 
 
 def main():
@@ -16,7 +14,7 @@ def main():
         ld.dump()
 
     # update example
-    example_text = EXAMPLE_FILE.read_text()
+    example_text = EXAMPLE_PATH.read_text()
     am = ld.get("am")
     am.name_data = {code: am.name_data[code] for code in ["am", "fr", "en"]}
     new_text = re.sub(
@@ -25,16 +23,16 @@ def main():
         example_text,
         flags=re.MULTILINE,
     )
-    EXAMPLE_FILE.write_text(new_text)
+    EXAMPLE_PATH.write_text(new_text)
 
     # update readme
-    readme_text = README_FILE.read_text()
+    readme_text = README_PATH.read_text()
     new_text = re.sub(
         r"(Number of languoids:) (\d\d\d\d)",
-        f"\g<1> {len(ld.languoids)}",
+        f"\g<1> {len(ld)}",
         readme_text,
     )
-    README_FILE.write_text(new_text)
+    README_PATH.write_text(new_text)
 
 
 if __name__ == "__main__":

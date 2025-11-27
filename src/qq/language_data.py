@@ -1,10 +1,10 @@
 import gzip
+import itertools
 import json
 import os
 from enum import Enum
 from pathlib import Path
 from typing import Generator
-import itertools
 
 import numpy as np
 import pandas as pd
@@ -365,10 +365,12 @@ class LanguageData:
 
     @staticmethod
     def _parse_languoids(paths: LanguageDataPaths) -> Generator[Languoid, None, None]:
-        wikipedia_mapping = json.loads(Path(paths.wikipedia).read_bytes())
+        iso_639_3_to_2 = {item["alpha_3"]: item for item in json.loads(paths.iso_639_3_to_2.read_bytes())["639-3"]}
+
+        wikipedia_mapping = json.loads(paths.wikipedia.read_bytes())
         wikipedia_by_iso = {value["alpha3"]: key for key, value in wikipedia_mapping.items()}
 
-        overview_data = (
+        overview_df = (
             pd.read_csv(
                 paths.overview,
                 sep="\t",
@@ -379,7 +381,6 @@ class LanguageData:
             .replace([np.nan, ""], [None, None])
             # The overview status is just a description, the other has source information.
             .rename(columns={"endangerment_status": "endangerment_status_description"})
-            .T.to_dict()
         )
 
         glotscript_df = (
@@ -393,7 +394,59 @@ class LanguageData:
             .replace([np.nan, ""], [None, None])
         )
         glotscript_df["ISO15924-Main"] = glotscript_df["ISO15924-Main"].str.split(", ")
+
+        glottolog_df = (
+            pd.read_csv(
+                paths.glottolog,
+                index_col="id",
+                keep_default_na=False,
+            )
+            .fillna(np.nan)
+            .replace([np.nan, ""], [None, None])
+        )
+        # Get all languages *not* covered by LinguaMeta: historical languages mainly!
+        glottolog_df = glottolog_df[~(glottolog_df.index.isin(overview_df["glottocode"]))]
+
+        # Convert to dicts so it's easier to work with (pydantic)
+        overview_data = overview_df.T.to_dict()
         glotscript_data = glotscript_df.T.to_dict()
+        glottolog_data = glottolog_df.T.to_dict()
+
+        glottolog_entries = {}
+
+        for glottocode, row in glottolog_data.items():
+            if not (iso_639_3 := row.get("iso639P3code", None)):
+                continue
+
+            if not (iso_item := iso_639_3_to_2.get(iso_639_3, None)):
+                print(f"WHO IS THIS: {iso_639_3}")
+                continue
+
+            # BCP_47 is the *shortest* iso code, per the spec. We have access to ISO-639-2 through pycountry.
+            # This might not be 100% correct, but it's good enough to have some access.
+            bcp_47_guess = iso_item.get("alpha_2", iso_639_3)
+
+            overview_no_linguameta = {
+                "bcp_47_code": bcp_47_guess,
+                "iso_639_3_code": iso_639_3,
+                "glottocode": glottocode,
+                "wikipedia_id": wikipedia_by_iso.get(iso_639_3, None),
+                "nllb_style_codes_iso_639_3": None,
+                "nllb_style_codes_bcp_47": None,
+                "english_name": row.get("name", None),
+            }
+
+            # Try to get additional writing system data, even if it's missing from linguameta
+            if iso_639_3 in glotscript_data:
+                if new_scripts := glotscript_data[iso_639_3]["ISO15924-Main"]:
+                    overview_no_linguameta["writing_systems"] = sorted(list(set(new_scripts)))
+                    # We consider glotscript as the authority when creating these nllb style codes.
+                    # And we're not including Braille for the time being.
+                    nllb_scripts = [scr for scr in sorted(new_scripts) if scr != BRAILLE]
+                    overview_no_linguameta["nllb_style_codes_iso_639_3"] = [
+                        f"{iso_639_3}_{scr}" for scr in nllb_scripts
+                    ]
+            glottolog_entries[bcp_47_guess] = overview_no_linguameta
 
         for file in Path(paths.json).glob("*.json"):
             bcp_47 = file.stem
@@ -421,10 +474,18 @@ class LanguageData:
                     nllb_codes["nllb_style_codes_iso_639_3"] = [f"{iso_639_3}_{scr}" for scr in nllb_scripts]
                     nllb_codes["nllb_style_codes_bcp_47"] = [f"{bcp_47}_{scr}" for scr in nllb_scripts]
 
+            glot_data = glottolog_entries.pop(bcp_47, dict())
+
             # ordering is important here
-            contents = overview | json.loads(file.read_bytes()) | wiki | nllb_codes
+            contents = overview | json.loads(file.read_bytes()) | wiki | nllb_codes | glot_data
             yield Languoid(**contents)
+
+        # At this point, we only have the glottolog languages left that are *not* in linguameta as well
+        yield from (Languoid(**g_data) for g_data in glottolog_entries.values())
 
     @staticmethod
     def _parse_locales(paths: LanguageDataPaths) -> Generator[FullLocale, None, None]:
         yield from (FullLocale(**content) for content in json.loads(Path(paths.locales).read_bytes())["locale_map"])
+
+    def __len__(self) -> int:
+        return len(self.languoids)
