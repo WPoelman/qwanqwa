@@ -11,9 +11,10 @@ README_PATH = PROJECT_ROOT / "README.md"
 
 # LinguaMeta
 LINGUAMETA_DUMP_PATH = LOCAL_DATA_DIR / "db.json.gz"
-LINGUAMETA_JSON_PATH = DATA_DIR / "linguameta/linguameta/data"
-LINGUAMETA_OVERVIEW_PATH = DATA_DIR / "linguameta/linguameta/linguameta.tsv"
-LINGUAMETA_LOCALES_PATH = DATA_DIR / "linguameta/linguameta/locales.json"
+LINGUAMETA_JSON_PATH = DATA_DIR / "linguameta/data"
+LINGUAMETA_OVERVIEW_PATH = DATA_DIR / "linguameta/linguameta.tsv"
+LINGUAMETA_LOCALES_PATH = DATA_DIR / "linguameta/locales.json"
+LINGUAMETA_SCRIPTS_PATH = DATA_DIR / "linguameta/scripts.json"
 
 # pycountry
 ISO_639_3_TO_2_MAPPING = DATA_DIR / "pycountry/src/pycountry/databases/iso639-3.json"
@@ -27,18 +28,12 @@ GLOTSCRIPT_MAPPING = DATA_DIR / "glotscript/codes.tsv"
 # Glottolog
 GLOTTOLOG_PATH = DATA_DIR / "glottolog/languoid.csv"
 
-# Grambank
-GB_DIR = DATA_DIR / "grambank"
-GB_PARAMS = GB_DIR / "gb_parameters.csv"
-GB_FEATURES = GB_DIR / "gb_processed.csv"
-GB_LANGUAGES = GB_DIR / "gb_languages.csv"
-GB_MV_FEATURES = ["GB024", "GB025", "GB065", "GB130", "GB193", "GB203"]
-
 
 @dataclass
 class LanguageDataPaths:
     json = LINGUAMETA_JSON_PATH
     locales = LINGUAMETA_LOCALES_PATH
+    scripts = LINGUAMETA_SCRIPTS_PATH
     overview = LINGUAMETA_OVERVIEW_PATH
     wikipedia = WIKIPEDIA_MAPPING
     glotscript = GLOTSCRIPT_MAPPING

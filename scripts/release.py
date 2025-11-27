@@ -10,7 +10,7 @@ def main():
     # make sure dump is up to date
     ld = LanguageData.from_raw()
     ld2 = LanguageData.from_db()
-    if ld.languoids != ld2.languoids:
+    if (ld.languoids != ld2.languoids) or (ld.scripts != ld2.scripts) or (ld.locales != ld2.locales):
         ld.dump()
 
     # update example

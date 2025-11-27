@@ -254,11 +254,19 @@ class Locale(BaseModel):
     locale_population: LocalePopulation | None = None
 
 
+# From locales.json
 class FullLocale(BaseModel):
     locale: Locale
     region: str | None = None
     subregion: str | None = None
     regional_group: str | None = None
+
+
+# From scripts.json
+class FullScript(BaseModel):
+    # This is the ISO_15924 code, not a 'name'
+    name: Annotated[ISO_15924_CODE, BeforeValidator(format_script_iso)] = None
+    full_name: str  # English name
 
 
 class TagConversion:
@@ -285,10 +293,12 @@ class LanguageData:
         self,
         languoids: dict[BCP_47_CODE, Languoid],
         locales: dict[ISO_3166_CODE, FullLocale] | None = None,
+        scripts: dict[ISO_15924_CODE, FullScript] | None = None,
     ) -> None:
         self.languoids = languoids
         self.tag_conversion = TagConversion(self.languoids)
         self.locales = locales  # TODO: move locales to their own class?
+        self.scripts = scripts  # TODO: move scripts to their own class?
 
     @classmethod
     def from_raw(cls, paths: LanguageDataPaths = LanguageDataPaths()):
@@ -296,6 +306,7 @@ class LanguageData:
         return cls(
             languoids={lang.bcp_47_code: lang for lang in cls._parse_languoids(paths)},
             locales={loc.locale.locale_code: loc for loc in cls._parse_locales(paths)},
+            scripts={sc.name: sc for sc in cls._parse_scripts(paths)},
         )
 
     @classmethod
@@ -305,6 +316,7 @@ class LanguageData:
         return cls(
             languoids={code: Languoid(**lang) for code, lang in contents["languoids"].items()},
             locales={code: FullLocale(**loc) for code, loc in contents["locales"].items()},
+            scripts={code: FullScript(**sc) for code, sc in contents["scripts"].items()},
         )
 
     def get(self, tag: str, tag_type: TagType = TagType.BCP_47_CODE) -> Languoid:
@@ -357,6 +369,7 @@ class LanguageData:
         output = {
             "languoids": {k: v.model_dump() for k, v in self.languoids.items()},
             "locales": {k: v.model_dump() for k, v in self.locales.items()},
+            "scripts": {k: v.model_dump() for k, v in self.scripts.items()},
         }
 
         out_file = Path(path)
@@ -485,7 +498,11 @@ class LanguageData:
 
     @staticmethod
     def _parse_locales(paths: LanguageDataPaths) -> Generator[FullLocale, None, None]:
-        yield from (FullLocale(**content) for content in json.loads(Path(paths.locales).read_bytes())["locale_map"])
+        yield from (FullLocale(**data) for data in json.loads(Path(paths.locales).read_bytes())["locale_map"])
+
+    @staticmethod
+    def _parse_scripts(paths: LanguageDataPaths) -> Generator[FullScript, None, None]:
+        yield from (FullScript(**data["script"]) for data in json.loads(Path(paths.scripts).read_bytes())["script_map"])
 
     def __len__(self) -> int:
         return len(self.languoids)
