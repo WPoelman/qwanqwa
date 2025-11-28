@@ -13,6 +13,7 @@ from qq.compile.sources.pycountry import (
     get_pycountry_31662_entries,
     get_pycountry_31663_entries,
 )
+from qq.compile.sources.wikipedia import get_wikipedia_entries
 from qq.constants import LanguageDataPaths, PycountryPaths
 
 
@@ -32,6 +33,8 @@ def main():
     pc_31663_entries = get_pycountry_31663_entries(PycountryPaths.iso_3166_3)
     pc_15924_entries = get_pycountry_15924_entries(PycountryPaths.iso_15924)
 
+    wiki_entries = get_wikipedia_entries(LanguageDataPaths.wikipedia)
+
     print(gl_entries[:5])
 
     print(gs_entries[:5])
@@ -49,6 +52,8 @@ def main():
     print(pc_31662_entries[0])
     print(pc_31663_entries[0])
     print(pc_15924_entries[0])
+
+    print(wiki_entries[0])
 
 
 if __name__ == "__main__":
