@@ -1,38 +1,32 @@
-import re
-
-from devtools import pformat
-
-from qq import LanguageData
-from qq.constants import EXAMPLE_PATH, README_PATH
+import qq.constants as const
+from qq.sources.docs_generator import write_sources_documentation
 
 
 def main():
-    # make sure dump is up to date
-    ld = LanguageData.from_raw()
-    ld2 = LanguageData.from_db()
-    if (ld.languoids != ld2.languoids) or (ld.scripts != ld2.scripts) or (ld.locales != ld2.locales):
-        ld.dump()
+    write_sources_documentation(const.SOURCES_DIR, const.SOURCES_DOCS_PATH)
 
-    # update example
-    example_text = EXAMPLE_PATH.read_text()
-    am = ld.get("am")
-    am.name_data = {code: am.name_data[code] for code in ["am", "fr", "en"]}
-    new_text = re.sub(
-        r"(```python\n)((.*\n)+)(```)",
-        f"\g<1>{pformat(am)}\n\g<4>",
-        example_text,
-        flags=re.MULTILINE,
-    )
-    EXAMPLE_PATH.write_text(new_text)
+    # TODO: update once rebuild is complete!
+    # # update example
+    # example_text = EXAMPLE_PATH.read_text()
+    # am = ld.get("am")
+    # am.name_data = {code: am.name_data[code] for code in ["am", "fr", "en"]}
+    # new_text = ""
+    # # new_text = re.sub(
+    # #     r"(```python\n)((.*\n)+)(```)",
+    # #     f"\g<1>{pformat(am)}\n\g<4>",
+    # #     example_text,
+    # #     flags=re.MULTILINE,
+    # # )
+    # EXAMPLE_PATH.write_text(new_text)
 
-    # update readme
-    readme_text = README_PATH.read_text()
-    new_text = re.sub(
-        r"(Number of languoids:) (\d\d\d\d)",
-        f"\g<1> {len(ld)}",
-        readme_text,
-    )
-    README_PATH.write_text(new_text)
+    # # update readme
+    # readme_text = README_PATH.read_text()
+    # new_text = re.sub(
+    #     r"(Number of languoids:) (\d\d\d\d)",
+    #     f"\g<1> {len(ld)}",
+    #     readme_text,
+    # )
+    # README_PATH.write_text(new_text)
 
 
 if __name__ == "__main__":

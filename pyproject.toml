@@ -3,34 +3,35 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "qq"
+name = "qwanqwa"
 version = "0.3.1"
 requires-python = ">= 3.10"
 authors = [{ name = "Wessel Poelman", email = "contact@wesselpoelman.nl" }]
 maintainers = [{ name = "Wessel Poelman", email = "contact@wesselpoelman.nl" }]
-description = "A package to handle language metadata (QwanQwa)."
+description = "A package to interact with language metadata (QwanQwa)."
 readme = "README.md"
-license = { file = "LICENSE" }
+license-files = ["LICENSE"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
-dependencies = [
-    "numpy>=2.1.1",
-    "pandas>=2.2.2",
-    "pydantic>=2.9.1",
-    "typing_extensions>=4.12.2",
-]
+dependencies = ["pydantic>=2.9.1", "typing_extensions>=4.12.2"]
 
 [project.optional-dependencies]
+# Build dependencies for building database from raw sources (from_raw)
+build = ["click>=8.0.0", "numpy>=2.1.1", "pandas>=2.2.2", "requests>=2.25.0"]
 dev = [
+    "qwanqwa[build]",
+    "pytest>=7.0.0",
     "ruff>=0.6.4",
     "pre-commit>=4.0.1",
     "devtools>=0.12.2",
+    "ty>=0.0.14",
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/WPoelman/qwanqwa"
+
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -40,3 +41,15 @@ qq = ["data/db.json.gz"]
 
 [tool.ruff]
 line-length = 120
+
+[tool.ty.src]
+include = ["scripts", "src", "tests"]
+
+[tool.ty.rules]
+unused-ignore-comment = "ignore"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v"

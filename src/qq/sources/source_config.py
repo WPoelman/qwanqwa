@@ -1,0 +1,81 @@
+from pathlib import Path
+
+from qq.sources.source_management import APISourceProvider, GitSourceProvider, SourceProvider
+
+
+class SourceConfig:
+    """
+    Sources are the 'raw' data that gets parsed into the qq graph database
+    by an Importer.
+
+    This config is used to import the sources in a consistent way.
+    """
+
+    @staticmethod
+    def get_providers(sources_dir: Path) -> list[SourceProvider]:
+        """
+        Get all configured source providers.
+
+        To add a new source:
+        1. Add it to this list
+        2. Specify the provider type (Git, API, or Directory)
+        3. The importer will be automatically used during rebuild
+           Do make sure to add an "Importer" to actually extract info from
+           the source during a rebuild.
+        """
+        return [
+            GitSourceProvider(
+                name="linguameta",
+                sources_dir=sources_dir,
+                source_url="https://github.com/google-research/url-nlp.git",
+                branch="main",
+                subpath="linguameta",
+                license="CC BY-SA 4.0",
+                paper_url="https://aclanthology.org/2024.lrec-main.921/",
+                website_url="https://github.com/google-research/url-nlp/tree/main/linguameta",
+                notes=(
+                    "Individual sources documented in "
+                    "[LinguaMeta README](https://github.com/google-research/url-nlp/blob/main/linguameta/README.md)"
+                ),
+            ),
+            GitSourceProvider(
+                name="glottolog",
+                sources_dir=sources_dir,
+                source_url="https://github.com/glottolog/glottolog-cldf.git",
+                branch="master",
+                subpath="cldf",
+                license="CC BY 4.0",
+                website_url="https://glottolog.org/",
+            ),
+            GitSourceProvider(
+                name="glotscript",
+                sources_dir=sources_dir,
+                source_url="https://github.com/cisnlp/glotscript",
+                branch="main",
+                subpath="metadata",
+                license="CC BY-SA 4.0",
+                paper_url="https://aclanthology.org/2024.lrec-main.687/",
+                website_url="https://github.com/cisnlp/glotscript",
+                notes=(
+                    "Individual sources documented in "
+                    "[GlotScript README](https://github.com/cisnlp/GlotScript/blob/main/metadata/README.md)"
+                ),
+            ),
+            GitSourceProvider(
+                name="pycountry",
+                sources_dir=sources_dir,
+                source_url="https://github.com/pycountry/pycountry",
+                branch="main",
+                subpath="src/pycountry/databases",
+                license="LGPL-2.1",
+                notes="Data from [Debian iso-codes](https://salsa.debian.org/iso-codes-team/iso-codes)",
+            ),
+            APISourceProvider(
+                name="wikipedia",
+                sources_dir=sources_dir,
+                source_url="https://en.wikipedia.org/w/api.php?action=sitematrix&format=json&formatversion=2",
+                cache_duration_hours=24 * 7,  # Cache for 1 week
+                license="CC BY-SA 4.0",
+                website_url="https://meta.wikimedia.org/wiki/List_of_Wikipedias",
+            ),
+        ]
