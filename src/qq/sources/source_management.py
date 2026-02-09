@@ -71,7 +71,13 @@ class SourceProvider(ABC):
         self.name = name
         self.source_url = source_url
         self.sources_dir = sources_dir
-        self.metadata_file = sources_dir / f"{name}_metadata.json"
+
+        self.metadata_dir = self.sources_dir / "_metadata"
+        self.metadata_dir.mkdir(exist_ok=True, parents=True)
+        self.metadata_file = self.metadata_dir / f"{name}_metadata.json"
+
+        self.data_dir = self.sources_dir / self.name
+        self.data_dir.mkdir(exist_ok=True, parents=True)
 
         self.metadata = self._load_metadata(name, license, source_type, source_url, website_url, paper_url, notes)
 
@@ -102,12 +108,8 @@ class SourceProvider(ABC):
             last_checked=md._last_checked.isoformat() if md._last_checked else None,
             checksum=md._checksum,
             is_valid=self.verify(),
-            data_path=str(self.get_data_path()),
+            data_path=str(self.data_dir),
         )
-
-    def get_data_path(self) -> Path:
-        """Get path to the extracted/usable data"""
-        return self.sources_dir / self.name
 
     def _load_metadata(
         self,
@@ -256,7 +258,7 @@ class GitSourceProvider(SourceProvider):
 
         # Copy data to usable location
         source_path = self.repo_path / self.subpath if self.subpath else self.repo_path
-        target_path = self.get_data_path()
+        target_path = self.data_dir
 
         if target_path.exists():
             shutil.rmtree(target_path)
@@ -329,7 +331,7 @@ class DirectorySourceProvider(SourceProvider):
         if not self.local_path.exists():
             raise FileNotFoundError("Source folder not found!")
 
-        target_path = self.get_data_path()
+        target_path = self.data_dir
 
         # Check if changed
         new_checksum = self._calculate_checksum(self.local_path)
@@ -384,7 +386,7 @@ class APISourceProvider(SourceProvider):
     ):
         super().__init__(name, sources_dir, license, SourceType.API, source_url, website_url, paper_url, notes)
         self.cache_duration_hours = cache_duration_hours
-        self.cache_file = self.sources_dir / f"{name}_cache.json"
+        self.cache_file = self.data_dir / f"{name}_cache.json"
 
         self.source_url: str  # see above
 
@@ -418,7 +420,7 @@ class APISourceProvider(SourceProvider):
         self.cache_file.write_text(json.dumps(data, indent=2, ensure_ascii=False))
 
         # Copy to data path for consistency with other providers
-        target_path = self.get_data_path()
+        target_path = self.data_dir / self.name
         target_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(self.cache_file, target_path.with_suffix(".json"))
 
@@ -431,10 +433,6 @@ class APISourceProvider(SourceProvider):
         self._save_metadata()
 
         return True
-
-    def get_data_path(self) -> Path:
-        """Get path to the JSON data file"""
-        return (self.sources_dir / self.name).with_suffix(".json")
 
     def get_version(self) -> str | None:
         """Get version (fetch timestamp)"""
@@ -476,7 +474,7 @@ class FileDownloadSourceProvider(SourceProvider):
 
     def fetch(self, force: bool = False) -> bool:
         """Download file"""
-        target_dir = self.get_data_path()
+        target_dir = self.data_dir
         target_file = target_dir / self.filename
 
         logger.info(f"Fetching {self.name} from {self.source_url}...")
@@ -514,15 +512,11 @@ class FileDownloadSourceProvider(SourceProvider):
 
         return True
 
-    def get_data_path(self) -> Path:
-        """Get path to the data directory."""
-        return self.sources_dir / self.name
-
     def get_version(self) -> str | None:
         """Get version (fetch timestamp)."""
         return self.metadata._version
 
     def verify(self) -> bool:
         """Verify the downloaded file exists."""
-        target_file = self.get_data_path() / self.filename
+        target_file = self.data_dir / self.filename
         return target_file.exists()

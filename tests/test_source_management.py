@@ -181,7 +181,7 @@ class TestDirectorySourceProvider:
         result = provider.fetch()
 
         assert result is True
-        target_path = provider.get_data_path()
+        target_path = provider.data_dir
         assert target_path.exists()
         assert (target_path / "test.txt").read_text() == "test data"
 
@@ -295,7 +295,7 @@ class TestAPISourceProvider:
 
         assert result is True
         assert api_provider.cache_file.exists()
-        assert api_provider.get_data_path().exists()
+        assert api_provider.data_dir.exists()
 
     @patch("urllib.request.urlopen")
     def test_fetch_use_cached_data(self, mock_urlopen, temp_sources_dir, api_provider):

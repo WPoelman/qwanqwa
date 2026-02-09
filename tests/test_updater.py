@@ -31,7 +31,7 @@ def mock_providers(temp_base_dir):
 
         data_path = temp_base_dir / "sources" / name
         data_path.mkdir(parents=True, exist_ok=True)
-        provider.get_data_path.return_value = data_path
+        provider.data_dir = data_path
 
         providers.append(provider)
 
