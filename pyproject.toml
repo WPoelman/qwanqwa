@@ -15,7 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
-dependencies = ["pydantic>=2.9.1", "typing_extensions>=4.12.2"]
+dependencies = ["pydantic>=2.9.1", "typing_extensions>=4.12.2", "click>=8.0.0"]
 
 [project.optional-dependencies]
 # Build dependencies for building database from raw sources (from_raw)
@@ -32,9 +32,11 @@ dev = [
 [project.urls]
 "Homepage" = "https://github.com/WPoelman/qwanqwa"
 
-
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.scripts]
+qq = "qq.cli:cli"
 
 [tool.setuptools.package-data]
 qq = ["data/db.json.gz"]

@@ -433,3 +433,8 @@ class TestSourceProviderMetadata:
 
         checksum2 = provider._dir_checksum(local_dir)
         assert checksum == checksum2
+
+
+class TestFileDownloadSourceProvider:
+    # TODO: add testing for file download
+    pass

@@ -10,3 +10,8 @@ EXAMPLE_PATH = DOCS_DIR / "example.md"
 SOURCES_DOCS_PATH = DOCS_DIR / "sources.md"
 
 LOG_SEP = "-" * 70
+DATETIME_FMT = "%Y%m%d_%H%M%S"
+
+
+# TODO: remove, this is only here so the type checker is happy
+LINGUAMETA_DUMP_PATH = SOURCES_DIR

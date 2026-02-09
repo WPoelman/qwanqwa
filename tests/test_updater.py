@@ -13,7 +13,6 @@ def temp_base_dir(tmp_path):
     base_dir = tmp_path / "qq_test"
     base_dir.mkdir()
     (base_dir / "sources").mkdir()
-    (base_dir / "data").mkdir()
     return base_dir
 
 
@@ -49,7 +48,6 @@ class TestSourceUpdater:
 
         assert updater.base_dir == temp_base_dir
         assert updater.sources_dir == temp_base_dir / "sources"
-        assert updater.data_dir == temp_base_dir / "data"
         assert isinstance(updater.providers, dict)
 
     @patch("qq.sources.source_config.SourceConfig.get_providers")

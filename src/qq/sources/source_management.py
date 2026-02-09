@@ -9,6 +9,9 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 
+import qq
+from qq.constants import DATETIME_FMT
+
 logger = logging.getLogger(__name__)
 
 
@@ -16,11 +19,24 @@ class SourceType(str, Enum):
     GIT = "git"
     DIR = "dir"
     API = "api"
+    FILE = "file"
+
+
+@dataclass
+class SourceStatus:
+    """Status of a source, this is for displaying and checking, the SourceMetadata is for internal tracking."""
+
+    version: str | None
+    last_updated: str | None
+    last_checked: str | None
+    checksum: str | None
+    is_valid: bool
+    data_path: str
 
 
 @dataclass
 class SourceMetadata:
-    """Metadata about a data source"""
+    """Metadata about a data source. This is more for internal use, for displaying use SourceStatus."""
 
     name: str
     license: str
@@ -76,6 +92,18 @@ class SourceProvider(ABC):
     def verify(self) -> bool:
         """Verify the source data is valid"""
         pass
+
+    def get_status(self) -> SourceStatus:
+        """Get the status of the source"""
+        md = self.metadata
+        return SourceStatus(
+            version=self.get_version(),
+            last_updated=md._last_updated.isoformat() if md._last_updated else None,
+            last_checked=md._last_checked.isoformat() if md._last_checked else None,
+            checksum=md._checksum,
+            is_valid=self.verify(),
+            data_path=str(self.get_data_path()),
+        )
 
     def get_data_path(self) -> Path:
         """Get path to the extracted/usable data"""
@@ -169,7 +197,10 @@ class GitSourceProvider(SourceProvider):
         self.branch = branch
         self.subpath = subpath
         self.repo_path = self.sources_dir / f"{name}_repo"
-        self.source_url: str  # ty cannot figure this out
+        # TODO: a source url should be required for all sources that download something
+        # Maybe there should be a subclass that requires this URLSourceProvider? For now this is necessary to
+        # keep ty happy
+        self.source_url: str
 
         self._verify_git_available()
 
@@ -236,7 +267,6 @@ class GitSourceProvider(SourceProvider):
             target_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source_path, target_path)
 
-        # Update metadata
         self.metadata._version = self.get_version()
         self.metadata._last_updated = datetime.now()
         self.metadata._last_checked = datetime.now()
@@ -321,7 +351,7 @@ class DirectorySourceProvider(SourceProvider):
 
         logger.info(f"Copied {self.name} from {self.local_path}")
 
-        self.metadata._version = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.metadata._version = datetime.now().strftime(DATETIME_FMT)
         self.metadata._last_updated = datetime.now()
         self.metadata._last_checked = datetime.now()
         self.metadata._checksum = new_checksum
@@ -356,7 +386,7 @@ class APISourceProvider(SourceProvider):
         self.cache_duration_hours = cache_duration_hours
         self.cache_file = self.sources_dir / f"{name}_cache.json"
 
-        self.source_url: str  # ty cannot figure this one out
+        self.source_url: str  # see above
 
     def fetch(self, force: bool = False) -> bool:
         """Fetch data from API"""
@@ -375,8 +405,7 @@ class APISourceProvider(SourceProvider):
         try:
             from urllib.request import Request, urlopen
 
-            # TODO get version from project
-            headers = {"User-Agent": "qwanqwa/0.3.1 (https://github.com/WPoelman/qwanqwa) Python/urllib"}
+            headers = {"User-Agent": f"qwanqwa/{qq.__version__} (https://github.com/WPoelman/qwanqwa) Python/urllib"}
             request = Request(self.source_url, headers=headers)
 
             with urlopen(request, timeout=30) as response:
@@ -384,10 +413,6 @@ class APISourceProvider(SourceProvider):
                 logger.info(f"Successfully fetched {self.name} data from API")
         except Exception as e:
             logger.error(f"Failed to fetch {self.name} from API: {e}")
-            # If we have cached data, use it
-            if self.cache_file.exists():
-                logger.warning(f"Using cached data for {self.name}")
-                return False
             return False
 
         self.cache_file.write_text(json.dumps(data, indent=2, ensure_ascii=False))
@@ -399,7 +424,7 @@ class APISourceProvider(SourceProvider):
 
         logger.info(f"Cached {self.name} data")
 
-        self.metadata._version = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.metadata._version = datetime.now().strftime(DATETIME_FMT)
         self.metadata._last_updated = datetime.now()
         self.metadata._last_checked = datetime.now()
         self.metadata._checksum = self._file_checksum(self.cache_file)
@@ -426,3 +451,78 @@ class APISourceProvider(SourceProvider):
             return True
         except json.JSONDecodeError:
             return False
+
+
+class FileDownloadSourceProvider(SourceProvider):
+    """Provider for single-file downloads (TSV, CSV, etc.)"""
+
+    def __init__(
+        self,
+        name: str,
+        sources_dir: Path,
+        source_url: str,
+        filename: str,
+        license: str,
+        cache_duration_hours: int = 24,
+        paper_url: str | None = None,
+        website_url: str | None = None,
+        notes: str | None = None,
+    ):
+        super().__init__(name, sources_dir, license, SourceType.FILE, source_url, website_url, paper_url, notes)
+        self.filename = filename
+        self.cache_duration_hours = cache_duration_hours
+
+        self.source_url: str  # see above
+
+    def fetch(self, force: bool = False) -> bool:
+        """Download file"""
+        target_dir = self.get_data_path()
+        target_file = target_dir / self.filename
+
+        logger.info(f"Fetching {self.name} from {self.source_url}...")
+
+        if not force and target_file.exists() and self.metadata._last_updated:
+            age_hours = (datetime.now() - self.metadata._last_updated).total_seconds() / 3600
+            if age_hours < self.cache_duration_hours:
+                logger.info(f"{self.name} cache is still valid (age: {age_hours:.1f} hours)")
+                self.metadata._last_checked = datetime.now()
+                self._save_metadata()
+                return False
+
+        try:
+            from urllib.request import Request, urlopen
+
+            headers = {"User-Agent": f"qwanqwa/{qq.__version__} (https://github.com/WPoelman/qwanqwa) Python/urllib"}
+            request = Request(self.source_url, headers=headers)
+
+            with urlopen(request, timeout=30) as response:
+                content = response.read()
+                logger.info(f"Successfully downloaded {self.name} ({len(content)} bytes)")
+        except Exception as e:
+            logger.error(f"Failed to download {self.name}: {e}")
+            return False
+
+        target_dir.mkdir(parents=True, exist_ok=True)
+        with open(target_file, "wb") as f:
+            f.write(content)
+
+        self.metadata._version = datetime.now().strftime(DATETIME_FMT)
+        self.metadata._last_updated = datetime.now()
+        self.metadata._last_checked = datetime.now()
+        self.metadata._checksum = self._file_checksum(target_file)
+        self._save_metadata()
+
+        return True
+
+    def get_data_path(self) -> Path:
+        """Get path to the data directory."""
+        return self.sources_dir / self.name
+
+    def get_version(self) -> str | None:
+        """Get version (fetch timestamp)."""
+        return self.metadata._version
+
+    def verify(self) -> bool:
+        """Verify the downloaded file exists."""
+        target_file = self.get_data_path() / self.filename
+        return target_file.exists()

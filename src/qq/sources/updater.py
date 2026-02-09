@@ -5,6 +5,7 @@ from pathlib import Path
 
 from qq.constants import LOG_SEP
 from qq.sources.source_config import SourceConfig
+from qq.sources.source_management import SourceStatus
 
 logger = logging.getLogger(__name__)
 
@@ -14,17 +15,11 @@ class SourceUpdater:
 
     def __init__(self, base_dir: Path):
         self.base_dir = Path(base_dir)
+        self.update_log_file = self.base_dir / "update_log.json"
         self.sources_dir = self.base_dir / "sources"
         self.sources_dir.mkdir(parents=True, exist_ok=True)
 
-        # We don't want the sources in git
-        ignore_file = Path(self.sources_dir.parent / ".gitignore")
-        if not ignore_file.exists():
-            ignore_file.write_text("*")
-
-        self.data_dir = self.base_dir / "data"
-        self.providers = {p.name: p for p in SourceConfig.get_providers(self.base_dir)}
-        self.update_log_file = self.base_dir / "update_log.json"
+        self.providers = SourceConfig.get_providers_as_dict(self.sources_dir)
 
     def update_all(self, force: bool = False, rebuild: bool = True) -> dict[str, bool]:
         """
@@ -60,7 +55,6 @@ class SourceUpdater:
                 logger.error(f"✗ Failed to update {name}: {e}")
                 results[name] = False
 
-        # Log update
         self._log_update(results, updated_sources)
 
         # Rebuild database if any sources were updated
@@ -121,25 +115,9 @@ class SourceUpdater:
 
         return results
 
-    def get_status(self) -> dict[str, dict]:
+    def get_status(self) -> dict[str, SourceStatus]:
         """Get status of all sources"""
-        status = {}
-
-        for name, provider in self.providers.items():
-            status[name] = {
-                "version": provider.get_version(),
-                "last_updated": provider.metadata._last_updated.isoformat()
-                if provider.metadata._last_updated
-                else None,
-                "last_checked": provider.metadata._last_checked.isoformat()
-                if provider.metadata._last_checked
-                else None,
-                "checksum": provider.metadata._checksum,
-                "is_valid": provider.verify(),
-                "data_path": str(provider.get_data_path()),
-            }
-
-        return status
+        return {name: source.get_status() for name, source in self.providers.items()}
 
     def _log_update(self, results: dict[str, bool], updated_sources: list[str]):
         """Log update to file"""
