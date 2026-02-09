@@ -46,6 +46,7 @@ line-length = 120
 
 [tool.ty.src]
 include = ["scripts", "src", "tests"]
+exclude = ["**/language_data.py"]     # TODO: remove once rebuild is complete
 
 [tool.ty.rules]
 unused-ignore-comment = "ignore"

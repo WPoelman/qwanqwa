@@ -27,11 +27,19 @@ repos:
       - id: python-no-eval
       - id: python-no-log-warn
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.14
+    rev: v0.15.0
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+  - repo: local
+    hooks:
+      - id: ty-check
+        name: ty type check
+        entry: uv run ty check
+        language: system
+        types: [python]
+        pass_filenames: false
   - repo: local
     hooks:
       - id: pytest-check
