@@ -2,8 +2,8 @@ import logging
 from pathlib import Path
 
 from qq.constants import LOG_SEP
+from qq.sources.providers import SourceStatus
 from qq.sources.source_config import SourceConfig
-from qq.sources.source_management import SourceStatus
 
 logger = logging.getLogger(__name__)
 

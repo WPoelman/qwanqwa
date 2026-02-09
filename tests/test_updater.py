@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from qq.sources.source_management import DirectorySourceProvider, SourceMetadata, SourceType
+from qq.sources.providers import DirectorySourceProvider, SourceMetadata, SourceType
 from qq.sources.updater import SourceUpdater
 
 

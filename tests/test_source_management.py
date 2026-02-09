@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-from qq.sources.source_management import APISourceProvider, DirectorySourceProvider, GitSourceProvider, SourceType
+from qq.sources.providers import APISourceProvider, DirectorySourceProvider, GitSourceProvider, SourceType
 
 
 @pytest.fixture

@@ -1,7 +1,7 @@
 from pathlib import Path
 
+from qq.sources.providers import SourceProvider
 from qq.sources.source_config import SourceConfig
-from qq.sources.source_management import SourceProvider
 
 
 def _generate_source_section(provider: SourceProvider) -> list[str]:

@@ -1,6 +1,9 @@
 from pathlib import Path
 
-from qq.sources.source_management import (
+from qq.importers.base_importer import BaseImporter
+from qq.importers.glotscript_importer import GlotscriptImporter
+from qq.importers.glottolog_importer import GlottologImporter
+from qq.sources.providers import (
     APISourceProvider,
     FileDownloadSourceProvider,
     GitSourceProvider,
@@ -99,3 +102,20 @@ class SourceConfig:
                 notes="ISO 639-3 retired code mappings maintained by SIL International",
             ),
         ]
+
+    @staticmethod
+    def get_importers() -> dict[str, type[BaseImporter]]:
+        """
+        Each name of a SourceProvider is associated with one or more Importers.
+        These importers extract information from the source.
+        Currently it's 1-1, but this could change in the future.
+        """
+        # TODO: finish and make nicer? based on enum instead?
+        return {
+            # "linguameta": [],
+            "glottolog": GlottologImporter,
+            "glotscript": GlotscriptImporter,
+            # "pycountry": [],
+            # "wikipedia": [],
+            # "sil": [],
+        }

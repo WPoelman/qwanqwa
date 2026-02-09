@@ -19,7 +19,13 @@ dependencies = ["pydantic>=2.9.1", "typing_extensions>=4.12.2", "click>=8.0.0"]
 
 [project.optional-dependencies]
 # Build dependencies for building database from raw sources (from_raw)
-build = ["click>=8.0.0", "numpy>=2.1.1", "pandas>=2.2.2", "requests>=2.25.0"]
+build = [
+    "click>=8.0.0",
+    "numpy>=2.1.1",
+    "pandas>=2.2.2",
+    "requests>=2.25.0",
+    "tqdm>=4.67.3",
+]
 dev = [
     "qwanqwa[build]",
     "pytest>=7.0.0",
@@ -46,7 +52,6 @@ line-length = 120
 
 [tool.ty.src]
 include = ["scripts", "src", "tests"]
-exclude = ["**/language_data.py"]     # TODO: remove once rebuild is complete
 
 [tool.ty.rules]
 unused-ignore-comment = "ignore"
