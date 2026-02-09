@@ -1,6 +1,4 @@
-import json
 import logging
-from datetime import datetime
 from pathlib import Path
 
 from qq.constants import LOG_SEP
@@ -13,12 +11,9 @@ logger = logging.getLogger(__name__)
 class SourceUpdater:
     """Manages updating all data sources and rebuilding the database"""
 
-    def __init__(self, base_dir: Path):
-        self.base_dir = Path(base_dir)
-        self.update_log_file = self.base_dir / "update_log.json"
-        self.sources_dir = self.base_dir / "sources"
+    def __init__(self, sources_dir: Path):
+        self.sources_dir = sources_dir
         self.sources_dir.mkdir(parents=True, exist_ok=True)
-
         self.providers = SourceConfig.get_providers_as_dict(self.sources_dir)
 
     def update_all(self, force: bool = False, rebuild: bool = True) -> dict[str, bool]:
@@ -55,8 +50,6 @@ class SourceUpdater:
                 logger.error(f"✗ Failed to update {name}: {e}")
                 results[name] = False
 
-        self._log_update(results, updated_sources)
-
         # Rebuild database if any sources were updated
         if rebuild and updated_sources:
             logger.info("\n" + LOG_SEP)
@@ -82,8 +75,6 @@ class SourceUpdater:
 
             if was_updated:
                 logger.info(f"✓ {source_name} updated")
-                self._log_update({source_name: True}, [source_name])
-
                 if rebuild:
                     logger.info("Rebuilding database...")
                     self.rebuild_database()
@@ -118,19 +109,3 @@ class SourceUpdater:
     def get_status(self) -> dict[str, SourceStatus]:
         """Get status of all sources"""
         return {name: source.get_status() for name, source in self.providers.items()}
-
-    def _log_update(self, results: dict[str, bool], updated_sources: list[str]):
-        """Log update to file"""
-        log_entry = {
-            "timestamp": datetime.now().isoformat(),
-            "results": results,
-            "updated_sources": updated_sources,
-            "source_versions": {name: provider.get_version() for name, provider in self.providers.items()},
-        }
-
-        log = []
-        if self.update_log_file.exists():
-            log = json.loads(self.update_log_file.read_bytes())
-        log.append(log_entry)
-        log = log[-100:]  # Only keep last 100
-        self.update_log_file.write_text(json.dumps(log, indent=2, ensure_ascii=False))

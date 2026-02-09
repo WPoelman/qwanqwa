@@ -19,7 +19,7 @@ def _get_source_updater():
     try:
         from qq.sources.updater import SourceUpdater
 
-        return SourceUpdater(Path.cwd())
+        return SourceUpdater(SOURCES_DIR)
     except ImportError as e:
         raise click.ClickException(
             f"This command requires build dependencies. Install them with: pip install qwanqwa[build]\n{e}"
@@ -64,13 +64,12 @@ def verify():
 
 @cli.command()
 @click.option("--output", "-o", type=Path, default=SOURCES_DOCS_PATH, help="Output path for documentation file")
-@click.option("--sources_dir", "-s", type=Path, default=SOURCES_DIR, help="Sources path to generate docs for")
-def generate_docs(output, sources_dir):
+def generate_docs(output):
     """Generate sources documentation"""
     try:
         from qq.sources.docs_generator import write_sources_documentation
 
-        write_sources_documentation(sources_dir, output)
+        write_sources_documentation(SOURCES_DIR, output)
         click.echo(f"Generated sources documentation at: {output}")
     except ImportError as e:
         raise click.ClickException(

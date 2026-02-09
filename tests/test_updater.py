@@ -1,4 +1,3 @@
-import json
 from unittest.mock import Mock, patch
 
 import pytest
@@ -46,8 +45,7 @@ class TestSourceUpdater:
         """Test initializing the updater"""
         updater = SourceUpdater(temp_base_dir)
 
-        assert updater.base_dir == temp_base_dir
-        assert updater.sources_dir == temp_base_dir / "sources"
+        assert updater.sources_dir == temp_base_dir
         assert isinstance(updater.providers, dict)
 
     @patch("qq.sources.source_config.SourceConfig.get_providers")
@@ -198,64 +196,6 @@ class TestSourceUpdater:
 
         assert len(results) == 5
         assert all(results.values())
-
-    @patch("qq.sources.source_config.SourceConfig.get_providers")
-    def test_log_update(self, mock_get_providers, temp_base_dir, mock_providers):
-        """Test logging updates to file"""
-        mock_get_providers.return_value = mock_providers
-
-        updater = SourceUpdater(temp_base_dir)
-        results = {"linguameta": True, "glottolog": False}
-        updated_sources = ["linguameta"]
-
-        updater._log_update(results, updated_sources)
-
-        assert updater.update_log_file.exists()
-
-        with open(updater.update_log_file) as f:
-            log = json.load(f)
-
-        assert len(log) == 1
-        assert log[0]["results"] == results
-        assert log[0]["updated_sources"] == updated_sources
-        assert "timestamp" in log[0]
-        assert "source_versions" in log[0]
-
-    @patch("qq.sources.source_config.SourceConfig.get_providers")
-    def test_log_update_preserves_history(self, mock_get_providers, temp_base_dir, mock_providers):
-        """Test that update log preserves previous entries"""
-        mock_get_providers.return_value = mock_providers
-
-        updater = SourceUpdater(temp_base_dir)
-
-        updater._log_update({"test1": True}, ["test1"])
-        updater._log_update({"test2": True}, ["test2"])
-        updater._log_update({"test3": True}, ["test3"])
-
-        with open(updater.update_log_file) as f:
-            log = json.load(f)
-
-        assert len(log) == 3
-        assert log[0]["updated_sources"] == ["test1"]
-        assert log[1]["updated_sources"] == ["test2"]
-        assert log[2]["updated_sources"] == ["test3"]
-
-    @patch("qq.sources.source_config.SourceConfig.get_providers")
-    def test_log_update_limits_entries(self, mock_get_providers, temp_base_dir, mock_providers):
-        """Test that update log limits to 100 entries"""
-        mock_get_providers.return_value = mock_providers
-
-        updater = SourceUpdater(temp_base_dir)
-
-        for i in range(105):
-            updater._log_update({f"test{i}": True}, [f"test{i}"])
-
-        with open(updater.update_log_file) as f:
-            log = json.load(f)
-
-        assert len(log) == 100
-        assert log[0]["updated_sources"] == ["test5"]
-        assert log[-1]["updated_sources"] == ["test104"]
 
 
 class TestSourceUpdaterIntegration:
