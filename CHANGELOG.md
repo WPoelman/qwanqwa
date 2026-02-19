@@ -11,7 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - NLLB-style codes support improvements
 - Additional convenience methods on Languoid
 
-## [1.0.1] - 2026-02-18
+## [1.0.2] - 2026-02-19
+
+- `Database.load()` logged a bunch of INFO level messages which are now at DEBUG level
+- `build_database.py` called `logging.basicConfig()` at import time, overriding the logging configuration of any application that used qq as a library
+
+## [1.0.1] - 2026-02-19
 
 ### Fixed
 - fixed an import issue due to missing build dependencies with regular install
@@ -20,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - removed old script
 
-## [1.0.0] - 2026-02-18
+## [1.0.0] - 2026-02-19
 
 **IMPORTANT**: This is a major rewrite with breaking changes. There is no backwards compatibility with 0.x versions.
 
