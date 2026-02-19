@@ -21,11 +21,9 @@ In `qq`, language-like entities are referred to as [*Languoids*](http://www.glot
 ## Installation
 
 ```bash
-pip install qwanqwa
-# or from git
-uv add git+https://github.com/WPoelman/qwanqwa
+uv add qwanqwa
 # or
-pip install git+https://github.com/WPoelman/qwanqwa
+pip install qwanqwa
 ```
 
 ## Quick Start
@@ -149,7 +147,7 @@ qq update
 
 ## Examples
 
-See the [`examples/`](examples/) directory for runnable scripts covering:
+See the [`examples/`](https://github.com/WPoelman/qwanqwa/tree/main/examples/) directory for runnable scripts covering:
 - `01_basic_usage.py`: Loading and accessing attributes
 - `02_identifiers.py`: Working with identifier types and retired codes
 - `03_conversion.py`: Converting between identifiers
@@ -164,19 +162,35 @@ See the [`examples/`](examples/) directory for runnable scripts covering:
 
 ## Case studies
 
-The [`case-studies/`](case-studies/) directory contains runnable analyses that use qq:
+The [`case-studies/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/) directory contains runnable analyses that use qq:
 
-- **[`hugginface-audit/`](case-studies/hugginface-audit/)**: Scans all multilingual datasets on the HuggingFace Hub and classifies every `language:` tag as valid, deprecated, a misused country code, or unknown. qq resolves 99.2% of the 8,189 codes; the rest are deprecated, misused country codes, or HuggingFace-specific tags.
-- **[`linking-datasets/`](case-studies/linking-datasets/)**: Links four lexical datasets (Concepticon, WordNet, Etymon, Phonotacticon) that each use a different identifier standard. qq resolves these four to a shared canonical ID: 102 languages are covered by all four.
-- **[`latex-tables/`](case-studies/latex-tables/)**: Generates a LaTeX table of language metadata (identifiers, scripts, speaker counts, families) for an imaginary 30-language NLP benchmark.
-- **[`identifier-coverage/`](case-studies/identifier-coverage/)**: Visualizes which combinations of identifier standards (Glottocode, ISO 639-3, ISO 639-1, Wikidata) cover which languoids as an UpSet plot.
+- **[`hugginface-audit/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/hugginface-audit/)**: Scans all multilingual datasets on the HuggingFace Hub and classifies every `language:` tag as valid, deprecated, a misused country code, or unknown. qq resolves 99.2% of the 8,189 codes; the rest are deprecated, misused country codes, or HuggingFace-specific tags.
+- **[`linking-datasets/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/linking-datasets/)**: Links four lexical datasets (Concepticon, WordNet, Etymon, Phonotacticon) that each use a different identifier standard. qq resolves these four to a shared canonical ID: 102 languages are covered by all four.
+- **[`latex-tables/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/latex-tables/)**: Generates a LaTeX table of language metadata (identifiers, scripts, speaker counts, families) for an imaginary 30-language NLP benchmark.
+- **[`identifier-coverage/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/identifier-coverage/)**: Visualizes which combinations of identifier standards (Glottocode, ISO 639-3, ISO 639-1, Wikidata) cover which languoids as an UpSet plot.
 
 ## Sources
 
-This project builds on the work of many people. See [`docs/sources.md`](docs/sources.md) for the full list. All sources are available under Creative Commons BY or BY-SA licenses.
+This project builds on the work of many people. See [`docs/sources.md`](https://github.com/WPoelman/qwanqwa/blob/main/docs/sources.md) for the full list. All sources are available under Creative Commons BY or BY-SA licenses.
+
+## Development
+
+To rebuild the database from sources, install with the `build` extras:
+
+```bash
+uv add qwanqwa[build]
+# or
+pip install qwanqwa[build]
+```
+
+To install for local development:
+
+```bash
+git clone https://github.com/WPoelman/qwanqwa
+cd qwanqwa
+uv sync --group dev
+```
 
 ## License
 
-[CC BY-SA 4.0](LICENSE)
-
-[^1]: NLLB-style codes combine an ISO 639-3 (or BCP-47) language tag with an ISO 15924 script tag (e.g., `nld_Latn`). The script part is derived from Glotscript, excluding Braille.
+[CC BY-SA 4.0](https://github.com/WPoelman/qwanqwa/blob/main/LICENSE)

@@ -26,6 +26,7 @@ keywords = [
     "writing-systems",
 ]
 classifiers = [
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
@@ -50,7 +51,6 @@ build = ["pandas>=2.2.2", "requests>=2.25.0"]
 
 [project.urls]
 "Homepage" = "https://github.com/WPoelman/qwanqwa"
-"Repository" = "https://github.com/WPoelman/qwanqwa"
 "Bug Tracker" = "https://github.com/WPoelman/qwanqwa/issues"
 "Changelog" = "https://github.com/WPoelman/qwanqwa/blob/main/CHANGELOG.md"
 

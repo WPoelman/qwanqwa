@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.2] - 2026-02-19
 
+### Fixed
 - `Database.load()` logged a bunch of INFO level messages which are now at DEBUG level
 - `build_database.py` called `logging.basicConfig()` at import time, overriding the logging configuration of any application that used qq as a library
 
@@ -56,12 +57,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved data storage: separate `names.zip` for multilingual name data (lazy-loaded)
 - Entity resolution now tracks conflicts and source priority instead of silently overwriting
 
-### Fixed
-
 ### Removed
 - **BREAKING**: `LanguageData` class
 - **BREAKING**: Old tag conversion methods (use `Database.convert()` instead)
 
-## [0.3.1] - 2025-01-XX
+## [0.3.1] - 2024-09-10 until 2026-02-18
 
-Initial versions, trying stuff out.
+Development started with trying stuff out and no proper changelog and versioning.
