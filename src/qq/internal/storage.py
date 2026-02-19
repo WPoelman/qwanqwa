@@ -2,6 +2,7 @@ import gzip
 import json
 import logging
 import pickle
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -19,18 +20,17 @@ logger = logging.getLogger(__name__)
 __all__ = [
     "DataManager",
     "load_data",
-    "save_data",
 ]
 
 
-class StorageBackend:
-    """Abstract storage backend"""
+class StorageBackend(ABC):
+    """Abstract base class for storage backends."""
 
-    def save(self, data: dict[str, Any], path: Path) -> None:
-        raise NotImplementedError
+    @abstractmethod
+    def save(self, data: dict[str, Any], path: Path) -> None: ...
 
-    def load(self, path: Path) -> dict[str, Any]:
-        raise NotImplementedError
+    @abstractmethod
+    def load(self, path: Path) -> dict[str, Any]: ...
 
 
 class JSONStorage(StorageBackend):
@@ -307,13 +307,6 @@ class DataManager:
             resolver._deprecated_codes[(id_type, value)] = reason
 
         return resolver
-
-
-def save_data(store: "DataStore", resolver: "EntityResolver", path: Path = DEFAULT_DB_PATH):
-    """Quick save function"""
-
-    manager = DataManager("pkl.gz")
-    manager.save_dataset(store, Path(path), resolver)
 
 
 def load_data(path: Path = DEFAULT_DB_PATH):

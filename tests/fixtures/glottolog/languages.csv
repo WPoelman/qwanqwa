@@ -1,0 +1,5 @@
+ID,Name,Level,Macroarea,Latitude,Longitude,Glottocode,ISO639P3code,Countries,Family_ID
+indo1319,Indo-European,family,Eurasia,,,indo1319,,,,
+germ1287,Germanic,family,Eurasia,,,germ1287,,,,indo1319
+dutc1256,Dutch,language,Eurasia,52.15,5.28,dutc1256,nld,NL;BE,germ1287
+nort2626,Northern Frisian,language,Eurasia,54.72,8.87,nort2626,frr,DE,germ1287

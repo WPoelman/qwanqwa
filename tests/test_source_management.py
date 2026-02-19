@@ -1,10 +1,9 @@
-import json
 from datetime import datetime
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
-from qq.sources.providers import APISourceProvider, DirectorySourceProvider, GitSourceProvider, SourceType
+from qq.sources.providers import DirectorySourceProvider, GitSourceProvider, SourceType
 
 
 @pytest.fixture
@@ -23,17 +22,6 @@ def git_provider(temp_sources_dir):
         sources_dir=temp_sources_dir,
         source_url="https://github.com/test/repo.git",
         branch="main",
-    )
-    return provider
-
-
-@pytest.fixture
-def api_provider(temp_sources_dir):
-    provider = APISourceProvider(
-        name="api_source",
-        license="CC",
-        sources_dir=temp_sources_dir,
-        source_url="https://api.example.com/data",
     )
     return provider
 
@@ -262,115 +250,6 @@ class TestDirectorySourceProvider:
         )
 
         assert provider.verify() is False
-
-
-class TestAPISourceProvider:
-    """Tests for APISourceProvider"""
-
-    def test_init(self, temp_sources_dir):
-        """Test initializing an API source provider"""
-        provider = APISourceProvider(
-            name="api_source",
-            sources_dir=temp_sources_dir,
-            source_url="https://api.example.com/data",
-            cache_duration_hours=24,
-            license="CC BY",
-        )
-        assert provider.name == "api_source"
-        assert provider.source_url == "https://api.example.com/data"
-        assert provider.cache_duration_hours == 24
-        assert provider.metadata.source_type == SourceType.API
-
-    @patch("urllib.request.urlopen")
-    def test_fetch_from_api(self, mock_urlopen, temp_sources_dir, api_provider):
-        """Test fetching data from API"""
-
-        mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({"test": "data"}).encode("utf-8")
-        mock_response.__enter__.return_value = mock_response
-        mock_response.__exit__.return_value = None
-        mock_urlopen.return_value = mock_response
-
-        result = api_provider.fetch()
-
-        assert result is True
-        assert api_provider.cache_file.exists()
-        assert api_provider.data_dir.exists()
-
-    @patch("urllib.request.urlopen")
-    def test_fetch_use_cached_data(self, mock_urlopen, temp_sources_dir, api_provider):
-        """Test using cached data when it's still valid"""
-
-        mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({"test": "data"}).encode("utf-8")
-        mock_response.__enter__.return_value = mock_response
-        mock_response.__exit__.return_value = None
-        mock_urlopen.return_value = mock_response
-
-        api_provider.fetch()
-        result = api_provider.fetch(force=False)
-
-        assert result is False
-        assert mock_urlopen.call_count == 1
-
-    @patch("urllib.request.urlopen")
-    def test_fetch_with_force(self, mock_urlopen, temp_sources_dir, api_provider):
-        """Test forcing a fetch even with valid cache"""
-
-        mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({"test": "data"}).encode("utf-8")
-        mock_response.__enter__.return_value = mock_response
-        mock_response.__exit__.return_value = None
-        mock_urlopen.return_value = mock_response
-
-        api_provider.fetch()
-        result = api_provider.fetch(force=True)
-
-        assert result is True
-        assert mock_urlopen.call_count == 2
-
-    @patch("urllib.request.urlopen")
-    def test_fetch_api_failure_with_cache(self, mock_urlopen, temp_sources_dir, api_provider):
-        """Test handling API failure when cache exists"""
-
-        mock_response = MagicMock()
-        mock_response.read.return_value = json.dumps({"test": "data"}).encode("utf-8")
-        mock_response.__enter__.return_value = mock_response
-        mock_response.__exit__.return_value = None
-        mock_urlopen.return_value = mock_response
-
-        api_provider.fetch()
-
-        mock_urlopen.side_effect = Exception("API Error")
-        result = api_provider.fetch(force=True)
-
-        assert result is False
-
-    def test_verify_valid_cache(self, temp_sources_dir, api_provider):
-        """Test verifying valid cached data"""
-
-        api_provider.sources_dir.mkdir(parents=True, exist_ok=True)
-        with open(api_provider.cache_file, "w") as f:
-            json.dump({"test": "data"}, f)
-
-        assert api_provider.verify() is True
-
-    def test_verify_invalid_cache(self, temp_sources_dir, api_provider):
-        """Test verifying invalid cached data"""
-
-        api_provider.sources_dir.mkdir(parents=True, exist_ok=True)
-        with open(api_provider.cache_file, "w") as f:
-            f.write("invalid json")
-
-        assert api_provider.verify() is False
-
-    def test_verify_missing_cache(self, temp_sources_dir):
-        """Test verifying when cache doesn't exist"""
-        api_provider = APISourceProvider(
-            name="api_source", sources_dir=temp_sources_dir, license="CC", source_url="https://api.example.com/data"
-        )
-
-        assert api_provider.verify() is False
 
 
 class TestSourceProviderMetadata:

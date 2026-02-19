@@ -1,8 +1,8 @@
 import logging
+import math
 from pathlib import Path
-from typing import Annotated
 
-from pydantic import BaseModel, BeforeValidator
+import pandas as pd  # TODO: also get rid of pandas dependency?
 
 from qq.data_model import DataSource, IdType, RelationType
 from qq.importers.base_importer import BaseImporter
@@ -10,20 +10,13 @@ from qq.importers.base_importer import BaseImporter
 logger = logging.getLogger(__name__)
 
 
-def _split_script_codes(item: str | None) -> list[str] | None:
-    if isinstance(item, str):
-        if item_s := item.strip():
-            return item_s.split(", ")
-    return None
-
-
-class _GlotScriptEntry(BaseModel):
-    iso639_3: str  # iso 639 3 code
-    iso15924_main: Annotated[list[str] | None, BeforeValidator(_split_script_codes)] = None
-    wiki_aux: str | None = None  # conflicting information, only wiki agrees
-    sil_aux: str | None = None  # conflicting information, only sil agrees
-    lrec2800_aux: str | None = None  # conflicting information, only lrec 2008 agrees
-    sil2_aux: str | None = None  # conflicting information between language tag and script source
+def _clean_nan_records(records: list[dict]) -> list[dict]:
+    """Replace float('nan') values with None (pandas .replace() doesn't catch them)."""
+    for rec in records:
+        for key, val in rec.items():
+            if isinstance(val, float) and math.isnan(val):
+                rec[key] = None
+    return records
 
 
 class GlotscriptImporter(BaseImporter):
@@ -37,9 +30,6 @@ class GlotscriptImporter(BaseImporter):
     def import_data(self, data_path: Path) -> None:
         """Import from Glotscript CSV."""
 
-        import pandas as pd
-        from tqdm import tqdm
-
         # Try multiple possible filenames
         glotscript_file = data_path / "GlotScript.tsv"
         if not glotscript_file.exists():
@@ -50,30 +40,43 @@ class GlotscriptImporter(BaseImporter):
         records = (
             pd.read_csv(glotscript_file, sep="\t")
             .rename(columns=lambda col: col.replace("-", "_").lower())
-            .dropna(subset=["iso639_3"])  # not sure why this is in there
+            .dropna(subset=["iso639_3"])
             .replace({pd.NA: None})
             .to_dict("records")
         )
 
-        for row in tqdm(records, desc="Glotscript import"):
-            self._import_script_usage(_GlotScriptEntry(**row))
+        # pandas .replace() doesn't catch float('nan'); clean up explicitly
+        _clean_nan_records(records)
+
+        for row in records:
+            self._import_script_usage(row)
 
         self.log_stats()
 
-    def _import_script_usage(self, row: _GlotScriptEntry) -> None:
+    def _import_script_usage(self, row: dict[str, str | None]) -> None:
         """Import script usage for a language"""
         # Find languoid by iso_639_3 via resolver
-        languoid = self.resolve_languoid(IdType.ISO_639_3, row.iso639_3)
-        if not languoid:
-            logger.debug(f"Languoid not found for iso_639_3: {row.iso639_3}")
+        if not (code := row.get("iso639_3")):
+            logger.debug(f"No iso code in glotscript row {row}")
+            return
+
+        if not (languoid := self.resolve_languoid(IdType.ISO_639_3, code)):
+            logger.debug(f"Languoid not found for iso_639_3: {row['iso639_3']}")
             return
 
         # iso15924_main is a list of script codes (or None)
-        if not row.iso15924_main:
+        if not isinstance(row["iso15924_main"], str):
             return
 
-        # Import each script
-        for script_code in row.iso15924_main:
+        if not (codes := row["iso15924_main"].strip().split(", ")):
+            return
+
+        for script_code in codes:
+            # Skip Braille: it is a tactile transcription system, not a visual script,
+            # and adds no linguistic information for NLP purposes.
+            if script_code == "Brai":
+                continue
+
             script_id = f"script:{script_code.lower()}"
             script = self.get_or_create_script(script_id)
             script.iso_15924 = script_code

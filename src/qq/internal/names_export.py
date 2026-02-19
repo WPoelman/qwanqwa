@@ -1,9 +1,10 @@
+import dataclasses
 import json
 import logging
 import zipfile
 from pathlib import Path
 
-from qq.data_model import CanonicalId
+from qq.data_model import CanonicalId, NameEntry
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 class NamesExporter:
     """Exports name data to a single zip archive for efficient packaging."""
 
-    def export_names(self, name_data_dict: dict[CanonicalId, list], output_path: Path) -> None:
+    def export_names(self, name_data_dict: dict[CanonicalId, list[NameEntry]], output_path: Path) -> None:
         """
         Export name data to a single zip archive.
 
@@ -19,7 +20,7 @@ class NamesExporter:
         Files inside the zip are named lang:XXXXXX.json (uncompressed JSON, zip handles compression).
 
         Args:
-            name_data_dict: Dict mapping canonical ID -> list of name entries
+            name_data_dict: Dict mapping canonical ID -> list of NameEntry objects
             output_path: Path for the output zip file (e.g., src/qq/data/names.zip)
         """
         output_path = Path(output_path)
@@ -33,7 +34,7 @@ class NamesExporter:
                     continue
 
                 filename = f"{entity_id}.json"
-                zf.writestr(filename, json.dumps(name_data, ensure_ascii=False))
+                zf.writestr(filename, json.dumps([dataclasses.asdict(e) for e in name_data], ensure_ascii=False))
                 exported_count += 1
 
         logger.info(f"Exported names for {exported_count} languoids to {output_path}")
@@ -56,6 +57,7 @@ class NamesLoader:
         Returns:
             List of name entries or None if not found.
             Each entry is a dict with keys: name, canonical_id, is_canonical, source.
+            (canonical_id here is the canonical ID of the locale language, e.g., English)
         """
         if self._zipfile is None:
             if not self.zip_path.exists():

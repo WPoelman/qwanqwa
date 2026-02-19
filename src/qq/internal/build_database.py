@@ -1,21 +1,29 @@
 import logging
 from pathlib import Path
+from typing import Literal
 
+from qq.constants import LOG_SEP
 from qq.internal.entity_resolution import EntityResolver
 from qq.internal.merge import merge
+from qq.internal.names_merge import merge_name_data, resolve_locale_codes
 from qq.internal.storage import DataManager
+from qq.internal.validation import DataValidator
 from qq.sources.source_config import SourceConfig
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
-# TODO: remove format, make it into an enum, or just get it from the path?
-def build_database(sources_dir: Path, source_config: SourceConfig, output_dir: Path, format: str = "json.gz"):
+def build_database(
+    sources_dir: Path,
+    source_config: SourceConfig,
+    output_dir: Path,
+    format: Literal["json.gz", "json", "pkl.gz"] = "json.gz",
+):
     """Build the complete qwanqwa database from all sources."""
-    logger.info("=" * 60)
+    logger.info(LOG_SEP)
     logger.info("Building qwanqwa database")
-    logger.info("=" * 60)
+    logger.info(LOG_SEP)
 
     # Create shared entity resolver (for identity only)
     resolver = EntityResolver()
@@ -24,13 +32,15 @@ def build_database(sources_dir: Path, source_config: SourceConfig, output_dir: P
     # Each importer fills its own EntitySet; they share only the resolver.
     importers = source_config.get_importers()
     to_merge = []
-    for idx, (source_name, importer) in enumerate(importers.items()):
-        logger.info(f"\n[{idx + 1}/{len(importers)}] Importing {source_name.title()}...")
+    instances = []
+    for idx, (source_name, importer_cls) in enumerate(importers):
+        logger.info(f"[{idx + 1}/{len(importers)}] Importing {source_name.title()}...")
 
         source_path = sources_dir / source_name  # TODO: can be nicer?
-        imp = importer(resolver)
+        imp = importer_cls(resolver)
         imp.import_data(source_path)
-        to_merge.append((importer.source, imp.entity_set))
+        to_merge.append((importer_cls.source, imp.entity_set))
+        instances.append(imp)
 
     # -- Merge phase
     # Combine all per-source EntitySets into the final DataStore.
@@ -46,9 +56,8 @@ def build_database(sources_dir: Path, source_config: SourceConfig, output_dir: P
 
     logger.info("Running data validation...")
 
-    # TODO: add validator
-    # validator = DataValidator(store, resolver)
-    # validator.validate_all()
+    validator = DataValidator(store, resolver)
+    validator.validate_all()
 
     # Log final statistics
     logger.info("Import complete!")
@@ -62,14 +71,19 @@ def build_database(sources_dir: Path, source_config: SourceConfig, output_dir: P
     for entity_type, count in entity_counts.items():
         logger.info(f"  {entity_type}: {count}")
 
-    # TODO add separate extractors for name data, resolve and store here?
-    # # Extract name data from LinguaMeta
-    # name_data_dict = linguameta.name_data if separate_names else None
+    # Collect and merge name data from all importers
+    all_name_data = [imp.name_data for imp in instances if hasattr(imp, "name_data") and imp.name_data]
+    if all_name_data:
+        name_data_dict = merge_name_data(all_name_data)
+        name_data_dict = resolve_locale_codes(name_data_dict, resolver)
+    else:
+        name_data_dict = None
 
-    # # Save the database
-    logger.info(f"\nSaving database to {output_dir}...")
+    # Save the database
+    output_path = output_dir / f"db.{format}"
+    logger.info(f"Saving database to {output_path}...")
     manager = DataManager(format)
-    manager.save_dataset(store, output_dir, resolver)
+    manager.save_dataset(store, output_path, resolver, name_data_dict)
 
     logger.info("✓ Database built successfully!")
     return store, resolver

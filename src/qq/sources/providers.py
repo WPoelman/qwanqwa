@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 class SourceType(str, Enum):
     GIT = "git"
     DIR = "dir"
-    API = "api"
     FILE = "file"
 
 
@@ -368,87 +367,6 @@ class DirectorySourceProvider(SourceProvider):
     def verify(self) -> bool:
         """Verify local path exists"""
         return self.local_path.exists()
-
-
-class APISourceProvider(SourceProvider):
-    """Provider for API-based data sources"""
-
-    def __init__(
-        self,
-        name: str,
-        sources_dir: Path,
-        source_url: str,
-        license: str,
-        cache_duration_hours: int = 24,
-        paper_url: str | None = None,
-        website_url: str | None = None,
-        notes: str | None = None,
-    ):
-        super().__init__(name, sources_dir, license, SourceType.API, source_url, website_url, paper_url, notes)
-        self.cache_duration_hours = cache_duration_hours
-        self.cache_file = self.data_dir / f"{name}_cache.json"
-
-        self.source_url: str  # see above
-
-    def fetch(self, force: bool = False) -> bool:
-        """Fetch data from API"""
-        logger.info(f"Fetching {self.name} from {self.source_url}...")
-
-        # Check if we should use cached data
-        if not force and self.cache_file.exists() and self.metadata._last_updated:
-            age_hours = (datetime.now() - self.metadata._last_updated).total_seconds() / 3600
-            if age_hours < self.cache_duration_hours:
-                logger.info(f"{self.name} cache is still valid (age: {age_hours:.1f} hours)")
-                self.metadata._last_checked = datetime.now()
-                self._save_metadata()
-                return False
-
-        # Fetch from API
-        try:
-            from urllib.request import Request, urlopen
-
-            headers = {"User-Agent": f"qwanqwa/{qq.__version__} (https://github.com/WPoelman/qwanqwa) Python/urllib"}
-            request = Request(self.source_url, headers=headers)
-
-            with urlopen(request, timeout=30) as response:
-                data = json.loads(response.read().decode("utf-8"))
-                logger.info(f"Successfully fetched {self.name} data from API")
-        except Exception as e:
-            logger.error(f"Failed to fetch {self.name} from API: {e}")
-            return False
-
-        self.cache_file.write_text(json.dumps(data, indent=2, ensure_ascii=False))
-
-        # Copy to data path for consistency with other providers
-        target_path = self.data_dir / self.name
-        target_path.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(self.cache_file, target_path.with_suffix(".json"))
-
-        logger.info(f"Cached {self.name} data")
-
-        self.metadata._version = datetime.now().strftime(DATETIME_FMT)
-        self.metadata._last_updated = datetime.now()
-        self.metadata._last_checked = datetime.now()
-        self.metadata._checksum = self._file_checksum(self.cache_file)
-        self._save_metadata()
-
-        return True
-
-    def get_version(self) -> str | None:
-        """Get version (fetch timestamp)"""
-        return self.metadata._version
-
-    def verify(self) -> bool:
-        """Verify cache file exists and is valid JSON"""
-        if not self.cache_file.exists():
-            return False
-
-        try:
-            with open(self.cache_file, "r") as f:
-                json.load(f)
-            return True
-        except json.JSONDecodeError:
-            return False
 
 
 class FileDownloadSourceProvider(SourceProvider):

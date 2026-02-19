@@ -35,7 +35,7 @@ class SourceUpdater:
         updated_sources = []
 
         for name, provider in self.providers.items():
-            logger.info(f"\n[{name}] Checking for updates...")
+            logger.info(f"[{name}] Checking for updates...")
             try:
                 was_updated = provider.fetch(force=force)
                 results[name] = was_updated
@@ -52,13 +52,13 @@ class SourceUpdater:
 
         # Rebuild database if any sources were updated
         if rebuild and updated_sources:
-            logger.info("\n" + LOG_SEP)
+            logger.info(LOG_SEP)
             logger.info(f"Sources updated: {', '.join(updated_sources)}")
             logger.info("Rebuilding database...")
             logger.info(LOG_SEP)
             self.rebuild_database()
         elif rebuild:
-            logger.info("\nNo sources updated, skipping database rebuild")
+            logger.info("No sources updated, skipping database rebuild")
 
         return results
 
@@ -88,9 +88,14 @@ class SourceUpdater:
             return False
 
     def rebuild_database(self):
-        """Rebuild the database from current sources"""
-        # TODO: add database builder to updater, next step!!!
-        pass
+        """Rebuild the database from current sources."""
+        from qq.constants import LOCAL_DATA_DIR
+        from qq.internal.build_database import build_database
+        from qq.sources.source_config import SourceConfig
+
+        logger.info("Rebuilding database from current sources...")
+        build_database(self.sources_dir, SourceConfig(), LOCAL_DATA_DIR)
+        logger.info("Database rebuilt successfully.")
 
     def verify_all(self) -> dict[str, bool]:
         """Verify all sources are valid"""

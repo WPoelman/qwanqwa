@@ -7,7 +7,7 @@
 * Source: https://github.com/cisnlp/glotscript
 * License: CC BY-SA 4.0
 * Paper: https://aclanthology.org/2024.lrec-main.687/
-* Last updated: 09-02-2026
+* Last updated: 19-02-2026
 
 Individual sources documented in [GlotScript README](https://github.com/cisnlp/GlotScript/blob/main/metadata/README.md)
 
@@ -16,7 +16,15 @@ Individual sources documented in [GlotScript README](https://github.com/cisnlp/G
 * Source: https://github.com/glottolog/glottolog-cldf.git
 * License: CC BY 4.0
 * Website: https://glottolog.org/
-* Last updated: 09-02-2026
+* Last updated: 19-02-2026
+
+## IANA
+
+* Source: https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
+* License: Public (Internet Standard)
+* Last updated: 19-02-2026
+
+IANA Language Subtag Registry (BCP 47 / RFC 5646): deprecated language subtag mappings
 
 ## Linguameta
 
@@ -24,7 +32,7 @@ Individual sources documented in [GlotScript README](https://github.com/cisnlp/G
 * License: CC BY-SA 4.0
 * Paper: https://aclanthology.org/2024.lrec-main.921/
 * Website: https://github.com/google-research/url-nlp/tree/main/linguameta
-* Last updated: 09-02-2026
+* Last updated: 19-02-2026
 
 Individual sources documented in [LinguaMeta README](https://github.com/google-research/url-nlp/blob/main/linguameta/README.md)
 
@@ -32,22 +40,24 @@ Individual sources documented in [LinguaMeta README](https://github.com/google-r
 
 * Source: https://github.com/pycountry/pycountry
 * License: LGPL-2.1
-* Last updated: 09-02-2026
+* Last updated: 19-02-2026
 
 Data from [Debian iso-codes](https://salsa.debian.org/iso-codes-team/iso-codes)
 
-## Sil
+## SIL
 
 * Source: https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Retirements.tab
 * License: Custom (free use)
 * Website: https://iso639-3.sil.org/code_tables/download_tables
-* Last updated: 09-02-2026
+* Last updated: 19-02-2026
 
 ISO 639-3 retired code mappings maintained by SIL International
 
 ## Wikipedia
 
-* Source: https://en.wikipedia.org/w/api.php?action=sitematrix&format=json&formatversion=2
+* Source: https://wikistats.wmcloud.org/api.php?action=dump&table=wikipedias&format=csv
 * License: CC BY-SA 4.0
-* Website: https://meta.wikimedia.org/wiki/List_of_Wikipedias
-* Last updated: 09-02-2026
+* Website: https://wikistats.wmcloud.org/
+* Last updated: 19-02-2026
+
+Wikipedia edition statistics (article counts, active users) from Wikistats (Wikimedia)

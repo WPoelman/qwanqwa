@@ -19,18 +19,21 @@ class DataSource(Enum):
     PYCOUNTRY = 50
     WIKIPEDIA = 60
     SIL = 70
+    IANA = 80
 
 
 class IdType(Enum):
-    """Types of language identifiers"""
+    """Types of languoid identifiers"""
 
     BCP_47 = "bcp_47"
     ISO_639_3 = "iso_639_3"
-    # TODO add iso_639_2T even though it's the same as 3?
+    ISO_639_5 = "iso_639_5"
     ISO_639_2B = "iso_639_2b"
+    ISO_639_2T = "iso_639_2t"
     ISO_639_1 = "iso_639_1"
     GLOTTOCODE = "glottocode"
     WIKIDATA_ID = "wikidata_id"
+    WIKIPEDIA = "wikipedia"
 
 
 # Type alias for canonical entity IDs (e.g., "lang:000001", "script:0001")
@@ -40,12 +43,24 @@ CanonicalId = str
 # TODO check if this can be removed, this is bit stupid
 ID_TYPE_TO_ATTR: dict["IdType", str] = {
     IdType.BCP_47: "bcp_47",
-    IdType.ISO_639_3: "iso_639_3",
-    IdType.ISO_639_2B: "iso_639_2b",
     IdType.ISO_639_1: "iso_639_1",
+    IdType.ISO_639_2B: "iso_639_2b",
+    IdType.ISO_639_2T: "iso_639_3",  # ISO 639-2T codes are identical to ISO 639-3
+    IdType.ISO_639_3: "iso_639_3",
+    IdType.ISO_639_5: "iso_639_5",
     IdType.GLOTTOCODE: "glottocode",
     IdType.WIKIDATA_ID: "wikidata_id",
 }
+
+
+class DeprecationReason(Enum):
+    """SIL Reason for deprecating a language code."""
+
+    CHANGE = "C"
+    MERGE = "M"
+    DUPLICATE = "D"
+    SPLIT = "S"
+    NON_EXISTENT = "N"
 
 
 @dataclass
@@ -53,11 +68,12 @@ class DeprecatedCode:
     """A deprecated/retired identifier that formerly referred to this languoid."""
 
     code: str
-    code_type: str  # "iso_639_3" or "bcp_47"
-    reason: str | None = None  # C=Change, M=Merge, D=Duplicate, S=Split, N=Non-existent
-    name: str | None = None  # Original reference name from retirements table
+    code_type: IdType
+    reason: DeprecationReason | None = None
+    name: str | None = None  # Name of the languoid referred to by the code being deprecated
     effective: str | None = None  # Date retired (YYYY-MM-DD)
     remedy: str | None = None  # Description of what happened
+    split_into: list[str] | None = None  # For splits: list of replacement codes
 
 
 @dataclass
@@ -68,6 +84,23 @@ class WikipediaInfo:
     code: str | None = None
     article_count: int | None = None
     active_users: int | None = None
+
+
+@dataclass
+class NameEntry:
+    """Name entry for a languoid as produced by importers and stored in names.zip.
+
+    bcp_47_code: the locale's BCP-47 code as provided by the source (e.g. "en").
+                 Preserved for readability and debugging.
+    locale_id:   canonical ID of the locale languoid, resolved from bcp_47_code
+                 by resolve_locale_codes() during the build phase (e.g. "lang:004172").
+                 Used as the lookup key in the NameDataCache.
+    """
+
+    name: str
+    bcp_47_code: str | None = None
+    locale_id: CanonicalId | None = None
+    is_canonical: bool | None = None
 
 
 @dataclass

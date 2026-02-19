@@ -1,19 +1,21 @@
 """
 Merge step: combines per-source EntitySets into a final DataStore.
 
-Pass 1 — Merge entity attributes:
+Pass 1 -> Merge entity attributes:
   For each entity ID across all EntitySets, create one entity in the final
   DataStore. For each field in _data_fields, collect values from all sources.
   Single-source values pass through. Multi-source conflicts resolve by source
-  priority (DataSource enum value — lower = higher priority). Lists are merged.
+  priority (DataSource enum value -> lower = higher priority). Lists are merged.
 
-Pass 2 — Apply relations:
+Pass 2 -> Apply relations:
   Collect all relations from all EntitySets, apply to final store entities
   (only if both source and target exist).
 """
 
+import dataclasses
 import json
 import logging
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -24,10 +26,23 @@ from qq.internal.data_store import DataStore
 
 logger = logging.getLogger(__name__)
 
+
+@dataclass
+class MergeConflict:
+    entity_id: str
+    field_name: str
+    values: list[dict[str, Any]]  # [{"value": ..., "source": ...}, ...]
+    resolved_to: Any
+    strategy: str
+
+
 # Fields where multiple values should be concatenated/merged rather than
 # resolved by priority.
-# TODO: figure out how to deal with all names
-_LIST_FIELDS = frozenset({"alternative_names", "deprecated_codes"})
+_LIST_FIELDS = frozenset({"deprecated_codes"})
+
+# Fields where conflicts are expected and should not be recorded.
+# Name disagreements are irrelevant because multilingual names live in NameDataCache.
+_NO_CONFLICT_FIELDS = frozenset({"name"})
 
 # Entity class lookup by class name
 _ENTITY_CLASSES: dict[str, type[TraversableEntity]] = {
@@ -48,7 +63,7 @@ def merge(sources: list[tuple[DataSource, EntitySet]], conflicts_path: Path | No
         The final merged DataStore.
     """
     store = DataStore()
-    conflicts: list[dict[str, Any]] = []
+    conflicts: list[MergeConflict] = []
 
     # Collect all entity IDs across all sources
     entity_index: dict[str, type[TraversableEntity]] = {}
@@ -57,7 +72,7 @@ def merge(sources: list[tuple[DataSource, EntitySet]], conflicts_path: Path | No
             if entity.id not in entity_index:
                 entity_index[entity.id] = type(entity)
 
-    # ---- Pass 1: merge entity attributes ----
+    # Pass 1: merge entity attributes
     for entity_id, entity_class in entity_index.items():
         # Collect (source_priority, entity) pairs for this ID
         source_entities: list[tuple[DataSource, TraversableEntity]] = []
@@ -79,15 +94,14 @@ def merge(sources: list[tuple[DataSource, EntitySet]], conflicts_path: Path | No
 
         store.add(merged)
 
-    # ---- Pass 2: apply relations ----
+    # Pass 2: apply relations
     _apply_relations(sources, store)
 
-    # ---- Report conflicts ----
     if conflicts:
         logger.warning(f"Total merge conflicts: {len(conflicts)}")
         if conflicts_path:
             with open(conflicts_path, "w") as f:
-                json.dump(conflicts, f, indent=2, default=str, ensure_ascii=False)
+                json.dump([dataclasses.asdict(c) for c in conflicts], f, indent=2, default=str, ensure_ascii=False)
             logger.info(f"Conflicts saved to {conflicts_path}")
     else:
         logger.info("No merge conflicts found!")
@@ -98,11 +112,11 @@ def merge(sources: list[tuple[DataSource, EntitySet]], conflicts_path: Path | No
 def _merge_field(
     field_name: str,
     source_entities: list[tuple[DataSource, TraversableEntity]],
-) -> tuple[Any, dict[str, Any] | None]:
+) -> tuple[Any, MergeConflict | None]:
     """Merge a single field across sources.
 
     Returns:
-        (merged_value, conflict_record or None)
+        (merged_value, conflict or None)
     """
     # Collect non-None values with their source priority
     values: list[tuple[DataSource, Any]] = []
@@ -117,7 +131,7 @@ def _merge_field(
     if len(values) == 1:
         return values[0][1], None
 
-    # Multiple sources — resolve
+    # Multiple sources -> resolve
     if field_name in _LIST_FIELDS:
         return _merge_list_field(values), None
 
@@ -125,18 +139,21 @@ def _merge_field(
     values.sort(key=lambda pair: pair[0].value)
     winner_source, winner_value = values[0]
 
+    # Some fields have expected disagreements that should not be recorded
+    if field_name in _NO_CONFLICT_FIELDS:
+        return winner_value, None
+
     # Check for actual conflict (different values)
     conflict = None
     unique_values = _unique_values([v for _, v in values])
     if len(unique_values) > 1:
-        # TODO: make into dataclass?
-        conflict = {
-            "entity_id": source_entities[0][1].id,
-            "field_name": field_name,
-            "values": [{"value": v, "source": s.name} for s, v in values],
-            "resolved_to": winner_value,
-            "strategy": "highest_priority",
-        }
+        conflict = MergeConflict(
+            entity_id=source_entities[0][1].id,
+            field_name=field_name,
+            values=[{"value": v, "source": s.name} for s, v in values],
+            resolved_to=winner_value,
+            strategy="highest_priority",
+        )
 
     return winner_value, conflict
 
@@ -183,11 +200,11 @@ def _apply_relations(
                     if store.get(rel.target_id) is not None:
                         # Avoid duplicate relations
                         existing = target._relations.get(rel_type, [])
-                        is_dup = any(r.target_id == rel.target_id and r.metadata == rel.metadata for r in existing)
+                        is_dup = any(r.target_id == rel.target_id for r in existing)
                         if not is_dup:
                             target.add_relation(rel_type, rel.target_id, **rel.metadata)
                             relations_added += 1
                     else:
                         relations_skipped += 1
 
-    logger.info(f"Applied {relations_added} relations ({relations_skipped} skipped — target not in store)")
+    logger.info(f"Applied {relations_added} relations ({relations_skipped} skipped -> target not in store)")

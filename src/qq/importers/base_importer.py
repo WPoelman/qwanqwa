@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TypeVar, cast
 
@@ -22,12 +22,11 @@ class ImportStats:
     entities_created: int = 0
     entities_updated: int = 0
     relations_added: int = 0
-    errors: list[str] = field(default_factory=list)
 
 
 class EntitySet:
     """
-    Lightweight import container — one per importer.
+    Lightweight import container: one per importer.
 
     Holds entities produced during a single import phase. Entities reference
     this as their ``_store`` (they only need ``get()``; traversal properties
@@ -127,11 +126,10 @@ class BaseImporter(ABC):
         self.stats.entities_created += 1
         return languoid
 
-    def _sync_identifiers_to_entity(self, entity: Languoid, identity: EntityIdentity):
-        """Sync all identifiers from identity to entity attributes"""
-        for id_type, attr_name in ID_TYPE_TO_ATTR.items():
-            value = identity.get_identifier(id_type)
-            if value and not getattr(entity, attr_name, None):
+    def _sync_identifiers_to_entity(self, entity: Languoid, identity: EntityIdentity) -> None:
+        """Sync identifiers from identity to entity, skipping already-set attributes."""
+        for attr_name, value in self._identifiers_to_kwargs(identity).items():
+            if not getattr(entity, attr_name, None):
                 setattr(entity, attr_name, value)
 
     def _identifiers_to_kwargs(self, identity: EntityIdentity) -> dict[str, Any]:
@@ -169,12 +167,8 @@ class BaseImporter(ABC):
         rel_type1: RelationType,
         entity2: TraversableEntity,
         rel_type2: RelationType,
-        **metadata,
+        **metadata: Any,
     ):
-        """
-        Add bidirectional relationship between two entities.
-        Metadata is available on both directions.
-        """
         entity1.add_relation(rel_type1, entity2.id, **metadata)
         entity2.add_relation(rel_type2, entity1.id, **metadata)
         self.stats.relations_added += 2
@@ -185,5 +179,3 @@ class BaseImporter(ABC):
         logger.info(f"  Created: {self.stats.entities_created}")
         logger.info(f"  Updated: {self.stats.entities_updated}")
         logger.info(f"  Relations: {self.stats.relations_added}")
-        if self.stats.errors:
-            logger.warning(f"  Errors: {len(self.stats.errors)}")

@@ -1,0 +1,16 @@
+{
+  "locale_map": [
+    {
+      "locale": {
+        "locale_code": "NL",
+        "locale_name": "Netherlands"
+      }
+    },
+    {
+      "locale": {
+        "locale_code": "BE",
+        "locale_name": "Belgium"
+      }
+    }
+  ]
+}

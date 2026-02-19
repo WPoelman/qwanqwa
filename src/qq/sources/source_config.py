@@ -1,10 +1,16 @@
 from pathlib import Path
 
-from qq.importers.base_importer import BaseImporter
-from qq.importers.glotscript_importer import GlotscriptImporter
-from qq.importers.glottolog_importer import GlottologImporter
+from qq.importers import (
+    BaseImporter,
+    GlotscriptImporter,
+    GlottologImporter,
+    IANAImporter,
+    LinguaMetaImporter,
+    PycountryImporter,
+    SILImporter,
+    WikipediaImporter,
+)
 from qq.sources.providers import (
-    APISourceProvider,
     FileDownloadSourceProvider,
     GitSourceProvider,
     SourceProvider,
@@ -34,7 +40,7 @@ class SourceConfig:
         2. Specify the provider type (Git, API, or Directory)
         3. The importer will be automatically used during rebuild
            Do make sure to add an "Importer" to actually extract info from
-           the source during a rebuild.
+           the source during a rebuild. See below.
         """
         return [
             GitSourceProvider(
@@ -83,13 +89,15 @@ class SourceConfig:
                 license="LGPL-2.1",
                 notes="Data from [Debian iso-codes](https://salsa.debian.org/iso-codes-team/iso-codes)",
             ),
-            APISourceProvider(
+            FileDownloadSourceProvider(
                 name="wikipedia",
                 sources_dir=sources_dir,
-                source_url="https://en.wikipedia.org/w/api.php?action=sitematrix&format=json&formatversion=2",
+                source_url="https://wikistats.wmcloud.org/api.php?action=dump&table=wikipedias&format=csv",
+                filename="wikipedia.csv",
                 cache_duration_hours=24 * 7,  # Cache for 1 week
                 license="CC BY-SA 4.0",
-                website_url="https://meta.wikimedia.org/wiki/List_of_Wikipedias",
+                website_url="https://wikistats.wmcloud.org/",
+                notes="Wikipedia edition statistics (article counts, active users) from Wikistats (Wikimedia)",
             ),
             FileDownloadSourceProvider(
                 name="sil",
@@ -101,21 +109,35 @@ class SourceConfig:
                 website_url="https://iso639-3.sil.org/code_tables/download_tables",
                 notes="ISO 639-3 retired code mappings maintained by SIL International",
             ),
+            FileDownloadSourceProvider(
+                name="iana",
+                sources_dir=sources_dir,
+                source_url="https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry",
+                filename="language-subtag-registry",
+                cache_duration_hours=24 * 30,  # Cache for one month
+                license="Public (Internet Standard)",
+                website_url="https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry",
+                notes="IANA Language Subtag Registry (BCP 47 / RFC 5646): deprecated language subtag mappings",
+            ),
         ]
 
     @staticmethod
-    def get_importers() -> dict[str, type[BaseImporter]]:
+    def get_importers() -> list[tuple[str, type[BaseImporter]]]:
         """
         Each name of a SourceProvider is associated with one or more Importers.
         These importers extract information from the source.
         Currently it's 1-1, but this could change in the future.
+
+        Ordering is significant: importers run in this order during a build,
+        and source priority in merge conflicts follows this sequence.
         """
-        # TODO: finish and make nicer? based on enum instead?
-        return {
-            # "linguameta": [],
-            "glottolog": GlottologImporter,
-            "glotscript": GlotscriptImporter,
-            # "pycountry": [],
-            # "wikipedia": [],
-            # "sil": [],
-        }
+        # TODO: in the future this should prob be a dict[str, [tuple[importer], ...]]
+        return [
+            ("linguameta", LinguaMetaImporter),
+            ("glottolog", GlottologImporter),
+            ("glotscript", GlotscriptImporter),
+            ("pycountry", PycountryImporter),
+            ("wikipedia", WikipediaImporter),
+            ("sil", SILImporter),
+            ("iana", IANAImporter),
+        ]

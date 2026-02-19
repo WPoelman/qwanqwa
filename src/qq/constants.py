@@ -9,7 +9,7 @@ README_PATH = PROJECT_ROOT / "README.md"
 EXAMPLE_PATH = DOCS_DIR / "example.md"
 SOURCES_DOCS_PATH = DOCS_DIR / "sources.md"
 
-DEFAULT_DB_PATH = LOCAL_DATA_DIR / "qwanqwa.pkl.gz"
+DEFAULT_DB_PATH = LOCAL_DATA_DIR / "db.json.gz"
 
 LOG_SEP = "-" * 70
 DATETIME_FMT = "%Y%m%d_%H%M%S"

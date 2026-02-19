@@ -1,9 +1,12 @@
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, TypeVar, cast, overload
+from typing import TYPE_CHECKING, TypeVar, cast, overload
 
-from qq.data_model import CanonicalId, NameData, TraversableEntity
+from qq.data_model import CanonicalId, IdType, NameData, TraversableEntity
 from qq.internal.names_export import NamesLoader
+
+if TYPE_CHECKING:
+    from qq.internal.entity_resolution import EntityResolver
 
 T = TypeVar("T", bound=TraversableEntity)
 
@@ -16,45 +19,19 @@ class DataStore:
 
     def __init__(self) -> None:
         self._entities: dict[str, TraversableEntity] = {}
-        # Indexes for fast lookups by attribute
-        self._indexes: dict[str, dict[Any, set[str]]] = {}
         # Index by type for fast all_of_type() lookups
         self._type_index: dict[type, set[str]] = defaultdict(set)
-        # Name cache (set by LanguoidAccess for Languoid.name_in())
+        # Name cache (set by Database for Languoid.name_in())
         self.name_cache: "NameDataCache | None" = None
-
-    def _add_to_index(self, index_name: str, key: Any, entity_id: str) -> None:
-        """Add an entity to a named index."""
-        if index_name not in self._indexes:
-            self._indexes[index_name] = defaultdict(set)
-        self._indexes[index_name][key].add(entity_id)
 
     def add(self, entity: TraversableEntity) -> None:
         """Add an entity to the store"""
         self._entities[entity.id] = entity
         self._type_index[type(entity)].add(entity.id)
 
-        # TODO: this is annoying, maybe a subclass that handles this? Or allow to register indices?
-        # if isinstance(entity, Languoid):
-        #     if entity.iso_639_3:
-        #         self._add_to_index("iso_639_3", entity.iso_639_3, entity.id)
-        #     if entity.glottocode:
-        #         self._add_to_index("glottocode", entity.glottocode, entity.id)
-        # elif isinstance(entity, Script):
-        #     if entity.iso_15924:
-        #         self._add_to_index("iso_15924", entity.iso_15924, entity.id)
-        # elif isinstance(entity, GeographicRegion):
-        #     if entity.parent_country_code:
-        #         self._add_to_index("parent_country_code", entity.parent_country_code, entity.id)
-
     def get(self, entity_id: str) -> TraversableEntity | None:
         """Get an entity by ID"""
         return self._entities.get(entity_id)
-
-    def find_by_attribute(self, attr_name: str, value: Any) -> list[TraversableEntity]:
-        """Find entities by indexed attribute"""
-        entity_ids = self._indexes.get(attr_name, {}).get(value, set())
-        return [self._entities[eid] for eid in entity_ids if eid in self._entities]
 
     @overload
     def query(self, entity_type: None = None, **filters) -> list[TraversableEntity]: ...
@@ -66,8 +43,6 @@ class DataStore:
         """
         Query entities with filters.
         Example: store.query(Languoid, speaker_count=lambda x: x > 1000000)
-
-        Uses indexes when available for exact match filters on indexed attributes.
         """
         # Start with set of candidate entity IDs
         if entity_type:
@@ -75,18 +50,7 @@ class DataStore:
         else:
             candidate_ids = set(self._entities.keys())
 
-        # Apply indexed filters first (most efficient)
-        indexed_attrs = set(self._indexes.keys())
-        for attr in list(filters.keys()):
-            value = filters[attr]
-            if not callable(value) and attr in indexed_attrs:
-                # Use index and intersect with candidates
-                matching_ids = self._indexes[attr].get(value, set())
-                candidate_ids &= matching_ids
-                del filters[attr]
-
-        # Apply remaining non-indexed filters
-        # Only materialize entities now for attribute-based filtering
+        # Apply attribute filters
         if filters:
             filtered_ids = set()
             for eid in candidate_ids:
@@ -102,7 +66,7 @@ class DataStore:
 
                     attr_value = getattr(entity, attr)
                     if callable(value):
-                        if not value(attr_value):
+                        if attr_value is None or not value(attr_value):
                             matches = False
                             break
                     elif attr_value != value:
@@ -128,24 +92,25 @@ class NameDataCache:
     """
     Lazy loader and cache for language name data.
 
-    Name data (translations of language names) can be stored either as:
-    - Individual files in a directory (legacy format)
-    - A single zip archive (recommended format)
+    Name data (translations of language names) is stored as a zip archive.
+    Each per-languoid dict is keyed by the canonical ID of the locale language.
 
-    This class loads names on-demand per language and caches the results.
+    Accepts an optional resolver to resolve BCP-47 locale codes to canonical
+    IDs at runtime (used by name_in() when called with a BCP-47 string).
     """
 
-    def __init__(self, names_path: Path):
+    def __init__(self, names_path: Path, resolver: "EntityResolver | None" = None):
         self._names_path = names_path
         self._cache: dict[str, dict[CanonicalId, NameData]] = {}
         self._loader = NamesLoader(self._names_path)
+        self._resolver = resolver
 
     def get(self, canonical_id: CanonicalId) -> dict[CanonicalId, NameData] | None:
         """
-        Get name data for a specific language by canonical ID.
+        Get name data for a specific languoid by its canonical ID.
 
-        Returns a dict mapping canonical IDs to NameData objects,
-        or None if no name data is available for this language.
+        Returns a dict mapping locale canonical IDs to NameData objects,
+        or None if no name data is available for this languoid.
         """
         if canonical_id in self._cache:
             return self._cache[canonical_id]
@@ -154,9 +119,55 @@ class NameDataCache:
         if not raw_data:
             return None
 
-        parsed = {entry["canonical_id"]: NameData(**entry) for entry in raw_data}
+        parsed: dict[CanonicalId, NameData] = {}
+        for entry in raw_data:
+            # locale_id is the resolved canonical ID set by resolve_locale_codes().
+            # bcp_47_code preserves the original BCP-47 code for readability.
+            key = entry.get("locale_id") or entry.get("bcp_47_code") or entry.get("canonical_id")
+            if key is None:
+                continue
+            is_canonical = entry.get("is_canonical") or False
+            # When multiple entries share the same locale key, prefer is_canonical=True.
+            existing = parsed.get(key)
+            if existing is None or (is_canonical and not existing.is_canonical):
+                parsed[key] = NameData(
+                    name=entry["name"],
+                    canonical_id=key,
+                    is_canonical=is_canonical,
+                )
+
         self._cache[canonical_id] = parsed
         return parsed
+
+    def get_name_in(self, languoid_id: CanonicalId, locale: str) -> str | None:
+        """
+        Get the name of a languoid in a specific locale.
+
+        Args:
+            languoid_id: Canonical ID of the languoid being named.
+            locale: Canonical ID or BCP-47 code of the target locale language.
+
+        Returns:
+            Name string, or None if not found.
+        """
+        name_data = self.get(languoid_id)
+        if not name_data:
+            return None
+
+        # Direct lookup (already a canonical ID)
+        entry = name_data.get(locale)
+        if entry:
+            return entry.name
+
+        # Try resolving the locale as a BCP-47 code
+        if self._resolver:
+            canonical = self._resolver.resolve(IdType.BCP_47, locale)
+            if canonical:
+                entry = name_data.get(canonical)
+                if entry:
+                    return entry.name
+
+        return None
 
     def preload(self, canonical_ids: list[CanonicalId]) -> None:
         """Preload name data for multiple languages at once."""

@@ -1,0 +1,9 @@
+{"639-3": [
+  {"alpha_3": "nld", "name": "Dutch; Flemish", "scope": "I", "type": "L", "alpha_2": "nl"},
+  {"alpha_3": "frr", "name": "Northern Frisian", "scope": "I", "type": "L"},
+  {"alpha_3": "zho", "name": "Chinese", "scope": "M", "type": "L", "alpha_2": "zh"},
+  {"alpha_3": "heb", "name": "Hebrew", "scope": "I", "type": "L", "alpha_2": "he"},
+  {"alpha_3": "ind", "name": "Indonesian", "scope": "I", "type": "L", "alpha_2": "id"},
+  {"alpha_3": "yid", "name": "Yiddish", "scope": "M", "type": "L", "alpha_2": "yi"},
+  {"alpha_3": "ron", "name": "Romanian; Moldavian; Moldovan", "scope": "I", "type": "L", "alpha_2": "ro"}
+]}

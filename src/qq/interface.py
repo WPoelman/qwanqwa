@@ -1,5 +1,3 @@
-from typing import cast
-
 from qq.data_model import (
     DeprecatedCode,
     EndangermentStatus,
@@ -26,8 +24,8 @@ class Languoid(TraversableEntity):
     scripts, and regions. This is the primary interface for working with language data.
 
     Basic usage:
-        >>> from qq import LanguoidAccess
-        >>> access = LanguoidAccess.from_db()
+        >>> from qq import Database
+        >>> access = Database.load()
         >>> dutch = access.get("nl")
         >>> print(dutch.name, dutch.iso_639_3, dutch.speaker_count)
         Dutch nld 24000000
@@ -35,33 +33,41 @@ class Languoid(TraversableEntity):
     Accessing identifiers:
         >>> dutch.bcp_47           # "nl"
         >>> dutch.iso_639_3        # "nld"
+        >>> dutch.iso_639_1        # "nl"
         >>> dutch.glottocode       # "dutc1256"
         >>> dutch.wikidata_id      # "Q7411"
+        >>> dutch.wikipedia.code   # "nl"  (Wikipedia language edition code)
+
+    Looking up by Wikipedia code:
+        >>> access.get("nl", IdType.WIKIPEDIA)       # Dutch (standard code)
+        >>> access.get("zh-yue", IdType.WIKIPEDIA)   # Cantonese (compound code)
+        >>> access.get("simple", IdType.WIKIPEDIA)   # English (Simple English alias)
 
     Phylogenetic navigation:
         >>> dutch.parent                    # West Germanic
         >>> dutch.parent.parent             # Germanic
         >>> dutch.family_tree               # All ancestors up to root
         >>> dutch.children                  # [Flemish, Afrikaans, ...]
-        >>> dutch.descendants()             # All descendants (recursive)
         >>> dutch.siblings                  # [English, German, Frisian, ...]
+        >>> dutch.descendants(limit=None)   # All descendants (recursive)
 
     Cross-domain traversal:
         >>> dutch.scripts                   # [Script(Latin, code=Latn)]
         >>> dutch.script_codes              # ["Latn"]
         >>> dutch.regions                   # [Netherlands, Belgium, Suriname, ...]
         >>> dutch.name_in("fr")             # "néerlandais"
+        >>> dutch.name_in(french)           # works with Languoids as well -> "néerlandais"
         >>> dutch.nllb_codes()              # ["nld_Latn"]
 
     Attributes:
         bcp_47: BCP-47 language code (e.g., "nl", "zh-Hans")
         iso_639_3: ISO 639-3 code (e.g., "nld")
+        iso_639_2t: ISO 639-2T (terminological) code (always identical to iso_639_3)
         iso_639_2b: ISO 639-2B code (e.g., "dut")
         glottocode: Glottolog code (e.g., "dutc1256")
         wikidata_id: Wikidata identifier (e.g., "Q7411")
         name: Primary name (typically in English)
         endonym: Name in the language itself
-        alternative_names: List of alternative names
         speaker_count: Number of speakers
         latitude: Geographic latitude
         longitude: Geographic longitude
@@ -69,24 +75,25 @@ class Languoid(TraversableEntity):
         scope: ISO 639-3 scope (I/M/S)
         status: ISO 639-3 type (L/H/A/C/E/S)
         endangerment_status: UNESCO endangerment classification
-        wikipedia: WikipediaInfo with edition metadata
+        wikipedia: WikipediaInfo with edition metadata (code, url, article_count, active_users)
         description: Textual description
     """
 
     def __init__(
         self,
         entity_id: str,
-        data_store: "EntityContainer",  # TODO: this is a stupid solution, this has to be DataStore
-        # Core identifiers
+        data_store: EntityContainer,
+        # Core identifiers, see IdType for more information
         bcp_47: str | None = None,
-        iso_639_3: str | None = None,
+        iso_639_1: str | None = None,
         iso_639_2b: str | None = None,
+        iso_639_3: str | None = None,
+        iso_639_5: str | None = None,
         glottocode: str | None = None,
         wikidata_id: str | None = None,
         # Names
         name: str | None = None,
         endonym: str | None = None,
-        alternative_names: list[str] | None = None,
         # Population/speakers
         speaker_count: int | None = None,
         # Geographic coordinates
@@ -108,15 +115,16 @@ class Languoid(TraversableEntity):
 
         # Core identifiers
         self.bcp_47: str | None = bcp_47
-        self.iso_639_3: str | None = iso_639_3
+        self.iso_639_1: str | None = iso_639_1
         self.iso_639_2b: str | None = iso_639_2b
+        self.iso_639_3: str | None = iso_639_3
+        self.iso_639_5: str | None = iso_639_5
         self.glottocode: str | None = glottocode
         self.wikidata_id: str | None = wikidata_id
 
         # Names
         self.name: str | None = name
         self.endonym: str | None = endonym
-        self.alternative_names: list[str] | None = alternative_names
 
         # Population/speakers
         self.speaker_count: int | None = speaker_count
@@ -140,7 +148,10 @@ class Languoid(TraversableEntity):
         # Deprecated/retired codes
         self.deprecated_codes: list[DeprecatedCode] | None = deprecated_codes
 
-    # Convenient property accessors for common relations
+    @property
+    def iso_639_2t(self) -> str | None:
+        """ISO 639-2T (terminological) code. Always identical to iso_639_3."""
+        return self.iso_639_3
 
     @property
     def parent(self) -> "Languoid | None":
@@ -156,7 +167,7 @@ class Languoid(TraversableEntity):
     @property
     def siblings(self) -> list["Languoid"]:
         """Get sibling languoids (same parent)."""
-        if not self.parent:
+        if self.parent is None:
             return []
         return [child for child in self.parent.children if child.id != self.id]
 
@@ -215,11 +226,13 @@ class Languoid(TraversableEntity):
     def script_codes(self) -> list[str] | None:
         """Get list of script codes (ISO 15924) used by this languoid."""
         script_entities = self.scripts
-        if script_entities:
-            codes = list(dict.fromkeys(s.iso_15924 for s in script_entities if s.iso_15924))
-            if codes:
-                return cast(list[str], codes)
-        return None
+        if not script_entities:
+            return None
+        seen: dict[str, None] = {}
+        for s in script_entities:
+            if s.iso_15924:
+                seen[s.iso_15924] = None
+        return list(seen) if seen else None
 
     @property
     def canonical_scripts(self) -> list["Script"]:
@@ -274,22 +287,12 @@ class Languoid(TraversableEntity):
         if not isinstance(self._store, DataStore) or self._store.name_cache is None:
             return None
 
-        name_data = self._store.name_cache.get(self.id)
-        if not name_data:
-            return None
-
-        # Resolve the language argument to a lookup key
         if isinstance(language, Languoid):
-            # Try BCP-47 code for lookup in name data (keyed by BCP-47)
-            lookup_key = language.bcp_47
+            locale = language.id  # canonical ID
         else:
-            lookup_key = language
+            locale = language  # BCP-47 code or canonical ID
 
-        if not lookup_key:
-            return None
-
-        entry = name_data.get(lookup_key)
-        return entry.name if entry else None
+        return self._store.name_cache.get_name_in(self.id, locale)
 
     def nllb_codes(self, use_bcp_47: bool = False) -> list[str]:
         """Get NLLB-style language-script codes (e.g., 'nld_Latn').
@@ -298,10 +301,11 @@ class Languoid(TraversableEntity):
             use_bcp_47: If True, use BCP-47 code instead of ISO 639-3
         """
         base = self.bcp_47 if use_bcp_47 else (self.iso_639_3 or self.bcp_47)
-        if not base:
+        if base is None:
             return []
         return [f"{base}_{s.iso_15924}" for s in self.scripts if s.iso_15924]
 
+    @property
     def languoids_with_same_script(self) -> list["Languoid"]:
         """Find other languoids that share any script with this one."""
         result = set()
@@ -310,6 +314,7 @@ class Languoid(TraversableEntity):
         result.discard(self)
         return list(result)
 
+    @property
     def languoids_in_same_region(self) -> list["Languoid"]:
         """Find other languoids spoken in the same regions."""
         result = set()
@@ -319,7 +324,7 @@ class Languoid(TraversableEntity):
         return list(result)
 
     def descendants(self, max_depth: int | None = None) -> list["Languoid"]:
-        """Get all descendants (recursive through children)."""
+        """Get all descendants (recursive through children), can be limited to max_depth."""
         result: list["Languoid"] = []
 
         def collect(lang: "Languoid", depth: int = 0) -> None:
@@ -332,6 +337,7 @@ class Languoid(TraversableEntity):
         collect(self)
         return result
 
+    @property
     def descendant_scripts(self) -> list["Script"]:
         """Get all scripts used by this languoid and its descendants."""
         scripts = set(self.scripts)
@@ -340,7 +346,7 @@ class Languoid(TraversableEntity):
         return list(scripts)
 
     def __repr__(self) -> str:
-        return f"Languoid({self.name or self.id}, iso={self.iso_639_3})"
+        return f"Languoid(({self.__dict__!r})"
 
 
 class Script(TraversableEntity):
@@ -349,7 +355,7 @@ class Script(TraversableEntity):
     def __init__(
         self,
         entity_id: str,
-        data_store: "DataStore",
+        data_store: EntityContainer,
         iso_15924: str | None = None,
         name: str | None = None,
         full_name: str | None = None,
@@ -361,6 +367,7 @@ class Script(TraversableEntity):
         self.full_name: str | None = full_name
         self.is_historical: bool = is_historical
 
+    # TODO: add some multi hop queries to this, maybe script -> languoid -> region "all regions that use this script?"
     @property
     def languoids(self) -> list[Languoid]:
         """Get all languoids that use this script."""
@@ -394,7 +401,7 @@ class GeographicRegion(TraversableEntity):
     def __init__(
         self,
         entity_id: str,
-        data_store: "DataStore",
+        data_store: EntityContainer,
         name: str | None = None,
         country_code: str | None = None,
         # ISO 3166-1 additional fields
@@ -426,6 +433,7 @@ class GeographicRegion(TraversableEntity):
         """Get languoids directly associated with this region (non-transitive)."""
         return self.get_related(RelationType.LANGUOIDS_IN_REGION, Languoid)
 
+    # TODO: going from region to region should probably follow the parent-child idea of Languoid as well
     @property
     def languoids(self) -> list[Languoid]:
         """Get all languoids in this region and its child regions (transitive)."""
@@ -452,8 +460,7 @@ class GeographicRegion(TraversableEntity):
         """Get all subdivisions of this region (for countries -> states/provinces)"""
         if not self.country_code or not isinstance(self._store, DataStore):
             return []
-        results = self._store.find_by_attribute("parent_country_code", self.country_code)
-        return [r for r in results if isinstance(r, GeographicRegion)]
+        return self._store.query(GeographicRegion, parent_country_code=self.country_code)
 
     def __repr__(self) -> str:
         return f"GeographicRegion({self.name or self.id})"

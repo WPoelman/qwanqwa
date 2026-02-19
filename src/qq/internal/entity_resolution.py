@@ -78,11 +78,21 @@ class EntityResolver:
         return canonical_id
 
     def resolve(self, id_type: IdType, value: str) -> CanonicalId | None:
+        """Resolve an identifier to a canonical entity ID, returns None if not found.
+
+        ISO 639-2T codes are identical to ISO 639-3 codes, so ISO_639_2T lookups
+        are handled by ISO_639_3 codes.
         """
-        Resolve an identifier to a canonical entity ID.
-        Returns None if not found.
-        """
+        if id_type == IdType.ISO_639_2T:
+            return self._id_to_canonical.get((IdType.ISO_639_3, value))
         return self._id_to_canonical.get((id_type, value))
+
+    def find(self, id_type: IdType, value: str) -> EntityIdentity | None:
+        """Tries to find the full identity, returns None if not found."""
+        if canonical_id := self.resolve(id_type, value):
+            return self.get_identity(canonical_id)
+        else:
+            return None
 
     def find_or_create_canonical_id(self, identifiers: dict[IdType, str]) -> CanonicalId:
         """

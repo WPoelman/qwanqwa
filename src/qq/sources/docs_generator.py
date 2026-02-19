@@ -6,7 +6,7 @@ from qq.sources.source_config import SourceConfig
 
 def _generate_source_section(provider: SourceProvider) -> list[str]:
     """Generate markdown section for a single source."""
-    lines = [f"## {provider.name.title()}", ""]
+    lines = [f"## {provider.name.title() if len(provider.name) > 4 else provider.name.upper()}", ""]
 
     meta = provider.metadata
 
