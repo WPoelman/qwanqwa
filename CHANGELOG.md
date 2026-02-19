@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - NLLB-style codes support improvements
 - Additional convenience methods on Languoid
 
+## [1.0.1] - 2026-02-18
+
+### Fixed
+- fixed an import issue due to missing build dependencies with regular install
+- fixed the location of the sources when rebuilding with installed version, should be okay now
+
+### Removed
+- removed old script
+
 ## [1.0.0] - 2026-02-18
 
 **IMPORTANT**: This is a major rewrite with breaking changes. There is no backwards compatibility with 0.x versions.
