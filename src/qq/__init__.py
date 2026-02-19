@@ -1,6 +1,5 @@
+import logging
 from importlib.metadata import version
-
-__version__ = version("qwanqwa")
 
 from qq.access import Database, DeprecatedCodeWarning
 from qq.data_model import (
@@ -15,6 +14,9 @@ from qq.data_model import (
     WikipediaInfo,
 )
 from qq.interface import GeographicRegion, Languoid, Script
+
+__version__ = version("qwanqwa")
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __all__ = [
     "Database",

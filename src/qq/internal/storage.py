@@ -166,7 +166,7 @@ class DataManager:
         from qq.internal.data_store import DataStore
 
         input_path = Path(input_path)
-        logger.info(f"Loading dataset from {input_path}")
+        logger.debug(f"Loading dataset from {input_path}")
 
         data = self.backend.load(input_path)
         store = DataStore()
@@ -185,7 +185,7 @@ class DataManager:
                 entity = self._deserialize_entity(entity_id, entity_data, entity_class, store)
                 store.add(entity)
 
-        logger.info(f"Loaded {len(store._entities)} entities")
+        logger.debug(f"Loaded {len(store._entities)} entities")
 
         resolver = self._deserialize_resolver(data["resolver"])
         return store, resolver

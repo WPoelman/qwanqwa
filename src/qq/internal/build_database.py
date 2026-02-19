@@ -10,7 +10,6 @@ from qq.internal.storage import DataManager
 from qq.internal.validation import DataValidator
 from qq.sources.source_config import SourceConfig
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(name)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
