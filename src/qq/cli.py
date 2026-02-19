@@ -5,9 +5,6 @@ import click
 
 from qq.access import Database
 from qq.constants import LOG_SEP, SOURCES_DIR, SOURCES_DOCS_PATH
-from qq.sources.source_config import SourceConfig
-
-_SOURCE_NAMES = [name for name, _ in SourceConfig.get_importers()]
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -38,12 +35,17 @@ def _get_access() -> "Database":
 @cli.command()
 @click.option("--force", is_flag=True, help="Force update even if up-to-date")
 @click.option("--no-rebuild", is_flag=True, help="Skip database rebuild")
-@click.option("--source", type=click.Choice(_SOURCE_NAMES), help="Update only specific source")
+@click.option("--source", type=str, help="Update only specific source")
 def update(force, no_rebuild, source):
     """Update data sources and rebuild database"""
     updater = _get_source_updater()
 
     if source:
+        from qq.sources.source_config import SourceConfig
+
+        valid = [name for name, _ in SourceConfig.get_importers()]
+        if source not in valid:
+            raise click.ClickException(f"Unknown source '{source}'. Valid sources: {', '.join(valid)}")
         updater.update_source(source, force=force, rebuild=not no_rebuild)
     else:
         updater.update_all(force=force, rebuild=not no_rebuild)
