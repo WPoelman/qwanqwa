@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - NLLB-style codes support improvements
 - Additional convenience methods on Languoid
 
+## [1.0.3] - 2026-02-19
+
+### Fixed
+- fixed relative links in readme which break on pypi
+- fixed up pyproject.toml a bit, remove redundant links
+- update install instructions in readme
+- bumped virtualenv version (only dev dependency), thanks dependabot
+
 ## [1.0.2] - 2026-02-19
 
 ### Fixed
