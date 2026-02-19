@@ -3,10 +3,10 @@ from __future__ import annotations
 import warnings
 from collections import defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, overload
 
 from qq.constants import DEFAULT_DB_PATH
-from qq.data_model import ID_TYPE_TO_ATTR, CanonicalId, IdType, LanguoidLevel, NameData
+from qq.data_model import ID_TYPE_TO_ATTR, CanonicalId, EndangermentStatus, IdType, LanguoidLevel, NameData
 from qq.interface import GeographicRegion, Languoid, Script
 
 if TYPE_CHECKING:
@@ -143,9 +143,11 @@ class Database:
         entity = self.store.get(canonical_id)
         if entity and isinstance(entity, Languoid):
             if self.resolver.is_deprecated(id_type, code):
+                dep = self.resolver.get_deprecation(id_type, code)
+                # TODO: be clearer about when something can be replaced (reason == merge) or when to trow an error/warn
+                #       (reason == split)
                 warnings.warn(
-                    f"Code '{code}' ({id_type.value}) is deprecated. "
-                    f"Resolved to: {entity.name} ({entity.iso_639_3 or entity.bcp_47})",
+                    f"Code '{code}' ({id_type.value}) is deprecated: {dep}.",
                     DeprecatedCodeWarning,
                     stacklevel=2,
                 )
@@ -172,7 +174,15 @@ class Database:
             raise deprecated_error
         raise KeyError(f"Languoid for code {code} not found for any known identifier type.")
 
-    def convert(self, code: str, from_type: IdType, to_type: IdType) -> str | None:
+    @overload
+    def convert(self, code: str, to_type: IdType) -> str | None:
+        """Guess the code and converts it to ``to_type`` if possible."""
+        ...
+
+    @overload
+    def convert(self, code: str, from_type: IdType, to_type: IdType) -> str | None: ...
+
+    def convert(self, code: str, type_a: IdType, type_b: IdType | None = None) -> str | None:
         """
         Convert a language code from one identifier type to another.
 
@@ -183,6 +193,23 @@ class Database:
             >>> db.convert("nl", IdType.BCP_47, IdType.ISO_639_3)
             'nld'
         """
+        # This is a bit messy since the signature flips, I want to keep the order of "from" and "to", see the overloads
+        if type_b is None:
+            to_type = type_a
+            from_type = None
+            lang = self.guess(code)
+            # find first non-empty
+            for id_type, attr in ID_TYPE_TO_ATTR.items():
+                if getattr(lang, attr) == code:
+                    from_type = id_type
+                    break
+            if from_type is None:
+                return None
+        else:
+            # Case: convert(code, from_type, to_type)
+            from_type = type_a
+            to_type = type_b
+
         return self._id_conversion.convert(code, from_type, to_type)
 
     def get_names(self, code: str, id_type: IdType = IdType.BCP_47) -> dict[CanonicalId, NameData] | None:
@@ -248,6 +275,17 @@ class Database:
         if id_type is not None:
             return self.resolver.is_deprecated(id_type, code)
         return any(self.resolver.is_deprecated(t, code) for t in IdType)
+
+    @property
+    def all_endangered(self) -> list[Languoid]:
+        """Get a list of living, but endangered languages. Does not include extinct languoids."""
+        endangered_statuses = [
+            EndangermentStatus.CRITICALLY_ENDANGERED,
+            EndangermentStatus.SEVERELY_ENDANGERED,
+            EndangermentStatus.DEFINITELY_ENDANGERED,
+            EndangermentStatus.VULNERABLE,
+        ]
+        return self.query(Languoid, endangerment_status=lambda x: x in endangered_statuses)
 
     @property
     def all_languoids(self) -> list[Languoid]:

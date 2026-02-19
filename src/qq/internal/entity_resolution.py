@@ -199,6 +199,12 @@ class EntityResolver:
         """Check if a code is deprecated/retired."""
         return (id_type, value) in self._deprecated_codes
 
+    def get_deprecation(self, id_type: IdType, value: str) -> str | None:
+        """Get info about a deprecated code."""
+        if not self.is_deprecated(id_type, value):
+            return None
+        return self._deprecated_codes.get((id_type, value))
+
     def stats(self) -> dict[str, Any]:
         """Get summary statistics about entity resolution."""
         identifier_counts = [len(identity.identifiers) for identity in self._identities.values()]

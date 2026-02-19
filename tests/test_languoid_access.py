@@ -238,7 +238,6 @@ class TestScriptProperties:
         assert canonical[0].iso_15924 == "Latn"
 
     def test_scripts_contains_script_objects(self, access):
-
         dutch = access.get("nl")
         for s in dutch.scripts:
             assert isinstance(s, Script)
@@ -422,7 +421,6 @@ class TestScriptAccess:
     """Test Database script access methods."""
 
     def test_get_script_by_iso15924(self, access):
-
         latin = access.get_script("Latn")
         assert isinstance(latin, Script)
         assert latin.iso_15924 == "Latn"
@@ -444,7 +442,6 @@ class TestScriptAccess:
         assert results == []
 
     def test_all_scripts_non_empty(self, access):
-
         scripts = access.all_scripts
         assert len(scripts) >= 1
         assert all(isinstance(s, Script) for s in scripts)

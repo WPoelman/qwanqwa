@@ -161,7 +161,7 @@ class Languoid(TraversableEntity):
 
     @property
     def children(self) -> list["Languoid"]:
-        """Get all child languoids."""
+        """Get all direct child languoids."""
         return self.get_related(RelationType.CHILD_LANGUOID, Languoid)
 
     @property
@@ -432,6 +432,13 @@ class GeographicRegion(TraversableEntity):
     def direct_languoids(self) -> list[Languoid]:
         """Get languoids directly associated with this region (non-transitive)."""
         return self.get_related(RelationType.LANGUOIDS_IN_REGION, Languoid)
+
+    @property
+    def scripts(self) -> list[Script]:
+        results = set()
+        for lang in self.languoids:
+            results.update(lang.scripts)
+        return list(results)
 
     # TODO: going from region to region should probably follow the parent-child idea of Languoid as well
     @property

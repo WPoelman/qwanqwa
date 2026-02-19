@@ -147,7 +147,6 @@ def format_languoid_structure(languoid):
 
 
 def main():
-
     # This updates the sources, rebuilds the database, and updates the sources file
     sources_dir = const.SOURCES_DIR
     updater = SourceUpdater(sources_dir)
