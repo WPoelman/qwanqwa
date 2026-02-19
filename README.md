@@ -1,135 +1,182 @@
 # Qwanqwa (`qq`): Language Metadata
-This is a language metadata toolkit to make it easier to work with a large variety of metadata from a single interface.
-Currently this metadata includes:
 
-* Official identifiers: `iso-639-3`, `bcp-47`, Glottocode, Wikidata, Wikipedia
-* Non-official identifiers: NLLB-style codes (`zho_Hans`, `zho_Hant`, etc.)[^1]
-* Geographic information
-* Speaker information
-* Writing systems
-* Names
+A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geographic data, and traversable relationships across ~27,256 languoids.
 
-Planned:
-* Phylogenetic information
-* Linking with [CLLD](https://github.com/clld) datasets
-* Typological features: `grambank`, `wals`, `uriel`
-* A graph-based view to traverse between languoids (family trees, geo areas, shared features etc.)
-* Historical languages
+**Name**: **Q**wan**q**wa is a phonetic spelling of 'ቋንቋ', which means *language* in Amharic; `qq` is short to type.
 
-**Name**: **Q**wan**q**wa is a phonetic spelling of 'ቋንቋ', which means *language* in Amharic; `qq` is nice and short to type.
+## Features
+
+- **Identifiers**: BCP-47, ISO 639-1, ISO 639-3, ISO 639-2B, ISO 639-2T, ISO 639-5, Glottocode, Wikidata ID, Wikipedia ID, NLLB-style codes
+- **Geographic information**: Countries, subdivisions, regions, which can be traversed, including from languoids and back
+- **Speaker information**: Population counts, UNESCO endangerment status
+- **Writing systems**: ISO 15924 script codes with canonical/historical metadata
+- **Multilingual names**: Language names in 500+ languages
+- **Relationships**: Traversable graph of language families, scripts, and geographic regions
+- **Phylogenetic data**: Language family trees from Glottolog
 
 ## Languoids
-In `qq`, language-like entities as referred to as [*Languoids*](http://www.glottopedia.de/index.php/Languoid), since it includes dialects, macro-languages and language areas.
-Not all languoids have coverage for all features.
 
-Number of languoids: 7848
+In `qq`, language-like entities are referred to as [*Languoids*](http://www.glottopedia.de/index.php/Languoid): this includes dialects, macro-languages, and language families, not just individual languages. Not all languoids have coverage for all features.
 
+## Installation
 
-## Usage
-```
+```bash
+pip install qwanqwa
+# or from git
+uv add git+https://github.com/WPoelman/qwanqwa
+# or
 pip install git+https://github.com/WPoelman/qwanqwa
 ```
 
-**Important**: `qq` makes a strict distinction between `None` (*don't know*) and `False` (*it is not the case*). Make sure to keep this in mind when checking boolean values for truthiness, so if you're interested in missing values for example, avoid `if not script.is_canonical:`, but instead explicitly check `if script.is_canonical is None:`.
+## Quick Start
 
 ```python
-from qq import LanguageData, TagType
+from qq import Database, IdType
 
-# Load from the pre-compiled database
-ld = LanguageData.from_db()
+# Load the pre-compiled database
+db = Database.load()
 
-# Access Languoid info using whatever official tag you have
-nl1 = ld.get('nl', tag_type=TagType.BCP_47_CODE)
-nl2 = ld.get('nld', tag_type=TagType.ISO_639_3_CODE)
-# The `guess` method tries all known official tag types,
-# be careful though since this can give unexpected resutls.
-nl3 = ld.guess('dut')  # happens to be TagType.ISO_639_2_B
+# Get a language by BCP-47 code (default)
+dutch = db.get("nl")
+print(dutch.name)          # "Dutch"
+print(dutch.iso_639_3)     # "nld"
+print(dutch.speaker_count) # 24085200
 
-# In this case, these will give the same Languoid
-assert nl1 == nl2 == nl3
-> True
+# Also works with ISO 639-3, Glottocode, etc.
+dutch2 = db.get("nld", id_type=IdType.ISO_639_3)
+dutch3 = db.get("dutc1256", id_type=IdType.GLOTTOCODE)
+dutch4 = db.guess("dut") # guessing works too
+# This will all resolve to the same languoid
+assert dutch.id == dutch2.id == dutch3.id == dutch4.id
 
-am = ld.get('am') # Default tag_type is BCP_47
-
-# Language identifiers
-am.iso_639_3_code
-> 'amh'
-am.glottocode
-> 'amha1245'
-am.wikidata_id
-> 'Q28244',
-am.wikipedia_id
-> 'am'
-
-# Also some non-standard identifiers, often used in NLP research
-am.nllb_style_codes_iso_639_3
-> ['amh_Ethi']
-am.nllb_style_codes_bcp_47
-> ['am_Ethi']
-
-# Names in different languages
-am.endonym
-> 'አማርኛ'
-am.name_data['fr'].name
-> 'amharique'
-
-# English description
-am.language_description.description
-> 'Semitic language of Ethiopia'
-
-# Endangerment status
-am.endangerment_status
-> <Endangerment.SAFE: 'SAFE'>
-
-# Scripts
-am.canonical_scripts
-> [
-    Script(
-        iso_15924_code='ethi',
-        is_canonical=True,
-        is_historical=None,
-        is_religious=None,
-        is_for_transliteration=None,
-        is_for_accessibility=None,
-        is_in_widespread_use=None,
-        has_official_status=None,
-        has_symbolic_value=None,
-        source='GOOGLE_RESEARCH',
-    )
-]
-
-# Mapping between codes
-dir(ld.tag_conversion)
-> [
-    'bcp_47_code2glottocode',
-    'bcp_47_code2iso_639_2b_code',
-    'bcp_47_code2iso_639_3_code',
-    'bcp_47_code2wikidata_id',
-    'bcp_47_code2wikipedia_id',
-    'glottocode2bcp_47_code',
-    'glottocode2iso_639_2b_code',
-    'glottocode2iso_639_3_code',
-    'glottocode2wikidata_id',
-    'glottocode2wikipedia_id',
-    'iso_639_2b_code2bcp_47_code',
-    'iso_639_2b_code2glottocode',
-    'iso_639_2b_code2iso_639_3_code',
-    'iso_639_2b_code2wikidata_id',
-    'iso_639_2b_code2wikipedia_id',
-    'iso_639_3_code2bcp_47_code',
-    'iso_639_3_code2glottocode',
-    'iso_639_3_code2iso_639_2b_code',
-    ...
-]
+# Search by name
+results = db.search("Chinese")
+for lang in results:
+    print(f"{lang.name} ({lang.glottocode})")
 ```
 
-... and more, [here](docs/example.md) are some full examples.
+**Important**: `qq` makes a strict distinction between `None` (*don't know*) and `False` (*it is not the case*). When checking boolean attributes, prefer explicit checks over truthiness: use `if script.is_canonical is None:` rather than `if not script.is_canonical:`.
 
-[^1]: This is a combination of an `iso-693-3` or `bcp-47` language tag and `iso-15924` script tag. This is similar to the first parts of an [IETF Tag](https://en.wikipedia.org/wiki/IETF_language_tag), which, confusingly, can also be referred to as a `bcp-47` tag on its own. This is done in NLLB for instance. This is not wrong, but because data in `qq` is based on LinguaMeta, who interpret just the first part of a IETF tag to be a `bcp-47` tag, we're sticking to  LinguaMeta's interpretation of `bcp-47` and refer to the combined tag as `nllb_style`. The `iso-15924` part of the `nllb_style` tags are based on Glotscript, excluding Braille.
+## Traversal
+
+Languoids, scripts, and geographic regions are all part of the same graph, which can be traversed:
+
+```python
+dutch = db.get("nl")
+
+# Language family navigation (Glottolog tree)
+dutch.parent             # Global Dutch
+dutch.parent.parent      # Modern Dutch
+dutch.family_tree        # [Global Dutch, Modern Dutch, ..., West Germanic, Germanic, Indo-European]
+dutch.siblings           # [Afrikaansic, Javindo, Petjo]
+dutch.children           # [North Hollandish, Central Northern Dutch, ...]
+dutch.descendants()      # All descendants (recursive)
+
+# Writing systems
+dutch.scripts            # [Script(Latin, code=Latn)]
+dutch.script_codes       # ["Latn"]
+dutch.canonical_scripts  # scripts marked canonical in LinguaMeta
+
+# Geographic regions
+dutch.regions            # [Aruba, Belgium, ..., Netherlands, Suriname, ...]
+dutch.country_codes      # ["AW", "BE", "BQ", "CW", "NL", "SR", "SX"]
+
+# Reverse traversal to script
+latin = dutch.scripts[0]
+latin.languoids          # All languages using Latin script
+
+# Cross-domain queries
+dutch.languoids_with_same_script   # other languages sharing any script
+dutch.languoids_in_same_region     # other languages in the same regions
+```
+
+## Identifiers and Conversion
+
+```python
+from qq import IdType
+
+# Automatic detection
+lang = db.guess("nld")   # tries all identifier types
+
+# Explicit conversion
+db.convert("nl", IdType.BCP_47, IdType.ISO_639_3)    # "nld"
+db.convert("nld", IdType.ISO_639_3, IdType.GLOTTOCODE) # "dutc1256"
+
+# Conversion where you don't know or care what the source is, just the target.
+# Useful for normalizing multiple standards to one
+db.convert("nl", IdType.ISO_639_3)    # "nld"
+db.convert("dutc1256", IdType.ISO_639_3) # "nld"
+
+# NLLB-style codes
+dutch.nllb_codes()              # ["nld_Latn"]
+dutch.nllb_codes(use_bcp_47=True) # ["nl_Latn"]
+```
+
+## Multilingual Names
+
+```python
+# Name of Dutch in French
+dutch.name_in("fr")    # "néerlandais"
+dutch.name_in(french)  # also accepts a Languoid object
+
+# Native name
+dutch.endonym  # "Nederlands"
+```
+
+## Command Line Interface
+
+```bash
+# Look up a language
+qq get nl
+qq get nld --type ISO_639_3
+
+# Search by name
+qq search Dutch
+
+# Database statistics and validation
+qq validate
+
+# Rebuild the database from sources
+qq rebuild
+
+# Check source status
+qq status
+
+# Update sources (only needed if you want to rebuild the database,
+# not necessary in normal use)
+qq update
+```
+
+## Examples
+
+See the [`examples/`](examples/) directory for runnable scripts covering:
+- `01_basic_usage.py`: Loading and accessing attributes
+- `02_identifiers.py`: Working with identifier types and retired codes
+- `03_conversion.py`: Converting between identifiers
+- `04_traversal.py`: Language family navigation
+- `05_search.py`: Searching and filtering
+- `06_names.py`: Multilingual name data
+- `07_geographic.py`: Geographic regions and countries
+- `08_relations.py`: Relationship graph traversal
+- `09_advanced_queries.py`: Complex queries and statistics
+- `10_linking_datasets.py`: Joining datasets that use different identifier systems
+- `11_normalizing_datasets.py`: Normalizing mixed identifier codes to a single standard
+
+## Case studies
+
+The [`case-studies/`](case-studies/) directory contains runnable analyses that use qq:
+
+- **[`hugginface-audit/`](case-studies/hugginface-audit/)**: Scans all multilingual datasets on the HuggingFace Hub and classifies every `language:` tag as valid, deprecated, a misused country code, or unknown. qq resolves 99.2% of the 8,189 codes; the rest are deprecated, misused country codes, or HuggingFace-specific tags.
+- **[`linking-datasets/`](case-studies/linking-datasets/)**: Links four lexical datasets (Concepticon, WordNet, Etymon, Phonotacticon) that each use a different identifier standard. qq resolves these four to a shared canonical ID: 102 languages are covered by all four.
+- **[`latex-tables/`](case-studies/latex-tables/)**: Generates a LaTeX table of language metadata (identifiers, scripts, speaker counts, families) for an imaginary 30-language NLP benchmark.
+- **[`identifier-coverage/`](case-studies/identifier-coverage/)**: Visualizes which combinations of identifier standards (Glottocode, ISO 639-3, ISO 639-1, Wikidata) cover which languoids as an UpSet plot.
 
 ## Sources
-Please have a look at the [sources](docs/sources.md), as this project would not have been possible without the hard work of a lot of people who created the data we use.
-Currently, all sources are available under Creative Commons BY or BY-SA licenses.
+
+This project builds on the work of many people. See [`docs/sources.md`](docs/sources.md) for the full list. All sources are available under Creative Commons BY or BY-SA licenses.
 
 ## License
-CC BY-SA 4.0
+
+[CC BY-SA 4.0](LICENSE)
+
+[^1]: NLLB-style codes combine an ISO 639-3 (or BCP-47) language tag with an ISO 15924 script tag (e.g., `nld_Latn`). The script part is derived from Glotscript, excluding Braille.

@@ -1,0 +1,23 @@
+# Concepticon (BabelNet)
+GMQ_BOT
+GMQ_OSW
+GMW_ECG
+GMW_RFR
+MAP_BMS
+ROA_GAL
+ROA_TARA
+ZLW_OPL
+
+# WordNet synsets
+GMQ_BOT
+GMW_ECG
+GMW_RFR
+MAP_BMS
+ROA_GAL
+ROA_TARA
+
+# Etymon
+
+# Phonotacticon
+huzh1238
+kuru1301

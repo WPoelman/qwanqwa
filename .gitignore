@@ -164,3 +164,7 @@ cython_debug/
 .python-version
 .sources
 conflicts.json
+case-studies/latex-tables/output/
+case-studies/hugginface-audit/hf_metadata.json
+case-studies/hugginface-audit/output/
+case-studies/identifier-coverage/identifier_coverage.pdf
