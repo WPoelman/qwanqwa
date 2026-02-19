@@ -1,11 +1,27 @@
+import os
+import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).parent.parent.parent
-DOCS_DIR = PROJECT_ROOT / "docs"
-LOCAL_DATA_DIR = Path(__file__).parent / "data"
-SOURCES_DIR = PROJECT_ROOT / ".sources"
+_PACKAGE_DIR = Path(__file__).parent
+LOCAL_DATA_DIR = _PACKAGE_DIR / "data"
 
-README_PATH = PROJECT_ROOT / "README.md"
+# When running from the repo (dev install), use .sources/ next to pyproject.toml.
+# When installed as a package, use the platform-appropriate user data directory.
+_REPO_ROOT = _PACKAGE_DIR.parent.parent
+if (_REPO_ROOT / "pyproject.toml").exists():
+    SOURCES_DIR = _REPO_ROOT / ".sources"
+else:
+    if sys.platform == "win32":
+        _data_home = Path(os.environ.get("APPDATA", Path.home()))
+    elif sys.platform == "darwin":
+        _data_home = Path.home() / "Library" / "Application Support"
+    else:
+        _data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+    SOURCES_DIR = _data_home / "qwanqwa" / "sources"
+
+# These paths are only used by the release/docs scripts in the dev workflow.
+DOCS_DIR = _REPO_ROOT / "docs"
+README_PATH = _REPO_ROOT / "README.md"
 EXAMPLE_PATH = DOCS_DIR / "example.md"
 SOURCES_DOCS_PATH = DOCS_DIR / "sources.md"
 
