@@ -1,0 +1,34 @@
+{
+  "bcp_47_code": "nl",
+  "iso_639_3_code": "nld",
+  "iso_639_2b_code": "dut",
+  "glottocode": "dutc1256",
+  "wikidata_id": "Q7411",
+  "total_population": 24000000,
+  "name_data": [
+    {"name": "Dutch", "bcp_47_code": "en", "is_canonical": true},
+    {"name": "Nederlands", "bcp_47_code": "nl", "is_canonical": true},
+    {"name": "Néerlandais", "bcp_47_code": "fr", "is_canonical": true},
+    {"name": "Holländisch", "bcp_47_code": "de", "is_canonical": false}
+  ],
+  "language_description": {
+    "description": "Dutch is a West Germanic language."
+  },
+  "language_scope": {
+    "scope": "LANGUAGE"
+  },
+  "language_script_locale": [
+    {
+      "locale": {"iso_3166_code": "NL"},
+      "script": {"iso_15924_code": "latn", "is_canonical": true, "source": "LINGUAMETA"},
+      "official_status": {"has_official_status": true},
+      "speaker_data": {"number_of_speakers": 17000000}
+    },
+    {
+      "locale": {"iso_3166_code": "BE"},
+      "script": {"iso_15924_code": "latn", "is_canonical": false, "source": "LINGUAMETA"},
+      "official_status": {"has_official_status": true},
+      "speaker_data": {"number_of_speakers": 6000000}
+    }
+  ]
+}

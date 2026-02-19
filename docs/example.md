@@ -1,126 +1,65 @@
-# Full example
-## Languoid
-Only `name_data` is truncated.
+# Example
 
-```python
-Languoid(
-    bcp_47_code='am',
-    deprecated_bcp_47_code=None,
-    iso_639_3_code='amh',
-    iso_639_2b_code=None,
-    glottocode='amha1245',
-    wikidata_id='Q28244',
-    nllb_style_codes_iso_639_3=[
-        'amh_Ethi',
-    ],
-    nllb_style_codes_bcp_47=[
-        'am_Ethi',
-    ],
-    wikipedia_id='am',
-    total_population=36000000,
-    language_scope=LanguageScope(
-        source='LINGUAMETA-ISO_639',
-        scope=<Scope.LANGUAGE: 'LANGUAGE'>,
-    ),
-    macrolanguage_bcp_47_code=None,
-    individual_language_bcp_47_codes=None,
-    endangerment_status=None,
-    language_description=LanguageDescription(
-        source='LINGUAMETA-WIKIDATA',
-        description='Semitic language of Ethiopia',
-    ),
-    name_data={
-        'am': NameData(
-            source='LINGUAMETA-GOOGLE_RESEARCH',
-            bcp_47_code='am',
-            name='አማርኛ',
-            is_canonical=True,
-        ),
-        'fr': NameData(
-            source='LINGUAMETA-CLDR',
-            bcp_47_code='fr',
-            name='amharique',
-            is_canonical=True,
-        ),
-        'en': NameData(
-            source='LINGUAMETA-GOOGLE_RESEARCH',
-            bcp_47_code='en',
-            name='Amharic',
-            is_canonical=True,
-        ),
-    },
-    language_script_locale=[
-        LanguageScriptLocale(
-            script=Script(
-                source='LINGUAMETA-GOOGLE_RESEARCH',
-                iso_15924_code='Ethi',
-                is_canonical=True,
-                is_historical=None,
-                is_religious=None,
-                is_for_transliteration=None,
-                is_for_accessibility=None,
-                is_in_widespread_use=None,
-                has_official_status=None,
-                has_symbolic_value=None,
-            ),
-            locale=SimpleLocale(
-                source='LINGUAMETA-GOOGLE_RESEARCH',
-                iso_3166_code='et',
-            ),
-            speaker_data=SpeakerData(
-                source='LINGUAMETA-CLDR',
-                number_of_speakers=36000000,
-            ),
-            official_status=OfficialStatus(
-                source='LINGUAMETA-CLDR',
-                has_official_status=True,
-                has_regional_official_status=None,
-                has_de_facto_official_status=None,
-            ),
-            geolocation=Geolocation(
-                source='LINGUAMETA-GOOGLE_RESEARCH',
-                latitude=11.708182,
-                longitude=39.543457,
-            ),
-        ),
-        LanguageScriptLocale(
-            script=Script(
-                source='LINGUAMETA-GOOGLE_RESEARCH',
-                iso_15924_code='Latn',
-                is_canonical=False,
-                is_historical=None,
-                is_religious=None,
-                is_for_transliteration=True,
-                is_for_accessibility=None,
-                is_in_widespread_use=None,
-                has_official_status=None,
-                has_symbolic_value=None,
-            ),
-            locale=SimpleLocale(
-                source='LINGUAMETA-GOOGLE_RESEARCH',
-                iso_3166_code='et',
-            ),
-            speaker_data=SpeakerData(
-                source='LINGUAMETA-CLDR',
-                number_of_speakers=36000000,
-            ),
-            official_status=None,
-            geolocation=None,
-        ),
-    ],
-    english_name='Amharic',
-    endonym='አማርኛ',
-    estimated_number_of_speakers=36000000,
-    writing_systems=[
-        'Brai',
-        'Ethi',
-        'Latn',
-    ],
-    locales=['ET'],
-    cldr_official_status=[
-        'Official [ET]',
-    ],
-    is_macrolanguage=False,
-    endangerment_status_description=<Endangerment.SAFE: 'SAFE'>,
-)
+# Languoid: Amharic (amh)
+
+## Core Identifiers
+- **BCP-47**: "am"
+- **ISO 639-3**: "amh"
+- **ISO 639-2B**: None
+- **Glottocode**: "amha1245"
+- **Wikidata ID**: "Q28244"
+
+## Names
+- **Name**: "Amharic"
+- **Endonym**: "አማርኛ"
+
+## Population / Speakers
+- **Speaker Count**: 36,000,000
+
+## Classification
+- **Level**: LanguoidLevel.LANGUAGE
+- **Scope**: LanguageScope.INDIVIDUAL
+- **Type**: LanguageStatus.LIVING
+- **Is Macrolanguage**: False
+
+## Endangerment
+- **Status**: Not endangered
+
+## Writing Systems
+- **Scripts**: ['Ethi', 'Latn']
+
+## NLLB Translation Codes
+- **ISO 639-3 style**: ['amh_Ethi', 'amh_Latn']
+- **BCP-47 style**: ['am_Ethi', 'am_Latn']
+
+## Relationships (Graph Traversal)
+
+### Parent
+- Amharic-Argobba (`amha1244`)
+
+### Language Family Tree
 ```
+Afro-Asiatic [family]
+  Semitic [family]
+    West Semitic [family]
+      Ethiosemitic [family]
+        South Ethiopic [family]
+          Amharic-Argobba [family]
+            Amharic [language]
+```
+
+### Children (5)
+- Shoa Amharic (`shoa1235`)
+- Addis Ababa (`addi1235`)
+- Wollo Amharic (`woll1236`)
+- Gojjam Amharic (`gojj1234`)
+- Gondar Amharic (`gond1266`)
+
+### Scripts (2)
+- Ethiopic (`Ethi`)
+
+### Geographic Regions (1)
+- Ethiopia (`ET`)
+
+### Descendants
+- **Total**: 5 languoids

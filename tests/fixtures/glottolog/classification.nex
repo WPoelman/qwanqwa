@@ -1,0 +1,6 @@
+#NEXUS
+
+
+BEGIN TREES;
+    tree indo1319 = [&R] ((dutc1256:1,nort2626:1)germ1287:1)indo1319:1;
+END;

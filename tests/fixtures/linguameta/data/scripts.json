@@ -1,0 +1,16 @@
+{
+  "script_map": [
+    {
+      "script": {
+        "name": "latn",
+        "full_name": "Latin"
+      }
+    },
+    {
+      "script": {
+        "name": "cyrl",
+        "full_name": "Cyrillic"
+      }
+    }
+  ]
+}

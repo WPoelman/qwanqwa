@@ -1,0 +1,86 @@
+File-Date: 2024-01-15
+%%
+Type: language
+Subtag: aa
+Description: Afar
+Added: 2005-10-16
+%%
+Type: language
+Subtag: nl
+Description: Dutch
+Description: Flemish
+Added: 2005-10-16
+%%
+Type: language
+Subtag: he
+Description: Hebrew
+Added: 2005-10-16
+%%
+Type: language
+Subtag: id
+Description: Indonesian
+Added: 2005-10-16
+%%
+Type: language
+Subtag: yi
+Description: Yiddish
+Added: 2005-10-16
+%%
+Type: language
+Subtag: ro
+Description: Romanian
+Description: Moldavian
+Description: Moldovan
+Added: 2005-10-16
+%%
+Type: language
+Subtag: iw
+Description: Hebrew
+Added: 2005-10-16
+Deprecated: 1989-01-01
+Preferred-Value: he
+%%
+Type: language
+Subtag: in
+Description: Indonesian
+Added: 2005-10-16
+Deprecated: 1989-01-01
+Preferred-Value: id
+%%
+Type: language
+Subtag: ji
+Description: Yiddish
+Added: 2005-10-16
+Deprecated: 1989-01-01
+Preferred-Value: yi
+%%
+Type: language
+Subtag: mo
+Description: Moldavian
+Added: 2005-10-16
+Deprecated: 2008-11-22
+Preferred-Value: ro
+%%
+Type: language
+Subtag: jw
+Description: Javanese
+Added: 2005-10-16
+Deprecated: 1989-01-01
+Preferred-Value: jv
+%%
+Type: language
+Subtag: sh
+Description: Serbo-Croatian
+Added: 2005-10-16
+Deprecated: 1989-01-01
+%%
+Type: region
+Subtag: NL
+Description: Netherlands
+Added: 2005-10-16
+%%
+Type: script
+Subtag: Latn
+Description: Latin
+Added: 2005-10-16
+%%

@@ -162,5 +162,9 @@ cython_debug/
 #.idea/
 
 .python-version
-data/
-!src/qq/data
+.sources
+conflicts.json
+case-studies/latex-tables/output/
+case-studies/hugginface-audit/hf_metadata.json
+case-studies/hugginface-audit/output/
+case-studies/identifier-coverage/identifier_coverage.pdf

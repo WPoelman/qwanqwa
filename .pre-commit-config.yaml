@@ -1,45 +1,43 @@
 repos:
--   repo: https://github.com/mxr/sync-pre-commit-deps
-    rev: v0.0.1
+  - repo: https://github.com/mxr/sync-pre-commit-deps
+    rev: v0.0.3
     hooks:
-    -   id: sync-pre-commit-deps
-- repo: local
-  hooks:
-    - id: update-release
-      name: update-release
-      entry: uv run --extra dev scripts/release.py
-      language: system
-      types: [python]
-      pass_filenames: false
-      always_run: true
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+      - id: sync-pre-commit-deps
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
     hooks:
-    -   id: check-yaml
-    -   id: end-of-file-fixer
-    -   id: trailing-whitespace
--   repo: https://github.com/pre-commit/pygrep-hooks
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
     hooks:
-    -   id: python-use-type-annotations
-    -   id: python-check-blanket-noqa
-    -   id: python-check-blanket-type-ignore
-    -   id: python-check-mock-methods
-    -   id: python-no-eval
-    -   id: python-no-log-warn
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.6.8
-  hooks:
-    - id: ruff
-      args: [ --fix ]
-    - id: ruff-format
-# TODO: add once we have testing
-# - repo: local
-#   hooks:
-#     - id: pytest-check
-#       name: pytest-check
-#       entry: pytest
-#       language: system
-#       types: [python]
-#       pass_filenames: false
-#       always_run: true
+      - id: python-use-type-annotations
+      - id: python-check-blanket-noqa
+      - id: python-check-mock-methods
+      - id: python-no-eval
+      - id: python-no-log-warn
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+  - repo: local
+    hooks:
+      - id: ty-check
+        name: ty type check
+        entry: uv run ty check
+        language: system
+        types: [python]
+        pass_filenames: false
+  # TODO: figure out how to conditionally run this. Or set up CI/CD
+  # - repo: local
+  #   hooks:
+  #     - id: pytest-check
+  #       name: pytest-check
+  #       entry: uv run pytest
+  #       language: system
+  #       types: [python]
+  #       pass_filenames: false
+  #       always_run: false

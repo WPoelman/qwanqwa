@@ -1,0 +1,12 @@
+{
+  "bcp_47_code": "frr",
+  "iso_639_3_code": "frr",
+  "glottocode": "nort2626",
+  "name_data": [
+    {"name": "Northern Frisian", "bcp_47_code": "en", "is_canonical": true}
+  ],
+  "language_scope": {
+    "scope": "LANGUAGE"
+  },
+  "deprecated_bcp_47_code": "frr-old"
+}

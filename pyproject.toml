@@ -3,40 +3,97 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "qq"
-version = "0.3.1"
+name = "qwanqwa"
+version = "1.0.0"
 requires-python = ">= 3.10"
 authors = [{ name = "Wessel Poelman", email = "contact@wesselpoelman.nl" }]
 maintainers = [{ name = "Wessel Poelman", email = "contact@wesselpoelman.nl" }]
-description = "A package to handle language metadata (QwanQwa)."
+description = "Unified language metadata toolkit for NLP - identifiers, scripts, speakers, and geographic data."
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "CC-BY-SA-4.0"
+license-files = ["LICENSE"]
+keywords = [
+    "language",
+    "metadata",
+    "linguistics",
+    "iso-639",
+    "bcp-47",
+    "glottolog",
+    "nlp",
+    "multilingual",
+    "language-codes",
+    "iso-15924",
+    "writing-systems",
+]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Linguistic",
+    "Typing :: Typed",
 ]
-dependencies = [
-    "numpy>=2.1.1",
-    "pandas>=2.2.2",
-    "pydantic>=2.9.1",
-    "typing_extensions>=4.12.2",
-]
+# Main dependencies for querying data, CLI, etc.
+dependencies = ["typing_extensions>=4.12.2", "click>=8.0.0"]
+
+[project.scripts]
+qq = "qq.cli:cli"
 
 [project.optional-dependencies]
-dev = [
-    "ruff>=0.6.4",
-    "pre-commit>=4.0.1",
-    "devtools>=0.12.2",
-]
+# For users who want to rebuild the database from sources
+build = ["pandas>=2.2.2", "requests>=2.25.0"]
 
 [project.urls]
 "Homepage" = "https://github.com/WPoelman/qwanqwa"
+"Repository" = "https://github.com/WPoelman/qwanqwa"
+"Bug Tracker" = "https://github.com/WPoelman/qwanqwa/issues"
+"Changelog" = "https://github.com/WPoelman/qwanqwa/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-qq = ["data/db.json.gz"]
+qq = ["data/db.json.gz", "data/names.zip", "py.typed"]
 
 [tool.ruff]
 line-length = 120
+
+[tool.ty.src]
+# TODO: add case-studies and examples? At that point maybe just trust gitignore
+include = ["scripts", "src", "tests"]
+
+[tool.ty.rules]
+unused-ignore-comment = "ignore"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v"
+markers = ["slow: marks tests as slow (deselect with '-m \"not slow\"')"]
+
+[dependency-groups]
+# Development dependencies (not published to PyPI)
+# Install with: uv sync --group dev
+dev = [
+    # Testing
+    "pytest>=7.0.0",
+    "pytest-cov>=7.0.0",
+    # Linting & Formatting
+    "ruff>=0.6.4",
+    # Type checking
+    "ty>=0.0.14",
+    # Git hooks
+    "pre-commit>=4.0.1",
+    # Utilities
+    "devtools>=0.12.2",
+    # Build dependencies (for database rebuilding)
+    "click>=8.0.0",
+    "pandas>=2.2.2",
+    "requests>=2.25.0",
+]

@@ -1,52 +1,63 @@
 # Sources
-`qq` collects the hard work of many people. A sincere thank you to all sources listed below for publicly sharing their data!
+`qq` collects the hard work of many people.
+ A sincere thank you to all sources listed below for publicly sharing their data!
 
-## LinguaMeta
-* Paper: https://aclanthology.org/2024.lrec-main.921/
-* Github: https://github.com/google-research/url-nlp/tree/main/linguameta
+## Glotscript
+
+* Source: https://github.com/cisnlp/glotscript
 * License: CC BY-SA 4.0
-* Last updated: 27-11-2025
-
-Individual sources (taken from LinguaMeta [README](https://github.com/google-research/url-nlp/blob/main/linguameta/README.md)):
-| LinguaMeta ID       | Source                                | License type      | Link                                                                                |
-| ------------------- | ------------------------------------- | ----------------- | ----------------------------------------------------------------------------------- |
-| ``CLDR``            | Unicode CLDR                          | non-standard      | [License](https://www.unicode.org/license.txt)                                      |
-| ``GLOTTOLOG``       | Glottolog                             | CC BY 4.0         | [Site homepage](https://glottolog.org/)                                             |
-| ``GOOGLE_RESEARCH`` | Language research conducted at Google | CC BY 4.0         | [License](https://github.com/google-research/url-nlp/blob/main/LICENSE)             |
-| ``IETF``            | IETF                                  | CC BY 4.0         | [License](https://trustee.ietf.org/assets/the-ietf-trusts-copyrights-and-licenses/) |
-| ``ISO_639``         | SIL ISO 639 Registration Authority    | non-standard      | [Terms of use](https://iso639-3.sil.org/code_tables/download_tables#termsofuse)     |
-| ``WIKIDATA``        | Wikidata                              | CC0, CC BY-SA 3.0 | [Copyright info](https://www.wikidata.org/wiki/Wikidata:Copyright)                  |
-| ``WIKIPEDIA``       | Wikipedia                             | CC BY-SA 4.0      | [Copyright info](https://en.wikipedia.org/wiki/Wikipedia:Copyrights)                |
-| ``WIKTIONARY``      | Wiktionary                            | CC BY-SA 4.0      | [Copyright info](https://en.wiktionary.org/wiki/Wiktionary:Copyrights)              |
-
-## Wikipedia
-* Source: https://meta.wikimedia.org/wiki/List_of_Wikipedias
-* License: CC BY-SA 4.0
-* Last updated: version from 26-10-2024
-
-## GlotScript
 * Paper: https://aclanthology.org/2024.lrec-main.687/
-* Github: https://github.com/cisnlp/GlotScript
-* License: CC BY-SA 4.0
-* Last updated: version from 07-06-2024
+* Last updated: 19-02-2026
 
-Individual sources (taken from GlotScript [README](https://github.com/cisnlp/GlotScript/blob/main/metadata/README.md)):
-- [Wikipedia](https://en.wikipedia.org/wiki/ISO_639:xxx): Since Wikipedia writing system metadata is not easily redistributed, we provide our crawled version of the Writing System Text from Wikipedia in the [sources folder](https://github.com/cisnlp/GlotScript/blob/main/metadata/sources/wikipedia.csv).
-- [ScriptSource](https://scriptsource.org/)
-- [Unicode CLDR](https://github.com/unicode-org/cldr-json/blob/main/cldr-json/cldr-core/supplemental/likelySubtags.json)
-- [LangTag](https://raw.githubusercontent.com/silnrsi/langtags/master/pub/langtags.json)
-- [LREC_2800](https://raw.githubusercontent.com/google-research/url-nlp/main/language_metadata/data.tsv)
-- [Omniglot](https://www.omniglot.com/writing/langalph.htm)
+Individual sources documented in [GlotScript README](https://github.com/cisnlp/GlotScript/blob/main/metadata/README.md)
 
 ## Glottolog
-* Website: https://glottolog.org/
-* Github: https://github.com/glottolog/glottolog-cldf
-* Download website: https://glottolog.org/meta/downloads
-* License: CC BY 4.0
-* Last updated: version 5.1 from 29-10-2024
 
-## `pycountry`
-* Github: https://github.com/pycountry/pycountry
-* Data (from Debian): https://salsa.debian.org/iso-codes-team/iso-codes
+* Source: https://github.com/glottolog/glottolog-cldf.git
+* License: CC BY 4.0
+* Website: https://glottolog.org/
+* Last updated: 19-02-2026
+
+## IANA
+
+* Source: https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
+* License: Public (Internet Standard)
+* Last updated: 19-02-2026
+
+IANA Language Subtag Registry (BCP 47 / RFC 5646): deprecated language subtag mappings
+
+## Linguameta
+
+* Source: https://github.com/google-research/url-nlp.git
+* License: CC BY-SA 4.0
+* Paper: https://aclanthology.org/2024.lrec-main.921/
+* Website: https://github.com/google-research/url-nlp/tree/main/linguameta
+* Last updated: 19-02-2026
+
+Individual sources documented in [LinguaMeta README](https://github.com/google-research/url-nlp/blob/main/linguameta/README.md)
+
+## Pycountry
+
+* Source: https://github.com/pycountry/pycountry
 * License: LGPL-2.1
-* Last updated: 27-11-2025
+* Last updated: 19-02-2026
+
+Data from [Debian iso-codes](https://salsa.debian.org/iso-codes-team/iso-codes)
+
+## SIL
+
+* Source: https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Retirements.tab
+* License: Custom (free use)
+* Website: https://iso639-3.sil.org/code_tables/download_tables
+* Last updated: 19-02-2026
+
+ISO 639-3 retired code mappings maintained by SIL International
+
+## Wikipedia
+
+* Source: https://wikistats.wmcloud.org/api.php?action=dump&table=wikipedias&format=csv
+* License: CC BY-SA 4.0
+* Website: https://wikistats.wmcloud.org/
+* Last updated: 19-02-2026
+
+Wikipedia edition statistics (article counts, active users) from Wikistats (Wikimedia)
