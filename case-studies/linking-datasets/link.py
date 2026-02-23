@@ -1,7 +1,7 @@
 """
 Linking Colexification Datasets via qq Language Identifiers
 
-Four lexical/etymological datasets, each using a different identifier standard:
+Five lexical/etymological datasets, each using a different identifier standard:
   1. Concepticon BabelNet synsets : BabelNet codes: primarily uppercase ISO 639-1
                                      (e.g. 'IT', 'ZH'), ISO 639-3 for historical
                                      languages (e.g. 'AKK', 'ANG'), and Wikipedia
@@ -12,8 +12,12 @@ Four lexical/etymological datasets, each using a different identifier standard:
                                      language codes (p_gem, p_ine, ...) that strip to
                                      ISO 639-5 (e.g. p_gem -> gem)
   4. Phonotacticon                : Glottocodes + ISO 639-3 codes
+  5. NoRaRe (norare-data)        : ISO 639-1 lowercase (e.g. 'en', 'de') from
+                                     norare.tsv LANGUAGE column, plus a handful of
+                                     ISO 639-3 codes (e.g. 'eng', 'tpi'); the
+                                     special value 'global' is ignored
 
-qq resolves all four to a shared canonical ID
+qq resolves all five to a shared canonical ID
 
 Note: reading the two large files (concepticon ~760 MB, WordNet ~230 MB) takes about
 a minute. Only the language column is parsed; no data is loaded into memory.
@@ -90,6 +94,34 @@ def collect_codes_phonotacticon(zip_path: Path, inner_path: str, resolver) -> tu
                 if iso := row.get("ISO", "").strip():
                     iso_codes.add(iso)
     return glottocodes, iso_codes
+
+
+def collect_codes_norare(zip_path: Path, inner_path: str) -> tuple[set[str], set[str]]:
+    """Collect language codes from norare-data/norare.tsv (inside zip).
+
+    The LANGUAGE column holds mostly ISO 639-1 lowercase codes (e.g. 'en',
+    'de') with a few ISO 639-3 codes (e.g. 'eng', 'tpi').  The special value
+    'global' carries no language information and is skipped.
+
+    Returns
+    -------
+    bcp47_codes : ISO 639-1 / BCP-47 two-letter codes (lowercase)
+    iso3_codes  : ISO 639-3 three-letter codes
+    """
+    bcp47_codes: set[str] = set()
+    iso3_codes: set[str] = set()
+    with zipfile.ZipFile(zip_path) as zf:
+        with zf.open(inner_path) as raw:
+            reader = csv.DictReader(io.TextIOWrapper(raw, encoding="utf-8"), delimiter="\t")
+            for row in reader:
+                lang = row.get("LANGUAGE", "").strip()
+                if not lang or lang == "global":
+                    continue
+                if len(lang) == 2:
+                    bcp47_codes.add(lang)
+                else:
+                    iso3_codes.add(lang)
+    return bcp47_codes, iso3_codes
 
 
 def resolve(
@@ -198,6 +230,14 @@ def main() -> None:
     )
     print(f"  {len(phono_glottocodes)} Glottocodes, {len(phono_iso_codes)} ISO codes found\n")
 
+    print("Reading NoRaRe data...")
+    norare_bcp47_codes, norare_iso3_codes = collect_codes_norare(
+        DATA_DIR / "norare-data.zip",
+        "norare-data/norare.tsv",
+    )
+    norare_total = len(norare_bcp47_codes) + len(norare_iso3_codes)
+    print(f"  {len(norare_bcp47_codes)} BCP-47 codes, {len(norare_iso3_codes)} ISO 639-3 codes found\n")
+
     # --- Resolve each set through qq ---
 
     # BabelNet uses uppercase codes. Primarily ISO 639-1 (e.g. NL -> nl), but also
@@ -224,6 +264,16 @@ def main() -> None:
 
     # Phonotacticon uses Glottocodes primarily, ISO 639-3 as fallback
     phono_resolved, phono_unresolved, phono_total = resolve_phonotacticon(resolver, phono_glottocodes, phono_iso_codes)
+
+    # NoRaRe: BCP-47 (ISO 639-1 lowercase) first, then ISO 639-3 as fallback
+    norare_lookup: list[tuple[IdType, Any]] = [
+        (IdType.BCP_47, None),
+        (IdType.ISO_639_3, None),
+    ]
+    norare_bcp47_resolved, norare_bcp47_unresolved = resolve(resolver, norare_bcp47_codes, norare_lookup)
+    norare_iso3_resolved, norare_iso3_unresolved = resolve(resolver, norare_iso3_codes, norare_lookup)
+    norare_resolved = {**norare_bcp47_resolved, **norare_iso3_resolved}
+    norare_unresolved = norare_bcp47_unresolved | norare_iso3_unresolved
 
     print(LOG_SEP)
     print("DATASET SUMMARY")
@@ -258,6 +308,13 @@ def main() -> None:
             len(phono_resolved),
             phono_unresolved,
         ),
+        (
+            "NoRaRe",
+            "ISO 639-1 lowercase (BCP-47) + ISO 639-3 (LANGUAGE column of norare.tsv)",
+            norare_total,
+            len(norare_resolved),
+            norare_unresolved,
+        ),
     ]
 
     for name, id_std, total, n_resolved, unresolved in rows:
@@ -274,7 +331,9 @@ def main() -> None:
     wn_ids = set(wn_resolved.values())
     etymon_ids = set(etymon_resolved.values())
     phono_ids = set(phono_resolved.values())
+    norare_ids = set(norare_resolved.values())
 
+    all_five = concepticon_ids & wn_ids & etymon_ids & phono_ids & norare_ids
     all_four = concepticon_ids & wn_ids & etymon_ids & phono_ids
     all_three = concepticon_ids & wn_ids & etymon_ids
 
@@ -284,20 +343,26 @@ def main() -> None:
     print(LOG_SEP)
     print(
         f"\n  Unique languages: Concepticon {len(concepticon_ids)}, WordNet {len(wn_ids)}, "
-        f"Etymon {len(etymon_ids)}, Phonotacticon {len(phono_ids)}"
+        f"Etymon {len(etymon_ids)}, Phonotacticon {len(phono_ids)}, NoRaRe {len(norare_ids)}"
     )
-    print(f"\n  Concepticon only              : {len(concepticon_ids - wn_ids - etymon_ids - phono_ids):>5}")
-    print(f"  WordNet only                  : {len(wn_ids - concepticon_ids - etymon_ids - phono_ids):>5}")
-    print(f"  Etymon only                   : {len(etymon_ids - concepticon_ids - wn_ids - phono_ids):>5}")
-    print(f"  Phonotacticon only            : {len(phono_ids - concepticon_ids - wn_ids - etymon_ids):>5}")
+    print(f"\n  Concepticon only              : {len(concepticon_ids - wn_ids - etymon_ids - phono_ids - norare_ids):>5}")
+    print(f"  WordNet only                  : {len(wn_ids - concepticon_ids - etymon_ids - phono_ids - norare_ids):>5}")
+    print(f"  Etymon only                   : {len(etymon_ids - concepticon_ids - wn_ids - phono_ids - norare_ids):>5}")
+    print(f"  Phonotacticon only            : {len(phono_ids - concepticon_ids - wn_ids - etymon_ids - norare_ids):>5}")
+    print(f"  NoRaRe only                   : {len(norare_ids - concepticon_ids - wn_ids - etymon_ids - phono_ids):>5}")
     print(f"  Concepticon ∩ WordNet          : {len(concepticon_ids & wn_ids):>5}")
     print(f"  Concepticon ∩ Etymon           : {len(concepticon_ids & etymon_ids):>5}")
     print(f"  Concepticon ∩ Phonotacticon    : {len(concepticon_ids & phono_ids):>5}")
+    print(f"  Concepticon ∩ NoRaRe           : {len(concepticon_ids & norare_ids):>5}")
     print(f"  WordNet ∩ Etymon               : {len(wn_ids & etymon_ids):>5}")
     print(f"  WordNet ∩ Phonotacticon        : {len(wn_ids & phono_ids):>5}")
+    print(f"  WordNet ∩ NoRaRe               : {len(wn_ids & norare_ids):>5}")
     print(f"  Etymon ∩ Phonotacticon         : {len(etymon_ids & phono_ids):>5}")
-    print(f"  All three (excl. Phonotacticon): {len(all_three):>5}")
-    print(f"  All four datasets              : {len(all_four):>5} (automatic, no mapping needed)")
+    print(f"  Etymon ∩ NoRaRe                : {len(etymon_ids & norare_ids):>5}")
+    print(f"  Phonotacticon ∩ NoRaRe         : {len(phono_ids & norare_ids):>5}")
+    print(f"  All three (excl. others)       : {len(all_three):>5}")
+    print(f"  All four (excl. NoRaRe)        : {len(all_four):>5}")
+    print(f"  All five datasets              : {len(all_five):>5} (automatic, no mapping needed)")
 
     # --- Concrete linking examples ---
 
@@ -306,6 +371,7 @@ def main() -> None:
     wn_by_id = {v: k for k, v in wn_resolved.items()}
     etymon_by_id = {v: k for k, v in etymon_resolved.items()}
     phono_by_id = {v: k for k, v in phono_resolved.items()}
+    norare_by_id = {v: k for k, v in norare_resolved.items()}
 
     print()
     print(LOG_SEP)
@@ -329,7 +395,7 @@ def main() -> None:
 
     header = (
         f"  {'Language':<22} {'Canonical ID':<14} {'Concepticon':<14} "
-        f"{'WordNet':<14} {'Etymon':<12} {'Phonotacticon':<14}"
+        f"{'WordNet':<14} {'Etymon':<12} {'Phonotacticon':<14} {'NoRaRe':<10}"
     )
     print(header)
     print("  " + "-" * (len(header) - 2))
@@ -343,21 +409,23 @@ def main() -> None:
         w_code = wn_by_id.get(canonical, "-")
         e_code = etymon_by_id.get(canonical, "-")
         p_code = phono_by_id.get(canonical, "-")
-        if c_code == "-" and w_code == "-" and e_code == "-" and p_code == "-":
+        n_code = norare_by_id.get(canonical, "-")
+        if c_code == "-" and w_code == "-" and e_code == "-" and p_code == "-" and n_code == "-":
             continue
         name = lang_label(ld, canonical)
-        print(f"  {name:<22} {canonical:<14} {c_code:<14} {w_code:<14} {e_code:<12} {p_code:<14}")
+        print(f"  {name:<22} {canonical:<14} {c_code:<14} {w_code:<14} {e_code:<12} {p_code:<14} {n_code:<10}")
         shown += 1
 
     if shown == 0:
         # Fall back to top-N from the intersection
-        for canonical in sorted(all_four)[:8]:
+        for canonical in sorted(all_five)[:8]:
             name = lang_label(ld, canonical)
             c_code = concepticon_by_id.get(canonical, "-")
             w_code = wn_by_id.get(canonical, "-")
             e_code = etymon_by_id.get(canonical, "-")
             p_code = phono_by_id.get(canonical, "-")
-            print(f"  {name:<22} {canonical:<14} {c_code:<14} {w_code:<14} {e_code:<12} {p_code:<14}")
+            n_code = norare_by_id.get(canonical, "-")
+            print(f"  {name:<22} {canonical:<14} {c_code:<14} {w_code:<14} {e_code:<12} {p_code:<14} {n_code:<10}")
 
     print()
 
@@ -368,6 +436,7 @@ def main() -> None:
             ("WordNet synsets", wn_unresolved),
             ("Etymon", etymon_unresolved),
             ("Phonotacticon", phono_unresolved),
+            ("NoRaRe", norare_unresolved),
         ]:
             f.write(f"# {dataset}\n")
             for code in sorted(codes):
