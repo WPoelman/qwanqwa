@@ -1,7 +1,7 @@
 # Sources
 `qq` collects the hard work of many people.
  A sincere thank you to all sources listed below for publicly sharing their data!
- Copies of the licenses can be found in [./licenses].
+ Copies of the licenses can be found [here](./licenses).
 
 ## Glotscript
 
