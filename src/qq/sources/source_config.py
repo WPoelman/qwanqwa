@@ -80,14 +80,15 @@ class SourceConfig:
                     "[GlotScript README](https://github.com/cisnlp/GlotScript/blob/main/metadata/README.md)"
                 ),
             ),
+            # TODO: maybe get rid of pycountry and just use Debian source directly?
             GitSourceProvider(
                 name="pycountry",
                 sources_dir=sources_dir,
                 source_url="https://github.com/pycountry/pycountry",
                 branch="main",
                 subpath="src/pycountry/databases",
-                license="LGPL-2.1",
-                notes="Data from [Debian iso-codes](https://salsa.debian.org/iso-codes-team/iso-codes)",
+                license="LGPL-2.1 or later",
+                notes="Builds on Debian iso-codes [project](https://salsa.debian.org/iso-codes-team/iso-codes)",
             ),
             FileDownloadSourceProvider(
                 name="wikipedia",

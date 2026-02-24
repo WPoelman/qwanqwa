@@ -10,7 +10,7 @@ authors = [{ name = "Wessel Poelman", email = "contact@wesselpoelman.nl" }]
 maintainers = [{ name = "Wessel Poelman", email = "contact@wesselpoelman.nl" }]
 description = "Unified language metadata toolkit for NLP - identifiers, scripts, speakers, and geographic data."
 readme = "README.md"
-license = "CC-BY-SA-4.0"
+license = "Apache-2.0"
 license-files = ["LICENSE"]
 keywords = [
     "language",
