@@ -62,6 +62,8 @@ qq = ["data/db.json.gz", "data/names.zip", "py.typed"]
 
 [tool.ruff]
 line-length = 120
+# TODO: maybe we should move this to its own repo
+exclude = ["notebooks/*", "case-studies/linking-datasets/*"]
 
 [tool.ty.src]
 # TODO: add case-studies and examples? At that point maybe just trust gitignore

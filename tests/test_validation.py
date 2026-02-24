@@ -71,6 +71,7 @@ class TestDataValidator:
         lang2 = Languoid(id2, store, name="Dutch Alt", iso_639_3="nld")
         store.add(lang2)
         identity2 = resolver.get_identity(id2)
+        assert identity2
         identity2.identifiers[IdType.ISO_639_3] = "nld"
 
         validator = make_validator(store, resolver)
