@@ -2,13 +2,13 @@
 Scan HuggingFace Hub datasets for deprecated language codes.
 
 Fetches dataset metadata from the HuggingFace Hub API (language tags only,
-not dataset content), filters to multilingual datasets (>10 languages),
+not dataset content), filters to multilingual datasets (>=10 languages),
 and cross-references every language tag against qq to classify it as
 valid, deprecated, or unknown.
 
 Usage:
-    uv run --with huggingface_hub,matplotlib,tqdm python case-studies/hugginface-audit/analyze.py
-    uv run --with huggingface_hub,matplotlib,tqdm python case-studies/hugginface-audit/analyze.py --refresh
+    uv run --with huggingface_hub,matplotlib,tqdm python case-studies/huggingface-audit/analyze.py
+    uv run --with huggingface_hub,matplotlib,tqdm python case-studies/huggingface-audit/analyze.py --refresh
 """
 
 from __future__ import annotations
@@ -419,8 +419,8 @@ def main() -> None:
 
     # fetch/load HF metadata
     all_datasets = fetch_hf_metadata(refresh=args.refresh)
-    datasets = [ds for ds in all_datasets if len(ds["languages"]) > min_lang]
-    print(f"Filtered to {len(datasets)} datasets with >{min_lang} language tags")
+    datasets = [ds for ds in all_datasets if len(ds["languages"]) >= min_lang]
+    print(f"Filtered to {len(datasets)} datasets with >={min_lang} language tags")
 
     if not datasets:
         print("No datasets found. Try --refresh if using a stale cache.")

@@ -6,10 +6,10 @@ How reliable are the language tags in datasets on the HuggingFace Hub? This case
 
 ```bash
 # First run fetches metadata from the Hub API (~5 min), then caches it
-uv run --with huggingface_hub,matplotlib,tqdm,pandas python case-studies/hugginface-audit/analyze.py
+uv run --with huggingface_hub,matplotlib,tqdm,pandas python case-studies/huggingface-audit/analyze.py
 
 # Force re-fetch metadata (useful if the cache is stale)
-uv run --with huggingface_hub,matplotlib,tqdm,pandas python case-studies/hugginface-audit/analyze.py --refresh
+uv run --with huggingface_hub,matplotlib,tqdm,pandas python case-studies/huggingface-audit/analyze.py --refresh
 ```
 
 Requires `pandas`, `tqdm`, `matplotlib`, and `huggingface_hub` (installed ad-hoc via `--with`).
