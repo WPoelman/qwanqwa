@@ -7,8 +7,8 @@ and cross-references every language tag against qq to classify it as
 valid, deprecated, or unknown.
 
 Usage:
-    uv run --with huggingface_hub,matplotlib,tqdm python case-studies/hf_deprecated_codes/analyze.py
-    uv run --with huggingface_hub,matplotlib,tqdm python case-studies/hf_deprecated_codes/analyze.py --refresh
+    uv run --with huggingface_hub,matplotlib,tqdm python case-studies/hugginface-audit/analyze.py
+    uv run --with huggingface_hub,matplotlib,tqdm python case-studies/hugginface-audit/analyze.py --refresh
 """
 
 from __future__ import annotations
@@ -223,7 +223,8 @@ def plot_identifier_distribution(
     colors = [palette[i % len(palette)] for i in range(len(labels))]
 
     with mpl.rc_context({"font.family": "serif"}):
-        fig, ax = plt.subplots(figsize=(7, max(3, len(labels) * 0.45)))
+        size = max(3, len(labels) * 0.45)
+        fig, ax = plt.subplots(figsize=(size, size))
         bars = ax.barh(labels, counts, color=colors, edgecolor="white", linewidth=0.8)
 
         max_count = max(counts) if counts else 1
