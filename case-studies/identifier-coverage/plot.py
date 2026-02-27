@@ -6,7 +6,7 @@ ISO 639-1, BCP-47, Wikidata) cover which languoids, and how many fall into
 each intersection.
 
 Usage:
-    uv run --with upsetplot,matplotlib python case-studies/identifier_coverage/plot.py
+    uv run --with upsetplot,matplotlib python case-studies/identifier-coverage/plot.py
 """
 
 from __future__ import annotations
@@ -30,8 +30,11 @@ PLOT_PATH = SCRIPT_DIR / "identifier_coverage.pdf"
 
 ATTR_LABELS = {
     "glottocode": "Glottocode",
-    "iso_639_3": "ISO 639-3",
-    "iso_639_1": "ISO 639-1",
+    "iso_639_1": "ISO-639-1",
+    "iso_639_2b": "ISO-639-2B",
+    "iso_639_3": "ISO-639-3",
+    "iso_639_5": "ISO-639-5",
+    "wikipedia": "Wikipedia",
     "wikidata_id": "Wikidata",
 }
 
@@ -56,7 +59,7 @@ def main() -> None:
 
     membership = df.groupby(list(df.columns)).size()
 
-    with mpl.rc_context({"font.family": "serif", "font.size": 8}):
+    with mpl.rc_context({"font.family": "serif", "font.size": 7}):
         upset = UpSet(
             membership,
             sort_by="cardinality",
@@ -64,12 +67,19 @@ def main() -> None:
             show_percentages=True,
             min_subset_size=10,
             facecolor="#8eaec0",
-            element_size=46,
-            intersection_plot_elements=8,
+            element_size=36,
+            intersection_plot_elements=3,
         )
         fig = upset.plot()
         fig["intersections"].set_ylabel("Languoids", fontsize=10)
+        fig["intersections"].grid(axis="y", color="lightgrey", linestyle="--", alpha=0.5)
+        fig["intersections"].set_axisbelow(True)
+        _, current_ymax = fig["intersections"].get_ylim()
+        fig["intersections"].set_ylim(0, current_ymax * 0.95)  # top get rid of overlapping labels
+
         fig["totals"].set_xlabel("Total", fontsize=10)
+        fig["totals"].grid(axis="x", color="lightgrey", linestyle="--", alpha=0.5)
+        fig["totals"].set_axisbelow(True)
 
         plt.savefig(PLOT_PATH, bbox_inches="tight")
         print(f"\nPlot saved to {PLOT_PATH}")

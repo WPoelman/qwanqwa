@@ -57,7 +57,7 @@ The same language expressed in each dataset's identifier system, resolved to one
 
 ```
   Language               Canonical ID   Concepticon    WordNet        Etymon       Phonotacticon
-  ──────────────────────────────────────────────────────────────────────────────────────────────
+
   Dutch                  lang:006448    NL             NL             nld          dutc1256
   German                 lang:006636    DE             DE             deu          stan1295
   Turkish                lang:000917    TR             TR             tur          nucl1301

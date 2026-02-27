@@ -223,7 +223,8 @@ def plot_identifier_distribution(
     colors = [palette[i % len(palette)] for i in range(len(labels))]
 
     with mpl.rc_context({"font.family": "serif"}):
-        size = max(3, len(labels) * 0.45)
+        size = 2
+        fontsize = 7
         fig, ax = plt.subplots(figsize=(size, size))
         bars = ax.barh(labels, counts, color=colors, edgecolor="white", linewidth=0.8)
 
@@ -234,19 +235,19 @@ def plot_identifier_distribution(
                 bar.get_y() + bar.get_height() / 2,
                 f"{count:,}",
                 va="center",
-                fontsize=12,
+                fontsize=fontsize,
             )
 
-        ax.set_xlabel("Number of datasets", fontsize=14)
+        ax.set_xlabel("Number of datasets", fontsize=fontsize)
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
-        ax.tick_params(axis="y", labelsize=13)
-        ax.tick_params(axis="x", labelsize=12)
+        ax.tick_params(axis="y", labelsize=fontsize)
+        ax.tick_params(axis="x", labelsize=fontsize)
         ax.set_xlim(0, max_count * 1.12)
         ax.grid(axis="x", linestyle="--", alpha=0.25)
         ax.set_axisbelow(True)
 
-        plt.tight_layout()
+        plt.tight_layout(pad=0)
         plt.savefig(plot_path, bbox_inches="tight")
         print(f"\nPlot saved to {plot_path.name}")
         plt.close()

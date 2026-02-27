@@ -23,7 +23,7 @@ Note: reading the two large files (concepticon ~760 MB, WordNet ~230 MB) takes a
 a minute. Only the language column is parsed; no data is loaded into memory.
 
 Usage:
-    uv run python case-studies/linking_datasets/link.py
+    uv run python case-studies/linking-datasets/link.py
 """
 
 from __future__ import annotations

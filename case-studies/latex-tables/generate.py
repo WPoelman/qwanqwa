@@ -6,7 +6,7 @@ in a few lines of code, instead of manually assembling data from multiple
 sources.
 
 Usage:
-    uv run python case-studies/publication_tables/generate.py
+    uv run python case-studies/latex-tables/generate.py
 """
 
 from __future__ import annotations
