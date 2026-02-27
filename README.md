@@ -195,8 +195,8 @@ uv sync --group dev
 
 The data sources qq incorporates have different licenses, see [here](https://github.com/WPoelman/qwanqwa/blob/main/docs/sources.md).
 
-We follow [this](https://epiverse-trace.github.io/posts/data-licensing-cran.html#licensing-code-and-data-in-one-r-package) example and license the software as [Apache 2.0](./LICENSE) and the data as their original licenses.
+We follow [this](https://epiverse-trace.github.io/posts/data-licensing-cran.html#licensing-code-and-data-in-one-r-package) example and license the software as [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) and the data as [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 
-This means for instance that any data issues we encounter will be openly reported to the upstream sources (in accordance with ShareAlike principles of CC-BY-SA), but that the software will ship with a compiled dataset (in accordance with the redistribution CC-BY and CC-BY-SA allow).
+This means for instance that any data issues we encounter will be openly reported to the upstream sources (in accordance with ShareAlike principles of CC BY-SA), but that the software will ship with a compiled dataset (in accordance with the redistribution CC BY and CC BY-SA allow).
 
-Ideally we'd use CC-BY-SA for everything, but this is highly [discouraged](https://creativecommons.org/faq/#can-i-apply-a-creative-commons-license-to-software) for software, even by Creative Commons themselves.
+Ideally we'd use CC BY-SA for everything, but this is highly [discouraged](https://creativecommons.org/faq/#can-i-apply-a-creative-commons-license-to-software) for software, even by Creative Commons themselves.
