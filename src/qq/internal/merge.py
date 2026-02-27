@@ -16,6 +16,7 @@ import dataclasses
 import json
 import logging
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +35,23 @@ class MergeConflict:
     values: list[dict[str, Any]]  # [{"value": ..., "source": ...}, ...]
     resolved_to: Any
     strategy: str
+
+
+class MergeStrategy(Enum):
+    SOURCE_PRIORITY = "source_priority"
+    MOST_RECENT = "most_recent"
+    MANUAL = "manual"
+
+
+_FIELD_TO_STRATEGY = {
+    # This one is tricky because country / region codes can be deprecated, but
+    # still in a transitionary phase. So it's both historical and not.
+    # LinguaMeta and pycountry do not agree for 7 values. I check manual
+    # resolution and pycountry is more strict with transitional codes, so I
+    # interpret Historical as to refer to the ISO codes. Pycountry is also
+    # updated more often.
+    (GeographicRegion, "is_historical"): (MergeStrategy.MANUAL, DataSource.PYCOUNTRY),
+}
 
 
 # Fields where multiple values should be concatenated/merged rather than
@@ -86,7 +104,7 @@ def merge(sources: list[tuple[DataSource, EntitySet]], conflicts_path: Path | No
 
         # Merge each data field
         for field_name in entity_class._data_fields:
-            merged_value, conflict = _merge_field(field_name, source_entities)
+            merged_value, conflict = _merge_field(field_name, entity_class, source_entities)
             if merged_value is not None:
                 setattr(merged, field_name, merged_value)
             if conflict:
@@ -111,6 +129,7 @@ def merge(sources: list[tuple[DataSource, EntitySet]], conflicts_path: Path | No
 
 def _merge_field(
     field_name: str,
+    entity_class: type[TraversableEntity],
     source_entities: list[tuple[DataSource, TraversableEntity]],
 ) -> tuple[Any, MergeConflict | None]:
     """Merge a single field across sources.
@@ -135,7 +154,7 @@ def _merge_field(
     if field_name in _LIST_FIELDS:
         return _merge_list_field(values), None
 
-    # Priority-based: lower DataSource enum value = higher priority
+    # Default is priority-based: lower DataSource enum value = higher priority
     values.sort(key=lambda pair: pair[0].value)
     winner_source, winner_value = values[0]
 
@@ -147,15 +166,45 @@ def _merge_field(
     conflict = None
     unique_values = _unique_values([v for _, v in values])
     if len(unique_values) > 1:
+        # TODO: this is a bit messy, but per field strategies is also annoying
+        # luckily this is only one field at the moment: Region.is_historical
+        key = (entity_class, field_name)
+        strategy, preferred_source = _FIELD_TO_STRATEGY.get(key, (MergeStrategy.SOURCE_PRIORITY, None))
+        if strategy == MergeStrategy.SOURCE_PRIORITY:
+            pass  # this is the default anyway above
+        elif strategy == MergeStrategy.MANUAL:
+            for source, value in values:
+                if source == preferred_source:
+                    winner_value = value
+                    break
+            # uncomment for step by step manual resolution through the cli
+            # winner_source, winner_value = _manually_resolve_conflict(field_name, values)
+        elif strategy == MergeStrategy.MOST_RECENT:
+            raise NotImplementedError("Most recent resolution is not implemented yet!")
+        else:
+            raise ValueError(f"Merge strategy {strategy} is not known.")
+
         conflict = MergeConflict(
             entity_id=source_entities[0][1].id,
             field_name=field_name,
             values=[{"value": v, "source": s.name} for s, v in values],
             resolved_to=winner_value,
-            strategy="highest_priority",
+            strategy=strategy.value,
         )
 
     return winner_value, conflict
+
+
+def _manually_resolve_conflict(field_name: str, options: list[tuple[DataSource, Any]]) -> tuple[DataSource, Any]:
+    import click
+
+    click.echo(f"Conflict detected for: {field_name}")
+    for i, (source, val) in enumerate(options, 1):
+        click.echo(f"{i}) {source.name} -> {field_name}: {val}")
+
+    choices = [str(i) for i in range(1, len(options) + 1)]
+    choice_index = click.prompt("Select the winning value", type=click.Choice(choices), show_choices=True)
+    return options[int(choice_index) - 1]
 
 
 def _merge_list_field(values: list[tuple[DataSource, Any]]) -> list:
