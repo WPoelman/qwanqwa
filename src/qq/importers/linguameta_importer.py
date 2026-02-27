@@ -394,7 +394,7 @@ class LinguaMetaImporter(BaseImporter):
 
             region_id = f"region:{locale_code.lower()}"
             region = self.get_or_create_region(region_id)
-            region.country_code = locale_code
+            region.country_code = locale_code.upper()
             region.name = locale_name
             self.stats.entities_created += 1
 

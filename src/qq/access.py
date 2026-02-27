@@ -95,7 +95,7 @@ class Database:
         return self._id_conversion
 
     @classmethod
-    def load(cls, path: Path = DEFAULT_DB_PATH, names_path: Path | None = None) -> Database:
+    def load(cls, path: Path | str = DEFAULT_DB_PATH, names_path: Path | None = None) -> Database:
         """
         Load the database from disk.
 
@@ -105,6 +105,7 @@ class Database:
         """
         from qq.internal.storage import load_data
 
+        path = Path(path)
         store, resolver = load_data(path)
 
         if names_path is None:
@@ -124,6 +125,9 @@ class Database:
 
         Raises:
             KeyError: If not found
+
+        Warns:
+            DeprecatedCodeWarning: If the languoid is known to have deprecated codes
 
         Example:
             >>> db.get("nl")
@@ -147,8 +151,7 @@ class Database:
                 # TODO: be clearer about when something can be replaced (reason == merge) or when to trow an error/warn
                 #       (reason == split)
                 warnings.warn(
-                    f"Code '{code}' ({id_type.value}) is deprecated: {dep}.",
-                    DeprecatedCodeWarning,
+                    DeprecatedCodeWarning(f"Code '{code}' ({id_type.value}) is deprecated: {dep}."),
                     stacklevel=2,
                 )
             return entity

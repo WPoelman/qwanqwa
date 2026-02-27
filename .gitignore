@@ -163,7 +163,7 @@ cython_debug/
 
 .python-version
 .sources
-conflicts.json
+build-log/
 case-studies/latex-tables/output/
 case-studies/huggingface-audit/hf_metadata.json
 case-studies/huggingface-audit/output/

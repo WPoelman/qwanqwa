@@ -1,4 +1,5 @@
 from qq.data_model import (
+    ID_TYPE_TO_ATTR,
     DeprecatedCode,
     EndangermentStatus,
     EntityContainer,
@@ -346,7 +347,12 @@ class Languoid(TraversableEntity):
         return list(scripts)
 
     def __repr__(self) -> str:
-        return f"Languoid(({self.__dict__!r})"
+        _ids = ", ".join(
+            f'{attr}="{value}"'
+            for attr in ID_TYPE_TO_ATTR.values()
+            if (value := getattr(self, attr)) and value is not None
+        )
+        return f'Languoid(name="{self.name}", {_ids}, ...)'
 
 
 class Script(TraversableEntity):
@@ -365,6 +371,8 @@ class Script(TraversableEntity):
         self.iso_15924: str | None = iso_15924
         self.name: str | None = name
         self.full_name: str | None = full_name
+        # TODO: maybe this needs to be structured as in linguameta where it's locale/languoid specific
+        #       could also be through relations (like we have below)
         self.is_historical: bool = is_historical
 
     # TODO: add some multi hop queries to this, maybe script -> languoid -> region "all regions that use this script?"
@@ -392,7 +400,7 @@ class Script(TraversableEntity):
         return len(self._relations.get(RelationType.USED_BY_LANGUOID, []))
 
     def __repr__(self) -> str:
-        return f"Script({self.name or self.id}, code={self.iso_15924})"
+        return f'Script(name="{self.name or self.id}", iso_15924="{self.iso_15924}", ...)"'
 
 
 class GeographicRegion(TraversableEntity):
@@ -470,4 +478,9 @@ class GeographicRegion(TraversableEntity):
         return self._store.query(GeographicRegion, parent_country_code=self.country_code)
 
     def __repr__(self) -> str:
-        return f"GeographicRegion({self.name or self.id})"
+        _fields = ", ".join(
+            f'{attr}="{value}"'
+            for attr in ["country_code", "subdivision_code", "subdivision_type", "parent_country_code"]
+            if (value := getattr(self, attr)) and value is not None
+        )
+        return f'GeographicRegion(name="{self.name or self.id}", {_fields}, ...)'
