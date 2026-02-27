@@ -1,6 +1,8 @@
 """Data quality validation for the qwanqwa database."""
 
+import json
 import logging
+from pathlib import Path
 from typing import Any
 
 from qq.constants import LOG_SEP
@@ -18,8 +20,8 @@ class DataValidator:
         self.store = store
         self.resolver = resolver
 
-    def validate_all(self) -> dict[str, Any]:
-        """Run all validation checks and log results."""
+    def validate_all(self, output_path: Path | None = None) -> dict[str, Any]:
+        """Run all validation checks and log results. Optionally write to file."""
 
         logger.info("Running data validation...")
 
@@ -33,6 +35,8 @@ class DataValidator:
         }
 
         self._report_results(results)
+        if output_path:
+            self._write_report(results, output_path)
         return results
 
     def find_orphaned_entities(self) -> list[str]:
@@ -169,8 +173,6 @@ class DataValidator:
     def _report_results(self, results: dict) -> None:
         """Log a summary of validation results."""
 
-        # TODO: probably write this to a file, similar to merge conflicts
-
         logger.info(LOG_SEP)
         logger.info("Validation Results")
         logger.info(LOG_SEP)
@@ -198,3 +200,7 @@ class DataValidator:
         logger.info("Data Completeness:")
         for field, percentage in results["data_completeness"].items():
             logger.info(f"  {field}: {percentage:.1f}%")
+
+    def _write_report(self, results: dict, output_path: Path):
+        """Write a JSON file of validation results"""
+        output_path.write_text(json.dumps(results, indent=2, ensure_ascii=False))

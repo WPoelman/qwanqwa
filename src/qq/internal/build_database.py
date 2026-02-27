@@ -24,6 +24,10 @@ def build_database(
     logger.info("Building qwanqwa database")
     logger.info(LOG_SEP)
 
+    # Dir to store validation results, merge conflicts, etc.
+    build_log_dir = output_dir / "build-log"
+    build_log_dir.mkdir(exist_ok=True, parents=True)
+
     # Create shared entity resolver (for identity only)
     resolver = EntityResolver()
 
@@ -44,7 +48,7 @@ def build_database(
     # -- Merge phase
     # Combine all per-source EntitySets into the final DataStore.
     logger.info("Merging entity sets into final DataStore")
-    conflicts_file = output_dir / "conflicts.json"
+    conflicts_file = build_log_dir / "conflicts.json"
     store = merge(to_merge, conflicts_file)
 
     # Log entity resolution statistics
@@ -55,8 +59,9 @@ def build_database(
 
     logger.info("Running data validation...")
 
+    validation_file = build_log_dir / "validation-results.json"
     validator = DataValidator(store, resolver)
-    validator.validate_all()
+    validator.validate_all(validation_file)
 
     # Log final statistics
     logger.info("Import complete!")
@@ -84,5 +89,4 @@ def build_database(
     manager = DataManager(format)
     manager.save_dataset(store, output_path, resolver, name_data_dict)
 
-    logger.info("✓ Database built successfully!")
     return store, resolver
