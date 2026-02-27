@@ -60,6 +60,8 @@ _LIST_FIELDS = frozenset({"deprecated_codes"})
 
 # Fields where conflicts are expected and should not be recorded.
 # Name disagreements are irrelevant because multilingual names live in NameDataCache.
+# TODO: this might go wrong with multiple endonyms or multiple English names since these are on the languoid.
+#       need to investigate further..?
 _NO_CONFLICT_FIELDS = frozenset({"name"})
 
 # Entity class lookup by class name
