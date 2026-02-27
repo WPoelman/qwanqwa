@@ -150,7 +150,7 @@ class PycountryImporter(BaseImporter):
         region_id = f"region:{subdivision_code.lower()}"
         region = self.get_or_create_region(region_id)
         region.subdivision_code = subdivision_code
-        region.subdivision_type = data.get("type")
+        region.subdivision_type = data.get("type")  # TODO: enum?
         region.parent_country_code = parent_country_code
 
         if name := data.get("name"):
@@ -194,6 +194,8 @@ class PycountryImporter(BaseImporter):
             if iso_type := lang_data.get("type"):
                 languoid.status = LanguageStatus(iso_type)
             # ISO 639-2T codes are identical to ISO 639-3 alpha_3 codes
+            # TODO: maybe this is too aggressive since it's a subset?
+            #       probably better to import this directly
             self.resolver.register_alias(IdType.ISO_639_2T, alpha_3, canonical_id)
             if alpha_2 := lang_data.get("alpha_2"):
                 languoid.iso_639_1 = alpha_2
@@ -219,11 +221,8 @@ class PycountryImporter(BaseImporter):
             languoid.name = lang_data.get("name")
 
             if name := lang_data.get("name"):
-                self._name_data[languoid.id] = [
-                    # "en" is a valid BCP-47 code; resolve_locale_codes() in build_database.py
-                    # converts it to the canonical ID for English before saving.
-                    NameEntry(name=name, bcp_47_code="en", is_canonical=True)
-                ]
+                # see above
+                self._name_data[languoid.id] = [NameEntry(name=name, bcp_47_code="en", is_canonical=True)]
 
             # ISO 639-2T codes are identical to ISO 639-3 alpha_3 codes
             self.resolver.register_alias(IdType.ISO_639_2T, alpha_3, languoid.id)
@@ -257,11 +256,8 @@ class PycountryImporter(BaseImporter):
             languoid.level = LanguoidLevel.FAMILY
 
             if name:
-                self._name_data[languoid.id] = [
-                    # "en" is a valid BCP-47 code; resolve_locale_codes() in build_database.py
-                    # converts it to the canonical ID for English before saving.
-                    NameEntry(name=name, bcp_47_code="en", is_canonical=True)
-                ]
+                # see above
+                self._name_data[languoid.id] = [NameEntry(name=name, bcp_47_code="en", is_canonical=True)]
 
             created += 1
 

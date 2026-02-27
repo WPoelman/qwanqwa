@@ -371,6 +371,8 @@ class Script(TraversableEntity):
         self.iso_15924: str | None = iso_15924
         self.name: str | None = name
         self.full_name: str | None = full_name
+        # TODO: maybe this needs to be structured as in linguameta where it's locale/languoid specific
+        #       could also be through relations (like we have below)
         self.is_historical: bool = is_historical
 
     # TODO: add some multi hop queries to this, maybe script -> languoid -> region "all regions that use this script?"
@@ -398,7 +400,7 @@ class Script(TraversableEntity):
         return len(self._relations.get(RelationType.USED_BY_LANGUOID, []))
 
     def __repr__(self) -> str:
-        return f'Script(name="{self.name or self.id}", iso_15924="{self.iso_15924}, ...)"'
+        return f'Script(name="{self.name or self.id}", iso_15924="{self.iso_15924}", ...)"'
 
 
 class GeographicRegion(TraversableEntity):
