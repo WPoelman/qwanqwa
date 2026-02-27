@@ -42,10 +42,10 @@ print()
 # Explore region hierarchy (subdivisions)
 print("Region hierarchy (subdivisions):")
 usa = db.get_region("US")
-print(f"Country: {usa.name} ({usa.country_code})")
+print(f"Country: {usa.name} ({usa.country_code}) {usa.is_historical}")
 if usa.subdivisions:
     print(f"  Subdivisions: {len(usa.subdivisions)}")
-    for sub in usa.subdivisions[:5]:
+    for sub in sorted(usa.subdivisions, key=lambda s: s.name)[:5]:
         print(f"    - {sub.name} ({sub.subdivision_code})")
     if len(usa.subdivisions) > 5:
         print(f"    ... and {len(usa.subdivisions) - 5} more")
