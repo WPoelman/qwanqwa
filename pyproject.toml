@@ -98,4 +98,5 @@ dev = [
     "click>=8.0.0",
     "pandas>=2.2.2",
     "requests>=2.25.0",
+    "ipykernel>=7.2.0",
 ]

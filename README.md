@@ -4,6 +4,8 @@ A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geo
 
 **Name**: **Q**wan**q**wa is a phonetic spelling of 'ቋንቋ', which means *language* in Amharic; `qq` is short to type.
 
+> Demo video: https://youtu.be/D9MmGCmJeNg
+
 ## Features
 
 - **Identifiers**: BCP-47, ISO 639-1, ISO 639-3, ISO 639-2B, ISO 639-2T, ISO 639-5, Glottocode, Wikidata ID, Wikipedia ID, NLLB-style codes
