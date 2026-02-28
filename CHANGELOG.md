@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - NLLB-style codes support improvements
 - Additional convenience methods on Languoid
 
+## [1.0.4] - 2026-02-28
+
+### Added
+- improved logging and reporting during database build
+- added option to manually resolve merge conflict
+- separate data and software license
+
+### Fixed
+- improved normalization of linguameta import
+- trust pycountry more than linguameta for region related imports
+
 ## [1.0.3] - 2026-02-19
 
 ### Fixed
