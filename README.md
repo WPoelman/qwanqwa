@@ -50,7 +50,7 @@ dutch2 = db.get("nld", id_type=IdType.ISO_639_3)
 dutch3 = db.get("dutc1256", id_type=IdType.GLOTTOCODE)
 dutch4 = db.guess("dut") # guessing works too
 # This will all resolve to the same languoid
-assert dutch.id == dutch2.id == dutch3.id == dutch4.id
+assert dutch == dutch2 == dutch3 == dutch4
 
 # Search by name
 results = db.search("Chinese")
