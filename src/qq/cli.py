@@ -133,7 +133,7 @@ def get(code, id_type):
 @cli.command()
 @click.argument("query")
 def search(query):
-    """Search for languages by name"""
+    """Search for languages by name or identifier"""
     access = _get_access()
     results = access.search(query, limit=20)
 
