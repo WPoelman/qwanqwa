@@ -188,6 +188,14 @@ class Database:
     def convert(self, code: str, type_a: IdType, type_b: IdType | None = None) -> str | None:
         """
         Convert a language code from one identifier type to another.
+        If only `type_a` is provided, that is considered the target,
+        regardless of the input type. If both `type_a` and `type_b` are provided,
+        this is considered as explicitly going from a to b, so this includes a
+        check that a actually belongs to that type.
+
+        Unlike `get`, conversion is silent for deprecated codes. If a
+        deprecated/alias code resolves to a replacement, ``convert()`` returns
+        the normalized target identifier without issuing a ``DeprecatedCodeWarning``.
 
         Returns:
             Converted code, or None if not found
@@ -195,15 +203,15 @@ class Database:
         Example:
             >>> db.convert("nl", IdType.BCP_47, IdType.ISO_639_3)
             'nld'
+            >>> db.convert("mol", IdType.ISO_639_3)
+            'ron'
         """
         # This is a bit messy since the signature flips, I want to keep the order of "from" and "to", see the overloads
         if type_b is None:
             to_type = type_a
             from_type = None
-            lang = self.guess(code)
-            # find first non-empty
-            for id_type, attr in ID_TYPE_TO_ATTR.items():
-                if getattr(lang, attr) == code:
+            for id_type in IdType:
+                if self.resolver.resolve(id_type, code) is not None:
                     from_type = id_type
                     break
             if from_type is None:
@@ -238,34 +246,67 @@ class Database:
 
     def search(self, query: str, limit: int = 20) -> list[Languoid]:
         """
-        Search for languoids by name (case-insensitive partial match).
+        Search for languoids by identifier, name, or endonym.
 
-        Searches both the primary name and endonym.
+        Ranking priority is:
+        1. Exact identifier matches
+        2. Exact name/endonym matches
+        3. Prefix name/endonym matches
+        4. Substring name/endonym matches
 
         Example:
             >>> db.search("dutch")
             [Languoid(Dutch), Languoid(Middle Dutch), ...]
+            >>> db.search("nl")
+            [Languoid(Dutch), ...]
         """
         from qq.interface import Languoid
 
-        if not hasattr(self, "_name_index"):
-            self._build_name_index()
+        if query == "":
+            return self.store.all_of_type(Languoid)[:limit]
 
         query_lower = query.lower()
-        results = []
-        seen: set[str] = set()
 
-        for name_lower, entity_ids in self._name_index.items():
-            if query_lower in name_lower:
-                for entity_id in entity_ids:
-                    if entity_id not in seen:
-                        entity = self.store.get(entity_id)
-                        if entity and isinstance(entity, Languoid):
-                            results.append(entity)
-                            seen.add(entity_id)
-                            if len(results) >= limit:
-                                return results
+        scored: dict[str, tuple[int, str, str]] = {}
 
+        for id_type in IdType:
+            canonical_id = self.resolver.resolve(id_type, query)
+            if canonical_id is None:
+                continue
+            entity = self.store.get(canonical_id)
+            if entity and isinstance(entity, Languoid):
+                scored[entity.id] = (0, entity.name or entity.bcp_47 or entity.id, entity.id)
+
+        for lang in self.store.all_of_type(Languoid):
+            best_score = scored.get(lang.id)
+            for candidate in [lang.name, lang.endonym]:
+                if not candidate:
+                    continue
+                candidate_lower = candidate.lower()
+                if candidate_lower == query_lower:
+                    score = 1
+                elif candidate_lower.startswith(query_lower):
+                    score = 2
+                elif query_lower in candidate_lower:
+                    score = 3
+                else:
+                    continue
+
+                candidate_rank = (score, lang.name or lang.bcp_47 or lang.id, lang.id)
+                if best_score is None or candidate_rank < best_score:
+                    best_score = candidate_rank
+
+            if best_score is not None:
+                scored[lang.id] = best_score
+
+        ranked_ids = sorted(scored, key=scored.__getitem__)
+        results: list[Languoid] = []
+        for entity_id in ranked_ids:
+            entity = self.store.get(entity_id)
+            if entity and isinstance(entity, Languoid):
+                results.append(entity)
+                if len(results) >= limit:
+                    break
         return results
 
     def is_deprecated(self, code: str, id_type: IdType | None = None) -> bool:

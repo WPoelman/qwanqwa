@@ -93,6 +93,26 @@ class TestConvert:
         result = access.convert("zzz", IdType.BCP_47, IdType.ISO_639_3)
         assert result is None
 
+    def test_convert_deprecated_alias_to_primary_identifier(self, access):
+        result = access.convert("mol", IdType.ISO_639_3)
+        assert result == "ron"
+
+    def test_convert_deprecated_alias_with_explicit_source_type(self, access):
+        result = access.convert("mol", IdType.ISO_639_3, IdType.ISO_639_3)
+        assert result == "ron"
+
+    def test_convert_alias_with_inferred_source_type_in_minimal_setup(self):
+        from qq.internal.data_store import DataStore
+
+        store = DataStore()
+        resolver = EntityResolver()
+        lang_id = resolver.find_or_create_canonical_id({IdType.ISO_639_3: "ron", IdType.BCP_47: "ro"})
+        resolver.register_alias(IdType.ISO_639_3, "mol", lang_id)
+        store.add(Languoid(lang_id, store, name="Romanian", iso_639_3="ron", bcp_47="ro"))
+
+        access = Database(store, resolver)
+        assert access.convert("mol", IdType.BCP_47) == "ro"
+
 
 class TestIdConversion:
     def test_convert_via_id_conversion(self, access):
@@ -122,6 +142,50 @@ class TestSearch:
     def test_search_limit(self, access):
         results = access.search("", limit=2)
         assert len(results) <= 2
+
+    def test_search_exact_name_ranks_ahead_of_partial_matches(self):
+        from qq.internal.data_store import DataStore
+
+        store = DataStore()
+        resolver = EntityResolver()
+
+        english_id = resolver.find_or_create_canonical_id({IdType.BCP_47: "en"})
+        store.add(Languoid(english_id, store, name="English", bcp_47="en"))
+
+        creole_id = resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "west1234"})
+        store.add(Languoid(creole_id, store, name="West African Creole English", glottocode="west1234"))
+
+        northern_id = resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "nort1234"})
+        store.add(Languoid(northern_id, store, name="Northern English", glottocode="nort1234"))
+
+        search_access = Database(store, resolver)
+        results = search_access.search("English")
+
+        assert results
+        assert results[0].name == "English"
+
+    def test_search_exact_identifier_match_returns_languoid_first(self):
+        from qq.internal.data_store import DataStore
+
+        store = DataStore()
+        resolver = EntityResolver()
+
+        english_id = resolver.find_or_create_canonical_id({IdType.BCP_47: "en"})
+        store.add(Languoid(english_id, store, name="English", bcp_47="en"))
+
+        noise_id = resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "nyen1255"})
+        store.add(Languoid(noise_id, store, name="Nyeng", glottocode="nyen1255"))
+
+        search_access = Database(store, resolver)
+        results = search_access.search("en")
+
+        assert results
+        assert results[0].name == "English"
+
+    def test_search_identifier_lookup_works_with_real_fixture_data(self, access):
+        results = access.search("nl")
+        assert results
+        assert results[0].name == "Dutch"
 
 
 class TestDeprecated:

@@ -120,7 +120,7 @@ def get(code, id_type):
     if lang.endonym:
         click.echo(f"\nEndonym: {lang.endonym}")
 
-    if lang.speaker_count:
+    if lang.speaker_count is not None:
         click.echo(f"\nSpeakers: {lang.speaker_count:,}")
 
     if lang.script_codes:
@@ -133,7 +133,7 @@ def get(code, id_type):
 @cli.command()
 @click.argument("query")
 def search(query):
-    """Search for languages by name"""
+    """Search for languages by name or identifier"""
     access = _get_access()
     results = access.search(query, limit=20)
 

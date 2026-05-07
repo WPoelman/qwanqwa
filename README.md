@@ -56,6 +56,10 @@ assert dutch == dutch2 == dutch3 == dutch4
 results = db.search("Chinese")
 for lang in results:
     print(f"{lang.name} ({lang.glottocode})")
+
+# Search also accepts identifiers and ranks them higher
+db.search("nl")[0].name   # "Dutch"
+db.search("English")[0].bcp_47  # "en"
 ```
 
 **Important**: `qq` makes a strict distinction between `None` (*don't know*) and `False` (*it is not the case*). When checking boolean attributes, prefer explicit checks over truthiness: use `if script.is_canonical is None:` rather than `if not script.is_canonical:`.
@@ -109,11 +113,15 @@ db.convert("nld", IdType.ISO_639_3, IdType.GLOTTOCODE) # "dutc1256"
 # Useful for normalizing multiple standards to one
 db.convert("nl", IdType.ISO_639_3)    # "nld"
 db.convert("dutc1256", IdType.ISO_639_3) # "nld"
+db.convert("mol", IdType.ISO_639_3)   # "ron" (deprecated alias normalized silently)
 
 # NLLB-style codes
 dutch.nllb_codes()              # ["nld_Latn"]
 dutch.nllb_codes(use_bcp_47=True) # ["nl_Latn"]
 ```
+
+`get()` and `guess()` warn when you use a deprecated code that still resolves to a replacement.
+`convert()` does not; it silently normalizes deprecated aliases to the requested target identifier.
 
 ## Multilingual Names
 
@@ -133,8 +141,9 @@ dutch.endonym  # "Nederlands"
 qq get nl
 qq get nld --type ISO_639_3
 
-# Search by name
+# Search by name or identifier
 qq search Dutch
+qq search nl
 
 # Database statistics and validation
 qq validate

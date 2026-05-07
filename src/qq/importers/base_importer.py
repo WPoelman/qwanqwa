@@ -57,6 +57,54 @@ class EntitySet:
         """Get all entities of a specific type."""
         return cast(list[T], [e for e in self._entities.values() if isinstance(e, entity_type)])
 
+    def merge_entity_ids(self, source_id: str, target_id: str) -> TraversableEntity | None:
+        """Collapse one entity ID into another and rewrite relations."""
+        if source_id == target_id:
+            return self.get(target_id)
+
+        source = self._entities.get(source_id)
+        target = self._entities.get(target_id)
+
+        if source is None:
+            return target
+
+        if target is None:
+            del self._entities[source_id]
+            source.id = target_id
+            self._entities[target_id] = source
+            self._rewrite_relation_targets(source_id, target_id)
+            return source
+
+        if type(source) is not type(target):
+            raise TypeError(f"Cannot merge {type(source).__name__} into {type(target).__name__}")
+
+        for attr, value in source.__dict__.items():
+            if attr.startswith("_") or attr == "id":
+                continue
+            if getattr(target, attr, None) is None and value is not None:
+                setattr(target, attr, value)
+
+        for rel_type, relations in source._relations.items():
+            existing = target._relations.setdefault(rel_type, [])
+            existing_keys = {(rel.target_id, tuple(sorted(rel.metadata.items()))) for rel in existing}
+            for rel in relations:
+                key = (rel.target_id, tuple(sorted(rel.metadata.items())))
+                if key not in existing_keys:
+                    existing.append(rel)
+                    existing_keys.add(key)
+
+        del self._entities[source_id]
+        self._rewrite_relation_targets(source_id, target_id)
+        return target
+
+    def _rewrite_relation_targets(self, source_id: str, target_id: str) -> None:
+        """Rewrite relation targets after an entity ID changes."""
+        for entity in self._entities.values():
+            for relations in entity._relations.values():
+                for rel in relations:
+                    if rel.target_id == source_id:
+                        rel.target_id = target_id
+
 
 class BaseImporter(ABC):
     """
@@ -89,7 +137,15 @@ class BaseImporter(ABC):
             identifiers: Dict of identifier types and values
                          e.g., {IdType.ISO_639_3: 'nld', IdType.GLOTTOCODE: 'dutc1256'}
         """
+        previous_ids = {
+            canonical_id
+            for id_type, value in identifiers.items()
+            if (canonical_id := self.resolver.resolve(id_type, value)) is not None
+        }
         canonical_id = self.resolver.find_or_create_canonical_id(identifiers)
+        for previous_id in previous_ids:
+            if previous_id != canonical_id:
+                self.entity_set.merge_entity_ids(previous_id, canonical_id)
         identity = self.resolver.get_identity(canonical_id)
         if not identity:
             raise ValueError("This should not be possible. Cannot find identity for Entity.")

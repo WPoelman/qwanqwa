@@ -1,5 +1,5 @@
 from qq.data_model import NameEntry
-from qq.internal.names_merge import merge_name_data
+from qq.internal.names_merge import merge_name_data, remap_name_data_keys
 
 
 def _entry(name, bcp_47_code="en", is_canonical=False):
@@ -94,3 +94,17 @@ class TestMergeNameData:
         }
         result = merge_name_data([source])
         assert len(result["lang:001"]) == 2
+
+    def test_remap_name_data_keys_merges_stale_ids(self):
+        source = {
+            "lang:001": [_entry("Dutch", bcp_47_code="en", is_canonical=True)],
+            "lang:999": [
+                _entry("Dutch", bcp_47_code="en", is_canonical=False),
+                _entry("Nederlands", bcp_47_code="nl", is_canonical=True),
+            ],
+        }
+        result = remap_name_data_keys(source, {"lang:999": "lang:001"})
+        assert set(result) == {"lang:001"}
+        assert len(result["lang:001"]) == 2
+        en_entry = [e for e in result["lang:001"] if e.bcp_47_code == "en"][0]
+        assert en_entry.is_canonical is True

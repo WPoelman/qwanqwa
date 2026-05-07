@@ -100,6 +100,19 @@ class TestDataValidator:
         # Both have bcp_47 -> 100%
         assert completeness["has_bcp_47"] == pytest.approx(100.0)
 
+    def test_check_data_completeness_counts_zero_speakers_as_present(self):
+        store = DataStore()
+        resolver = EntityResolver()
+
+        lang_id = resolver.find_or_create_canonical_id({IdType.BCP_47: "xx"})
+        lang = Languoid(lang_id, store, name="Extinctish", bcp_47="xx", speaker_count=0)
+        store.add(lang)
+
+        validator = make_validator(store, resolver)
+        completeness = validator.check_data_completeness()
+
+        assert completeness["has_speaker_count"] == pytest.approx(100.0)
+
     def test_validate_all_returns_structure(self):
         """validate_all() should return a dict with all expected keys without crashing."""
         store, resolver = basic_store_and_resolver()

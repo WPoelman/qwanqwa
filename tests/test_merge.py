@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from qq.data_model import IdType, LanguageScope, LanguoidLevel, RelationType
+from qq.importers.base_importer import EntitySet
 from qq.importers.glotscript_importer import GlotscriptImporter
 from qq.importers.glottolog_importer import GlottologImporter
 from qq.importers.linguameta_importer import LinguaMetaImporter
@@ -13,6 +14,7 @@ from qq.importers.sil_importer import SILImporter
 from qq.importers.wikipedia_importer import WikipediaImporter
 from qq.interface import GeographicRegion, Languoid, Script
 from qq.internal.entity_resolution import EntityResolver
+from qq.internal.build_database import _reconcile_merged_languoids
 from qq.internal.merge import merge
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -162,3 +164,41 @@ class TestMergeIntegration:
         counts = Counter(target_ids)
         for target_id, count in counts.items():
             assert count <= 3, f"Relation to {target_id} appears {count} times"
+
+
+def test_reconcile_merged_languoids_updates_earlier_entity_sets():
+    resolver = EntityResolver()
+
+    first_set = EntitySet()
+    second_set = EntitySet()
+
+    first_id = resolver.find_or_create_canonical_id({IdType.BCP_47: "x-a"})
+    first = Languoid(first_id, first_set, bcp_47="x-a", name="First")
+    first_set.add(first)
+
+    second_id = resolver.find_or_create_canonical_id({IdType.ISO_639_3: "xaa"})
+    second = Languoid(second_id, second_set, iso_639_3="xaa", endonym="Second")
+    second_set.add(second)
+
+    script = Script("script:latn", first_set, iso_15924="Latn")
+    script.add_relation(RelationType.USED_BY_LANGUOID, first_id)
+    first_set.add(script)
+
+    merged_id = resolver.find_or_create_canonical_id({IdType.BCP_47: "x-a", IdType.ISO_639_3: "xaa"})
+    assert merged_id == first_id
+    assert resolver.get_identity(second_id) is None
+
+    reconciled = _reconcile_merged_languoids(
+        [
+            (LinguaMetaImporter.source, first_set),
+            (GlottologImporter.source, second_set),
+        ],
+        resolver,
+    )
+
+    assert reconciled == {second_id: merged_id}
+    assert first_set.get(first_id) is not None
+    assert first_set.get(second_id) is None
+    assert second_set.get(merged_id) is not None
+    assert second_set.get(second_id) is None
+    assert [rel.target_id for rel in script._relations[RelationType.USED_BY_LANGUOID]] == [merged_id]
