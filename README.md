@@ -109,11 +109,15 @@ db.convert("nld", IdType.ISO_639_3, IdType.GLOTTOCODE) # "dutc1256"
 # Useful for normalizing multiple standards to one
 db.convert("nl", IdType.ISO_639_3)    # "nld"
 db.convert("dutc1256", IdType.ISO_639_3) # "nld"
+db.convert("mol", IdType.ISO_639_3)   # "ron" (deprecated alias normalized silently)
 
 # NLLB-style codes
 dutch.nllb_codes()              # ["nld_Latn"]
 dutch.nllb_codes(use_bcp_47=True) # ["nl_Latn"]
 ```
+
+`get()` and `guess()` warn when you use a deprecated code that still resolves to a replacement.
+`convert()` does not; it silently normalizes deprecated aliases to the requested target identifier.
 
 ## Multilingual Names
 

@@ -188,6 +188,14 @@ class Database:
     def convert(self, code: str, type_a: IdType, type_b: IdType | None = None) -> str | None:
         """
         Convert a language code from one identifier type to another.
+        If only `type_a` is provided, that is considered the target,
+        regardless of the input type. If both `type_a` and `type_b` are provided,
+        this is considered as explicitly going from a to b, so this includes a
+        check that a actually belongs to that type.
+
+        Unlike `get`, conversion is silent for deprecated codes. If a
+        deprecated/alias code resolves to a replacement, ``convert()`` returns
+        the normalized target identifier without issuing a ``DeprecatedCodeWarning``.
 
         Returns:
             Converted code, or None if not found
@@ -195,15 +203,15 @@ class Database:
         Example:
             >>> db.convert("nl", IdType.BCP_47, IdType.ISO_639_3)
             'nld'
+            >>> db.convert("mol", IdType.ISO_639_3)
+            'ron'
         """
         # This is a bit messy since the signature flips, I want to keep the order of "from" and "to", see the overloads
         if type_b is None:
             to_type = type_a
             from_type = None
-            lang = self.guess(code)
-            # find first non-empty
-            for id_type, attr in ID_TYPE_TO_ATTR.items():
-                if getattr(lang, attr) == code:
+            for id_type in IdType:
+                if self.resolver.resolve(id_type, code) is not None:
                     from_type = id_type
                     break
             if from_type is None:

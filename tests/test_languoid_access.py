@@ -93,6 +93,26 @@ class TestConvert:
         result = access.convert("zzz", IdType.BCP_47, IdType.ISO_639_3)
         assert result is None
 
+    def test_convert_deprecated_alias_to_primary_identifier(self, access):
+        result = access.convert("mol", IdType.ISO_639_3)
+        assert result == "ron"
+
+    def test_convert_deprecated_alias_with_explicit_source_type(self, access):
+        result = access.convert("mol", IdType.ISO_639_3, IdType.ISO_639_3)
+        assert result == "ron"
+
+    def test_convert_alias_with_inferred_source_type_in_minimal_setup(self):
+        from qq.internal.data_store import DataStore
+
+        store = DataStore()
+        resolver = EntityResolver()
+        lang_id = resolver.find_or_create_canonical_id({IdType.ISO_639_3: "ron", IdType.BCP_47: "ro"})
+        resolver.register_alias(IdType.ISO_639_3, "mol", lang_id)
+        store.add(Languoid(lang_id, store, name="Romanian", iso_639_3="ron", bcp_47="ro"))
+
+        access = Database(store, resolver)
+        assert access.convert("mol", IdType.BCP_47) == "ro"
+
 
 class TestIdConversion:
     def test_convert_via_id_conversion(self, access):
