@@ -3,14 +3,51 @@ from pathlib import Path
 from typing import Literal
 
 from qq.constants import LOG_SEP
+from qq.data_model import ID_TYPE_TO_ATTR
+from qq.importers.base_importer import DataSource, EntitySet
+from qq.interface import Languoid
 from qq.internal.entity_resolution import EntityResolver
 from qq.internal.merge import merge
-from qq.internal.names_merge import merge_name_data, resolve_locale_codes
+from qq.internal.names_merge import merge_name_data, remap_name_data_keys, resolve_locale_codes
 from qq.internal.storage import DataManager
 from qq.internal.validation import DataValidator
 from qq.sources.source_config import SourceConfig
 
 logger = logging.getLogger(__name__)
+
+
+def _reconcile_merged_languoids(
+    sources: list[tuple[DataSource, EntitySet]], resolver: EntityResolver
+) -> dict[str, str]:
+    """Rewrite stale languoid IDs in importer entity sets after resolver merges."""
+    reconciled: dict[str, str] = {}
+
+    for _source, entity_set in sources:
+        stale_ids = [
+            lang.id for lang in entity_set.entities_of_type(Languoid) if resolver.get_identity(lang.id) is None
+        ]
+        for stale_id in stale_ids:
+            languoid = entity_set.get(stale_id)
+            if not isinstance(languoid, Languoid):
+                continue
+
+            target_id = None
+            for id_type, attr_name in ID_TYPE_TO_ATTR.items():
+                value = getattr(languoid, attr_name, None)
+                if not value:
+                    continue
+                resolved_id = resolver.resolve(id_type, value)
+                if resolved_id is not None:
+                    target_id = resolved_id
+                    break
+
+            if target_id is None or target_id == stale_id:
+                continue
+
+            entity_set.merge_entity_ids(stale_id, target_id)
+            reconciled[stale_id] = target_id
+
+    return reconciled
 
 
 def build_database(
@@ -47,6 +84,15 @@ def build_database(
 
     # -- Merge phase
     # Combine all per-source EntitySets into the final DataStore.
+    reconciled = _reconcile_merged_languoids(to_merge, resolver)
+    if reconciled:
+        logger.info(f"Reconciled {len(reconciled)} stale languoid IDs across importer entity sets")
+        for imp in instances:
+            if hasattr(imp, "name_data") and imp.name_data:
+                remapped = remap_name_data_keys(imp.name_data, reconciled)
+                imp.name_data.clear()
+                imp.name_data.update(remapped)
+
     logger.info("Merging entity sets into final DataStore")
     conflicts_file = build_log_dir / "conflicts.json"
     store = merge(to_merge, conflicts_file)

@@ -33,6 +33,22 @@ def merge_name_data(all_name_data: list[dict[str, list[NameEntry]]]) -> dict[str
     return merged
 
 
+def remap_name_data_keys(
+    name_data_dict: dict[str, list[NameEntry]], canonical_id_updates: dict[str, str]
+) -> dict[str, list[NameEntry]]:
+    """Rewrite stale languoid IDs in name-data keys and merge duplicates."""
+    remapped: dict[str, list[NameEntry]] = {}
+
+    for canonical_id, entries in name_data_dict.items():
+        target_id = canonical_id_updates.get(canonical_id, canonical_id)
+        remapped.setdefault(target_id, []).extend(entries)
+
+    for canonical_id, entries in remapped.items():
+        remapped[canonical_id] = _deduplicate_entries(entries)
+
+    return remapped
+
+
 def resolve_locale_codes(name_data_dict: dict[str, list[NameEntry]], resolver) -> dict[str, list[NameEntry]]:
     """Resolve BCP-47 locale codes to canonical IDs in name data entries.
 

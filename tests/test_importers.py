@@ -13,7 +13,8 @@ from qq.data_model import (
     LanguoidLevel,
     RelationType,
 )
-from qq.importers.base_importer import EntitySet
+from qq.data_model import DataSource
+from qq.importers.base_importer import BaseImporter, EntitySet
 from qq.importers.glotscript_importer import GlotscriptImporter
 from qq.importers.glottolog_importer import GlottologImporter
 from qq.importers.linguameta_importer import LinguaMetaImporter
@@ -30,6 +31,13 @@ FIXTURES = Path(__file__).parent / "fixtures"
 @pytest.fixture
 def resolver():
     return EntityResolver()
+
+
+class DummyImporter(BaseImporter):
+    source = DataSource.GLOTTOLOG
+
+    def import_data(self, data_path: Path) -> None:
+        raise NotImplementedError
 
 
 class TestBaseImporter:
@@ -86,6 +94,32 @@ class TestBaseImporter:
 
         bwd = b._relations[RelationType.LANGUOIDS_IN_REGION]
         assert bwd[0].metadata == {"is_official": True, "speaker_count": 5000}
+
+    def test_get_or_create_languoid_reconciles_merged_canonical_ids(self, resolver):
+        importer = DummyImporter(resolver)
+
+        first = importer.get_or_create_languoid({IdType.BCP_47: "x-a"})
+        first.name = "First Name"
+        first.add_relation(RelationType.USES_SCRIPT, "script:latn", source="first")
+
+        second = importer.get_or_create_languoid({IdType.ISO_639_3: "xaa"})
+        second.endonym = "Second Name"
+
+        script = Script("script:latn", importer.entity_set, iso_15924="Latn")
+        script.add_relation(RelationType.USED_BY_LANGUOID, second.id, source="second")
+        importer.entity_set.add(script)
+
+        merged = importer.get_or_create_languoid({IdType.BCP_47: "x-a", IdType.ISO_639_3: "xaa"})
+
+        assert merged.id == first.id
+        assert merged is importer.entity_set.get(first.id)
+        assert importer.entity_set.get(second.id) is None
+        assert len(importer.entity_set.entities_of_type(Languoid)) == 1
+        assert merged.bcp_47 == "x-a"
+        assert merged.iso_639_3 == "xaa"
+        assert merged.name == "First Name"
+        assert merged.endonym == "Second Name"
+        assert [rel.target_id for rel in script._relations[RelationType.USED_BY_LANGUOID]] == [merged.id]
 
 
 class TestEntitySet:
