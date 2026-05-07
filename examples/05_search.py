@@ -2,7 +2,7 @@
 Searching for Languoids and other entities
 
 This example demonstrates:
-- Searching by name
+- Searching by name or identifier
 - Filtering results
 - Finding languages by properties
 """
@@ -11,7 +11,7 @@ from qq import Database, Languoid
 
 db = Database.load()
 
-# Basic name search
+# Basic ranked search
 print("Searching by name:")
 print()
 
@@ -21,11 +21,18 @@ for lang in results:
     print(f"  - {lang.name} ({lang.iso_639_3 or lang.glottocode})")
 print()
 
+# Identifier lookup is part of search too
+print("Searching by identifier:")
+results = db.search("nl", limit=5)
+for lang in results:
+    print(f"  - {lang.name} ({lang.bcp_47 or lang.iso_639_3 or lang.glottocode})")
+print()
+
 # Search with different queries
 print("Searching for 'Arabic' variants:")
 results = db.search("Arabic", limit=15)
 for lang in results[:10]:
-    speakers = f"{lang.speaker_count:,}" if lang.speaker_count else "Unknown"
+    speakers = f"{lang.speaker_count:,}" if lang.speaker_count is not None else "Unknown"
     print(f"  - {lang.name} ({lang.iso_639_3 or lang.glottocode}) - Speakers: {speakers}")
 print()
 
