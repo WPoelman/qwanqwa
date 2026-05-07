@@ -159,7 +159,7 @@ class DataValidator:
                 if identity.get_identifier(IdType.BCP_47):
                     counts["has_bcp_47"] += 1
 
-            if entity.speaker_count:
+            if entity.speaker_count is not None:
                 counts["has_speaker_count"] += 1
             if entity.scripts:
                 counts["has_scripts"] += 1
