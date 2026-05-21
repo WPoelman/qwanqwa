@@ -5,6 +5,8 @@ A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geo
 **Name**: **Q**wan**q**wa is a phonetic spelling of 'ቋንቋ', which means *language* in Amharic; `qq` is short to type.
 
 > [!NOTE]
+> Explore in your browser: https://wesselpoelman.nl/qq/
+>
 > Demo video: https://youtu.be/D9MmGCmJeNg
 >
 > Paper (pre-print): https://arxiv.org/abs/2603.00620
