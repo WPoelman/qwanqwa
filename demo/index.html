@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>QQ Explorer</title>
+    <link rel="stylesheet" href="./app.css">
+  </head>
+  <body>
+    <div class="page">
+      <aside class="site-sidebar">
+        <div class="site-title-wrap">
+          <div class="site-title">QQ</div>
+        </div>
+        <nav class="demo-nav" aria-label="Demo navigation">
+          <ul class="demo-menu">
+            <li><a href="../">Home</a></li>
+            <li><a href="https://github.com/WPoelman/qq" target="_blank" rel="noreferrer noopener">GitHub ↗</a></li>
+            <li><a href="https://pypi.org/project/qwanqwa/" target="_blank" rel="noreferrer noopener">PyPI ↗</a></li>
+          </ul>
+        </nav>
+      </aside>
+
+      <div class="page-main">
+      <details class="intro-panel">
+        <summary>About this explorer</summary>
+        <div class="intro-copy">
+          <p>Qwanqwa (phonetic spelling of ቋንቋ, QQ for short) is a language metadata toolkit for NLP: identifiers, scripts, speakers, geographic data, and traversable relationships across languoids, scripts, and regions.</p>
+          <p>In QQ, language-like entities are called <a href="http://www.glottopedia.de/index.php/Languoid" target="_blank" rel="noreferrer noopener"><em>languoids</em> ↗</a>: this includes dialects, macro-languages, and language families, not just individual languages. Coverage differs across entities.</p>
+          <p>You can search for languoids, scripts, and regions, inspect their properties, copy values, and explore related entities in the graph.</p>
+          <p>We combine and normalize data from the sources listed below. Properties include:</p>
+          <ul>
+            <li>Identifiers such as BCP-47, ISO 639, Glottocode, Wikidata, and related code systems</li>
+            <li>Multilingual names, speaker counts, endangerment data, scripts, and geographic coverage</li>
+            <li>Traversable relationships across language families, scripts, and regions</li>
+            <li>And more! See the <a href="https://github.com/WPoelman/qq" target="_blank" rel="noreferrer noopener">GitHub repo ↗</a> and the <a href="https://pypi.org/project/qwanqwa/" target="_blank" rel="noreferrer noopener">Python package ↗</a> for more complete programmatic access.</li>
+          </ul>
+          <div class="stats" id="stats"></div>
+          <div class="intro-sources" id="intro-sources"></div>
+        </div>
+      </details>
+
+      <section class="search-panel">
+        <label class="search-label" for="search">Search</label>
+        <input id="search" class="search-input" type="search" autocomplete="off" spellcheck="false" placeholder="Dutch, Latn, NL, dutc1256, Nederlands ...">
+        <div class="search-results" id="search-results" aria-live="polite"></div>
+        <div class="recent-trail recent-trail-below" id="recent-trail"></div>
+      </section>
+
+      <main class="layout">
+        <section class="entity-panel">
+          <div class="entity-header">
+            <p class="entity-type" id="entity-type"></p>
+            <h1 class="entity-name" id="entity-name"></h1>
+            <p class="entity-subtitle" id="entity-subtitle"></p>
+          </div>
+          <div class="entity-warning" id="entity-warning"></div>
+          <div class="properties" id="properties"></div>
+        </section>
+
+        <aside class="explore-panel">
+          <section class="graph-block">
+            <div class="section-head">
+              <h2>Graph</h2>
+              <label class="graph-view-label">
+                <span>View</span>
+                <select id="graph-view" class="graph-view-select">
+                  <option value="mixed">Mixed</option>
+                  <option value="scripts">Scripts</option>
+                  <option value="regions">Regions</option>
+                  <option value="family">Family</option>
+                </select>
+              </label>
+            </div>
+            <svg id="graph" class="graph" viewBox="0 0 640 420" role="img" aria-label="Connected entities graph"></svg>
+          </section>
+
+          <section class="relations-block">
+            <div class="section-head">
+              <h2>Connections</h2>
+            </div>
+            <div id="relations"></div>
+          </section>
+        </aside>
+      </main>
+      </div>
+    </div>
+
+    <script src="./data/index.js"></script>
+    <script src="./app.js"></script>
+  </body>
+  </html>
