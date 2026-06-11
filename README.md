@@ -185,7 +185,7 @@ The browser explorer supports metadata inspection and graph traversal, and langu
 The [`case-studies/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/) directory contains runnable analyses that use qq:
 
 - **[`huggingface-audit/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/huggingface-audit/)**: Scans 1,940 multilingual datasets on the HuggingFace Hub and classifies every `language:` tag as valid, deprecated, a misused country code, or unknown. qq resolves 99.1% of the 8,201 codes; the rest are deprecated, misused country codes, or HuggingFace-specific tags.
-- **[`linking-datasets/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/linking-datasets/)**: Links four lexical datasets (Concepticon, WordNet, Etymon, Phonotacticon) that each use a different identifier standard. qq resolves these four to a shared canonical ID: 102 languages are covered by all four.
+- **[`linking-datasets/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/linking-datasets/)**: Links five lexical datasets (Concepticon, WordNet, Etymon, Phonotacticon, NoRaRe) that use different identifier standards. qq resolves all NoRaRe language codes and finds 34 languages covered by all five datasets.
 - **[`latex-tables/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/latex-tables/)**: Generates a LaTeX table of language metadata (identifiers, scripts, speaker counts, families) for an imaginary 30-language NLP benchmark.
 - **[`identifier-coverage/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/identifier-coverage/)**: Visualizes which combinations of identifier standards (Glottocode, ISO 639-3, ISO 639-1, Wikidata) cover which languoids as an UpSet plot.
 

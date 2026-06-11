@@ -21,3 +21,5 @@ ROA_TARA
 # Phonotacticon
 huzh1238
 kuru1301
+
+# NoRaRe
