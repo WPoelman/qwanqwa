@@ -3,6 +3,7 @@ from qq.data_model import (
     DeprecatedCode,
     EndangermentStatus,
     EntityContainer,
+    ExternalResource,
     LanguageScope,
     LanguageStatus,
     LanguoidLevel,
@@ -77,6 +78,7 @@ class Languoid(TraversableEntity):
         status: ISO 639-3 type (L/H/A/C/E/S)
         endangerment_status: UNESCO endangerment classification
         wikipedia: WikipediaInfo with edition metadata (code, url, article_count, active_users)
+        external_resources: ExternalResource that lists dataset / resources that contain this languoid
         description: Textual description
     """
 
@@ -107,6 +109,8 @@ class Languoid(TraversableEntity):
         endangerment_status: EndangermentStatus | str | None = None,
         # Wikipedia metadata (grouped)
         wikipedia: WikipediaInfo | None = None,
+        # Links to external resources that include this languoid
+        external_resources: list[ExternalResource] | None = None,
         # Description
         description: str | None = None,
         # Deprecated/retired codes
@@ -142,6 +146,9 @@ class Languoid(TraversableEntity):
 
         # Wikipedia metadata (grouped)
         self.wikipedia: WikipediaInfo | None = wikipedia
+
+        # Links to external resources that include this languoid
+        self.external_resources: list[ExternalResource] = external_resources or []
 
         # Description
         self.description: str | None = description
@@ -366,6 +373,9 @@ class Script(TraversableEntity):
         name: str | None = None,
         full_name: str | None = None,
         is_historical: bool = False,
+        unicode_alias: str | None = None,
+        unicode_ranges: list[str] | None = None,
+        unicode_character_count: int | None = None,
     ) -> None:
         super().__init__(entity_id, data_store)
         self.iso_15924: str | None = iso_15924
@@ -374,6 +384,9 @@ class Script(TraversableEntity):
         # TODO: maybe this needs to be structured as in linguameta where it's locale/languoid specific
         #       could also be through relations (like we have below)
         self.is_historical: bool = is_historical
+        self.unicode_alias: str | None = unicode_alias
+        self.unicode_ranges: list[str] = unicode_ranges or []
+        self.unicode_character_count: int | None = unicode_character_count
 
     # TODO: add some multi hop queries to this, maybe script -> languoid -> region "all regions that use this script?"
     @property

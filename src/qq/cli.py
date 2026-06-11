@@ -43,7 +43,7 @@ def update(force, no_rebuild, source):
     if source:
         from qq.sources.source_config import SourceConfig
 
-        valid = [name for name, _ in SourceConfig.get_importers()]
+        valid = sorted(SourceConfig.get_providers_as_dict(SOURCES_DIR))
         if source not in valid:
             raise click.ClickException(f"Unknown source '{source}'. Valid sources: {', '.join(valid)}")
         updater.update_source(source, force=force, rebuild=not no_rebuild)

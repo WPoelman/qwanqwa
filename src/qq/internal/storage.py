@@ -218,7 +218,7 @@ class DataManager:
         """Reconstruct entity from dict"""
         import inspect
 
-        from qq.data_model import DeprecatedCode, RelationType, WikipediaInfo
+        from qq.data_model import DeprecatedCode, ExternalResource, ExternalResourceGroup, RelationType, WikipediaInfo
 
         # Get valid parameter names from entity class __init__
         sig = inspect.signature(entity_class.__init__)
@@ -235,6 +235,21 @@ class DataManager:
         if "deprecated_codes" in attrs and isinstance(attrs["deprecated_codes"], list):
             attrs["deprecated_codes"] = [
                 DeprecatedCode(**dc) if isinstance(dc, dict) else dc for dc in attrs["deprecated_codes"]
+            ]
+
+        # Reconstruct ExternalResource list from dicts
+        if "external_resources" in attrs and isinstance(attrs["external_resources"], list):
+            attrs["external_resources"] = [
+                ExternalResource(
+                    label=resource["label"],
+                    group=ExternalResourceGroup(resource["group"]),
+                    url=resource["url"],
+                    code=resource.get("code"),
+                    count=resource.get("count"),
+                )
+                if isinstance(resource, dict)
+                else resource
+                for resource in attrs["external_resources"]
             ]
 
         entity = entity_class(entity_id, store, **attrs)

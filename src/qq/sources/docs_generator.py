@@ -6,7 +6,9 @@ from qq.sources.source_config import SourceConfig
 
 def _generate_source_section(provider: SourceProvider) -> list[str]:
     """Generate markdown section for a single source."""
-    lines = [f"## {provider.name.title() if len(provider.name) > 4 else provider.name.upper()}", ""]
+    # TODO: make everything require a display_name? This is a bit stupid
+    title = provider.display_name or (provider.name.title() if len(provider.name) > 4 else provider.name.upper())
+    lines = [f"## {title}", ""]
 
     meta = provider.metadata
 

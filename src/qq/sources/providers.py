@@ -66,10 +66,14 @@ class SourceProvider(ABC):
         website_url: str | None = None,
         paper_url: str | None = None,
         notes: str | None = None,
+        external_resources: list[object] | None = None,
+        display_name: str | None = None,
     ):
         self.name = name
         self.source_url = source_url
         self.sources_dir = sources_dir
+        self.external_resources = external_resources or []
+        self.display_name = display_name
 
         self.metadata_dir = self.sources_dir / "_metadata"
         self.metadata_dir.mkdir(exist_ok=True, parents=True)
@@ -193,8 +197,21 @@ class GitSourceProvider(SourceProvider):
         website_url: str | None = None,
         paper_url: str | None = None,
         notes: str | None = None,
+        external_resources: list[object] | None = None,
+        display_name: str | None = None,
     ):
-        super().__init__(name, sources_dir, license, SourceType.GIT, source_url, website_url, paper_url, notes)
+        super().__init__(
+            name,
+            sources_dir,
+            license,
+            SourceType.GIT,
+            source_url=source_url,
+            website_url=website_url,
+            paper_url=paper_url,
+            notes=notes,
+            external_resources=external_resources,
+            display_name=display_name,
+        )
         self.branch = branch
         self.subpath = subpath
         self.repo_path = self.sources_dir / f"{name}_repo"
@@ -321,8 +338,20 @@ class DirectorySourceProvider(SourceProvider):
         website_url: str | None = None,
         paper_url: str | None = None,
         notes: str | None = None,
+        external_resources: list[object] | None = None,
+        display_name: str | None = None,
     ):
-        super().__init__(name, sources_dir, license, SourceType.DIR, website_url, paper_url, notes)
+        super().__init__(
+            name,
+            sources_dir,
+            license,
+            SourceType.DIR,
+            website_url=website_url,
+            paper_url=paper_url,
+            notes=notes,
+            external_resources=external_resources,
+            display_name=display_name,
+        )
         self.local_path = local_path
 
     def fetch(self, force: bool = False) -> bool:
@@ -383,8 +412,21 @@ class FileDownloadSourceProvider(SourceProvider):
         paper_url: str | None = None,
         website_url: str | None = None,
         notes: str | None = None,
+        external_resources: list[object] | None = None,
+        display_name: str | None = None,
     ):
-        super().__init__(name, sources_dir, license, SourceType.FILE, source_url, website_url, paper_url, notes)
+        super().__init__(
+            name,
+            sources_dir,
+            license,
+            SourceType.FILE,
+            source_url=source_url,
+            website_url=website_url,
+            paper_url=paper_url,
+            notes=notes,
+            external_resources=external_resources,
+            display_name=display_name,
+        )
         self.filename = filename
         self.cache_duration_hours = cache_duration_hours
 
@@ -438,3 +480,173 @@ class FileDownloadSourceProvider(SourceProvider):
         """Verify the downloaded file exists."""
         target_file = self.data_dir / self.filename
         return target_file.exists()
+
+
+# TODO: maybe this can be reworked into the filedownloader, but instead with multiple files instead of just one?
+class UnicodeUCDSourceProvider(SourceProvider):
+    """Provider for the Unicode Character Database files used by qq."""
+
+    filenames = ("Scripts.txt", "PropertyValueAliases.txt")
+
+    def __init__(
+        self,
+        name: str,
+        sources_dir: Path,
+        source_url: str,
+        license: str,
+        cache_duration_hours: int = 24 * 30,
+        paper_url: str | None = None,
+        website_url: str | None = None,
+        notes: str | None = None,
+        external_resources: list[object] | None = None,
+        display_name: str | None = None,
+    ):
+        super().__init__(
+            name,
+            sources_dir,
+            license,
+            SourceType.FILE,
+            source_url=source_url,
+            website_url=website_url,
+            paper_url=paper_url,
+            notes=notes,
+            external_resources=external_resources,
+            display_name=display_name,
+        )
+        self.cache_duration_hours = cache_duration_hours
+        self.source_url: str
+
+    def fetch(self, force: bool = False) -> bool:
+        logger.info(f"Fetching {self.name} from {self.source_url}...")
+
+        if not force and self.verify() and self.metadata._last_updated:
+            age_hours = (datetime.now() - self.metadata._last_updated).total_seconds() / 3600
+            if age_hours < self.cache_duration_hours:
+                logger.info(f"{self.name} cache is still valid (age: {age_hours:.1f} hours)")
+                self.metadata._last_checked = datetime.now()
+                self._save_metadata()
+                return False
+
+        try:
+            from urllib.parse import urljoin
+            from urllib.request import Request, urlopen
+
+            headers = {"User-Agent": f"qwanqwa/{qq.__version__} (https://github.com/WPoelman/qwanqwa) Python/urllib"}
+            self.data_dir.mkdir(parents=True, exist_ok=True)
+            for filename in self.filenames:
+                url = urljoin(self.source_url, filename)
+                request = Request(url, headers=headers)
+                with urlopen(request, timeout=30) as response:
+                    content = response.read()
+                (self.data_dir / filename).write_bytes(content)
+                logger.info(f"Downloaded {filename} ({len(content)} bytes)")
+        except Exception as e:
+            logger.error(f"Failed to download {self.name}: {e}")
+            return False
+
+        self.metadata._version = datetime.now().strftime(DATETIME_FMT)
+        self.metadata._last_updated = datetime.now()
+        self.metadata._last_checked = datetime.now()
+        self.metadata._checksum = self._calculate_checksum(self.data_dir)
+        self._save_metadata()
+
+        return True
+
+    def get_version(self) -> str | None:
+        return self.metadata._version
+
+    def verify(self) -> bool:
+        return all((self.data_dir / filename).exists() for filename in self.filenames)
+
+
+# TODO: more generic huggingface
+class HuggingFaceDatasetTagsSourceProvider(FileDownloadSourceProvider):
+    """Provider that caches Hugging Face language tags with dataset counts."""
+
+    def fetch(self, force: bool = False) -> bool:
+        target_dir = self.data_dir
+        target_file = target_dir / self.filename
+
+        logger.info(f"Fetching {self.name} from {self.source_url}...")
+
+        if not force and target_file.exists() and self.metadata._last_updated:
+            age_hours = (datetime.now() - self.metadata._last_updated).total_seconds() / 3600
+            if age_hours < self.cache_duration_hours:
+                logger.info(f"{self.name} cache is still valid (age: {age_hours:.1f} hours)")
+                self.metadata._last_checked = datetime.now()
+                self._save_metadata()
+                return False
+
+        try:
+            data = self._fetch_language_tag_counts()
+        except Exception as e:
+            logger.error(f"Failed to fetch {self.name}: {e}")
+            return False
+
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+        self.metadata._version = datetime.now().strftime(DATETIME_FMT)
+        self.metadata._last_updated = datetime.now()
+        self.metadata._last_checked = datetime.now()
+        self.metadata._checksum = self._file_checksum(target_file)
+        self._save_metadata()
+
+        return True
+
+    def _fetch_language_tag_counts(self) -> dict[str, list[dict[str, int | str]]]:
+        from collections import Counter
+        from urllib.request import Request, urlopen
+
+        headers = {"User-Agent": f"qwanqwa/{qq.__version__} (https://github.com/WPoelman/qwanqwa) Python/urllib"}
+        url = self.source_url
+        counts: Counter[str] = Counter()
+        page_count = 0
+        dataset_count = 0
+
+        while url:
+            request = Request(url, headers=headers)
+            with urlopen(request, timeout=60) as response:
+                datasets = json.loads(response.read().decode("utf-8"))
+                link = response.headers.get("Link")
+                base_url = response.geturl()
+
+            page_count += 1
+            dataset_count += len(datasets)
+            for dataset in datasets:
+                tags = dataset.get("tags") or []
+                for tag in tags:
+                    if isinstance(tag, str) and tag.startswith("language:"):
+                        counts[tag] += 1
+
+            if page_count == 1 or page_count % 25 == 0:
+                logger.info(
+                    "Scanned %d Hugging Face dataset pages (%d datasets, %d language tags)",
+                    page_count,
+                    dataset_count,
+                    len(counts),
+                )
+
+            url = self._next_link(link, base_url)
+
+        return {
+            "language": [
+                {"id": tag, "dataset_count": count} for tag, count in sorted(counts.items(), key=lambda item: item[0])
+            ]
+        }
+
+    @staticmethod
+    def _next_link(link_header: str | None, base_url: str) -> str | None:
+        from urllib.parse import urljoin
+
+        if not link_header:
+            return None
+        for part in link_header.split(","):
+            section = part.strip()
+            if 'rel="next"' not in section:
+                continue
+            start = section.find("<")
+            end = section.find(">")
+            if start != -1 and end != -1 and end > start:
+                return urljoin(base_url, section[start + 1 : end])
+        return None

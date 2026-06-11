@@ -213,6 +213,23 @@ def export_languoid_summary(entity: Languoid) -> dict[str, Any]:
     }
 
 
+def export_external_resources(entity: Languoid) -> list[dict[str, str]]:
+    resources = []
+    for resource in entity.external_resources:
+        resources.append(
+            clean_none_dict(
+                {
+                    "label": resource.label,
+                    "group": resource.group.value,
+                    "code": resource.code,
+                    "url": resource.url,
+                    "count": resource.count,
+                }
+            )
+        )
+    return sorted(resources, key=lambda item: (item.get("group", ""), item.get("label", ""), item.get("code", "")))
+
+
 def export_languoid_detail(
     db: Database,
     entity: Languoid,
@@ -289,6 +306,7 @@ def export_languoid_detail(
         ],
         "replaced_by": replaced_by,
         "replaced_from": replaced_from_index.get(entity.id, []),
+        "resources": export_external_resources(entity),
     }
 
 
@@ -313,6 +331,12 @@ def export_script_detail(entity: Script) -> dict[str, Any]:
                 "name": make_property(entity.name),
                 "full_name": make_property(entity.full_name),
                 "iso_15924": make_property(entity.iso_15924),
+                "unicode_alias": make_property(entity.unicode_alias),
+                "unicode_character_count": make_property(entity.unicode_character_count),
+                "unicode_range_count": make_property(len(entity.unicode_ranges) if entity.unicode_ranges else None),
+                "unicode_ranges": make_property(
+                    ", ".join(entity.unicode_ranges[:20]) if entity.unicode_ranges else None
+                ),
                 "is_historical": make_property(entity.is_historical),
                 "languoid_count": make_property(entity.languoid_count),
                 "id": make_property(entity.id),

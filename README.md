@@ -18,10 +18,11 @@ A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geo
 - **Identifiers**: BCP-47, ISO 639-1, ISO 639-3, ISO 639-2B, ISO 639-2T, ISO 639-5, Glottocode, Wikidata ID, Wikipedia ID, NLLB-style codes
 - **Geographic information**: Countries, subdivisions, regions, which can be traversed, including from languoids and back
 - **Speaker information**: Population counts, UNESCO endangerment status
-- **Writing systems**: ISO 15924 script codes with canonical/historical metadata
+- **Writing systems**: ISO 15924 script codes with canonical/historical metadata and Unicode ranges
 - **Multilingual names**: Language names in 500+ languages
 - **Relationships**: Traversable graph of language families, scripts, and geographic regions
 - **Phylogenetic data**: Language family trees from Glottolog
+- **External resources**: Find datasets and reference resources that include a particular language. Currently includes [CLLD](https://clld.org/datasets.html) datasets like WALS and Grambank, [Hugging Face Datasets](https://huggingface.co/datasets), and [Universal Dependencies](https://universaldependencies.org/).
 
 ## Languoids
 
@@ -180,7 +181,7 @@ See the [`examples/`](https://github.com/WPoelman/qwanqwa/tree/main/examples/) d
 
 ## Case studies
 
-The browser explorer supports metadata inspection and graph traversal, and language pages link to matching HuggingFace Hub dataset filters for available language identifiers.
+The [browser explorer](https://wesselpoelman.nl/qq/) supports metadata inspection and graph traversal. Language pages link to datasets containing that language.
 
 The [`case-studies/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/) directory contains runnable analyses that use qq:
 

@@ -86,6 +86,7 @@ a:focus-visible {
 .search-panel,
 .entity-panel,
 .graph-block,
+.resources-block,
 .relations-block {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -518,6 +519,32 @@ a:focus-visible {
   font-size: 0.95rem;
 }
 
+.entity-actions {
+  margin-top: 0.65rem;
+  font-size: 0.95rem;
+}
+
+.entity-actions:empty {
+  display: none;
+}
+
+.entity-actions-label {
+  color: var(--muted);
+  margin-right: 0.25rem;
+}
+
+.entity-action-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration-thickness: 0.14em;
+  text-underline-offset: 0.16em;
+}
+
+.entity-action-link:hover,
+.entity-action-link:focus-visible {
+  color: var(--text);
+}
+
 .properties {
   margin-top: 1rem;
 }
@@ -604,6 +631,7 @@ a:focus-visible {
 }
 
 .graph-block,
+.resources-block,
 .relations-block {
   padding: 1.25rem;
 }
@@ -626,6 +654,50 @@ a:focus-visible {
 .section-head h2 {
   border-bottom: 2px solid var(--accent-secondary);
   width: fit-content;
+}
+
+.resource-group + .resource-group {
+  margin-top: 1rem;
+}
+
+.resource-group-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.resource-row {
+  display: grid;
+  grid-template-columns: minmax(6rem, 8rem) minmax(0, 1fr);
+  gap: 0.65rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.resource-label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.resource-values {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.35rem;
+  align-items: baseline;
+}
+
+.resource-link {
+  overflow-wrap: anywhere;
+}
+
+.resource-count {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.resource-separator {
+  color: var(--muted-soft);
 }
 
 .graph-view-label {
@@ -817,7 +889,8 @@ a:focus-visible {
     text-align: left;
   }
 
-  .property {
+  .property,
+  .resource-row {
     grid-template-columns: 1fr;
     gap: 0.35rem;
   }

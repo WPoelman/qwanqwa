@@ -1,20 +1,36 @@
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
+from qq.data_model import ExternalResourceGroup, IdType
 from qq.importers import (
     BaseImporter,
+    ExternalResourceImporter,
     GlotscriptImporter,
     GlottologImporter,
     IANAImporter,
     LinguaMetaImporter,
     PycountryImporter,
     SILImporter,
+    UnicodeImporter,
     WikipediaImporter,
 )
+from qq.sources.external_resource import ExternalResourceDefinition, ExternalResourceFileFormat
 from qq.sources.providers import (
     FileDownloadSourceProvider,
     GitSourceProvider,
+    HuggingFaceDatasetTagsSourceProvider,
     SourceProvider,
+    UnicodeUCDSourceProvider,
 )
+
+
+@dataclass(frozen=True)
+class ImporterConfig:
+    source_name: str
+    importer_cls: type[BaseImporter]
+    data_path_name: str | None = ""
+    kwargs: dict[str, Any] = field(default_factory=dict)
 
 
 class SourceConfig:
@@ -90,6 +106,16 @@ class SourceConfig:
                 license="LGPL-2.1 or later",
                 notes="Builds on Debian iso-codes [project](https://salsa.debian.org/iso-codes-team/iso-codes)",
             ),
+            UnicodeUCDSourceProvider(
+                name="unicode_ucd",
+                display_name="Unicode Character Database",
+                sources_dir=sources_dir,
+                source_url="https://www.unicode.org/Public/UCD/latest/ucd/",
+                cache_duration_hours=24 * 30,
+                license="UNICODE LICENSE V3",
+                website_url="https://www.unicode.org/ucd/",
+                notes="Unicode Scripts.txt and PropertyValueAliases.txt used to add script code point ranges.",
+            ),
             FileDownloadSourceProvider(
                 name="wikipedia",
                 sources_dir=sources_dir,
@@ -120,10 +146,256 @@ class SourceConfig:
                 website_url="https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry",
                 notes="IANA Language Subtag Registry (BCP 47 / RFC 5646): deprecated language subtag mappings",
             ),
+            FileDownloadSourceProvider(
+                name="grambank",
+                display_name="Grambank",
+                sources_dir=sources_dir,
+                source_url="https://raw.githubusercontent.com/grambank/grambank/master/cldf/languages.csv",
+                filename="languages.csv",
+                cache_duration_hours=24 * 30,
+                license="CC BY 4.0",
+                website_url="https://grambank.clld.org/",
+                notes="Language table used to add exact Grambank resource links by Glottocode.",
+                external_resources=[
+                    ExternalResourceDefinition(
+                        label="Grambank",
+                        group=ExternalResourceGroup.TYPOLOGY,
+                        url_template="https://grambank.clld.org/languages/{code}",
+                        source_name="grambank",
+                        filename="languages.csv",
+                        match_column="Glottocode",
+                        match_id_type=IdType.GLOTTOCODE,
+                        code_column="ID",
+                    )
+                ],
+            ),
+            FileDownloadSourceProvider(
+                name="phoible",
+                display_name="PHOIBLE",
+                sources_dir=sources_dir,
+                source_url="https://raw.githubusercontent.com/cldf-datasets/phoible/master/cldf/languages.csv",
+                filename="languages.csv",
+                cache_duration_hours=24 * 30,
+                license="CC BY-SA 3.0",
+                website_url="https://phoible.org/",
+                notes="Language table used to add exact PHOIBLE resource links by Glottocode.",
+                external_resources=[
+                    ExternalResourceDefinition(
+                        label="PHOIBLE",
+                        group=ExternalResourceGroup.TYPOLOGY,
+                        url_template="https://phoible.org/languages/{code}",
+                        source_name="phoible",
+                        filename="languages.csv",
+                        match_column="Glottocode",
+                        match_id_type=IdType.GLOTTOCODE,
+                        code_column="ID",
+                    )
+                ],
+            ),
+            FileDownloadSourceProvider(
+                name="wals",
+                display_name="WALS",
+                sources_dir=sources_dir,
+                source_url="https://raw.githubusercontent.com/cldf-datasets/wals/master/cldf/languages.csv",
+                filename="languages.csv",
+                cache_duration_hours=24 * 30,
+                license="CC BY 4.0",
+                website_url="https://wals.info/",
+                notes="Language table used to add exact WALS resource links by Glottocode and WALS code.",
+                external_resources=[
+                    ExternalResourceDefinition(
+                        label="WALS",
+                        group=ExternalResourceGroup.TYPOLOGY,
+                        url_template="https://wals.info/languoid/lect/wals_code_{code}",
+                        source_name="wals",
+                        filename="languages.csv",
+                        match_column="Glottocode",
+                        match_id_type=IdType.GLOTTOCODE,
+                        code_column="ID",
+                        unique_per_languoid=True,
+                    )
+                ],
+            ),
+            FileDownloadSourceProvider(
+                name="apics",
+                display_name="APiCS",
+                sources_dir=sources_dir,
+                source_url="https://raw.githubusercontent.com/cldf-datasets/apics/master/cldf/languages.csv",
+                filename="languages.csv",
+                cache_duration_hours=24 * 30,
+                license="CC BY 3.0",
+                website_url="https://apics-online.info/",
+                notes="Language table used to add exact APiCS resource links by Glottocode and APiCS language ID.",
+                external_resources=[
+                    ExternalResourceDefinition(
+                        label="APiCS",
+                        group=ExternalResourceGroup.TYPOLOGY,
+                        url_template="https://apics-online.info/languages/{code}",
+                        source_name="apics",
+                        filename="languages.csv",
+                        match_column="Glottocode",
+                        match_id_type=IdType.GLOTTOCODE,
+                        code_column="ID",
+                    )
+                ],
+            ),
+            FileDownloadSourceProvider(
+                name="ewave",
+                display_name="eWAVE",
+                sources_dir=sources_dir,
+                source_url="https://raw.githubusercontent.com/cldf-datasets/ewave/master/cldf/languages.csv",
+                filename="languages.csv",
+                cache_duration_hours=24 * 30,
+                license="CC BY 3.0",
+                website_url="https://ewave-atlas.org/",
+                notes="Language table used to add exact eWAVE resource links by Glottocode and eWAVE language ID.",
+                external_resources=[
+                    ExternalResourceDefinition(
+                        label="eWAVE",
+                        group=ExternalResourceGroup.TYPOLOGY,
+                        url_template="https://ewave-atlas.org/languages/{code}",
+                        source_name="ewave",
+                        filename="languages.csv",
+                        match_column="Glottocode",
+                        match_id_type=IdType.GLOTTOCODE,
+                        code_column="ID",
+                    )
+                ],
+            ),
+            FileDownloadSourceProvider(
+                name="afbo",
+                display_name="AfBo",
+                sources_dir=sources_dir,
+                source_url="https://raw.githubusercontent.com/cldf-datasets/afbo/master/cldf/languages.csv",
+                filename="languages.csv",
+                cache_duration_hours=24 * 30,
+                license="CC BY 4.0",
+                website_url="https://afbo.info/",
+                notes="Language table used to add exact AfBo resource links by Glottocode and AfBo language ID.",
+                external_resources=[
+                    ExternalResourceDefinition(
+                        label="AfBo",
+                        group=ExternalResourceGroup.TYPOLOGY,
+                        url_template="https://afbo.info/languages/{code}",
+                        source_name="afbo",
+                        filename="languages.csv",
+                        match_column="Glottocode",
+                        match_id_type=IdType.GLOTTOCODE,
+                        code_column="ID",
+                    )
+                ],
+            ),
+            FileDownloadSourceProvider(
+                name="sails",
+                display_name="SAILS",
+                sources_dir=sources_dir,
+                source_url="https://raw.githubusercontent.com/cldf-datasets/sails/master/cldf/languages.csv",
+                filename="languages.csv",
+                cache_duration_hours=24 * 30,
+                license="CC BY-NC-ND 2.0 DE",
+                website_url="https://sails.clld.org/",
+                notes="Language table used to add exact SAILS resource links by Glottocode and SAILS language ID.",
+                external_resources=[
+                    ExternalResourceDefinition(
+                        label="SAILS",
+                        group=ExternalResourceGroup.TYPOLOGY,
+                        url_template="https://sails.clld.org/languages/{code}",
+                        source_name="sails",
+                        filename="languages.csv",
+                        match_column="Glottocode",
+                        match_id_type=IdType.GLOTTOCODE,
+                        code_column="ID",
+                    )
+                ],
+            ),
+            HuggingFaceDatasetTagsSourceProvider(
+                name="huggingface_dataset_tags",
+                display_name="Hugging Face Datasets",
+                sources_dir=sources_dir,
+                source_url="https://huggingface.co/api/datasets?limit=1000&full=false",
+                filename="tags.json",
+                cache_duration_hours=24,
+                license="See Hugging Face datasets themselves.",
+                website_url="https://huggingface.co/datasets",
+                notes=(
+                    "Dataset tag metadata used to add Hugging Face links only for language tags that occur on the Hub."
+                ),
+                external_resources=[
+                    ExternalResourceDefinition(
+                        label="Hugging Face",
+                        group=ExternalResourceGroup.DATASETS,
+                        url_template="https://huggingface.co/datasets?filter=language:{code}",
+                        source_name="huggingface_dataset_tags",
+                        filename="tags.json",
+                        file_format=ExternalResourceFileFormat.HUGGINGFACE_TAGS_JSON,
+                        match_column="language",
+                        match_id_type=id_type,
+                    )
+                    for id_type in (
+                        IdType.BCP_47,
+                        IdType.ISO_639_1,
+                        IdType.ISO_639_3,
+                        IdType.ISO_639_2T,
+                        IdType.ISO_639_2B,
+                        IdType.ISO_639_5,
+                    )
+                ],
+            ),
+            FileDownloadSourceProvider(
+                name="universal_dependencies",
+                display_name="Universal Dependencies",
+                sources_dir=sources_dir,
+                source_url=(
+                    "https://lindat.mff.cuni.cz/repository/server/api/core/items/7fbbbd99-ae2d-4b91-8318-d996dbe34cbc"
+                ),
+                filename="item.json",
+                cache_duration_hours=24 * 7,
+                license="Universal Dependencies v2.18 License Agreement",
+                website_url="https://universaldependencies.org/",
+                notes="LINDAT item metadata used to add Universal Dependencies links by ISO 639-3 code.",
+                external_resources=[
+                    ExternalResourceDefinition(
+                        label="Universal Dependencies",
+                        group=ExternalResourceGroup.DATASETS,
+                        url_template="http://hdl.handle.net/11234/1-6149",
+                        source_name="universal_dependencies",
+                        filename="item.json",
+                        file_format=ExternalResourceFileFormat.DSPACE_ITEM_JSON,
+                        match_column="dc.language.iso",
+                        match_id_type=IdType.ISO_639_3,
+                    )
+                ],
+            ),
         ]
 
+    # TODO: not a fan of this, maybe the external resouces should be attached differently or in a different location.
+    #       it works for now, but a refactor would be good.
     @staticmethod
-    def get_importers() -> list[tuple[str, type[BaseImporter]]]:
+    def get_external_resource_definitions(sources_dir: Path | None = None) -> list[ExternalResourceDefinition]:
+        definitions = [
+            ExternalResourceDefinition(
+                label="Glottolog",
+                group=ExternalResourceGroup.REFERENCE,
+                url_template="https://glottolog.org/resource/languoid/id/{code}",
+                match_column="glottocode",
+                match_id_type=IdType.GLOTTOCODE,
+            ),
+            ExternalResourceDefinition(
+                label="Wikidata",
+                group=ExternalResourceGroup.REFERENCE,
+                url_template="https://www.wikidata.org/wiki/{code}",
+                match_column="wikidata_id",
+                match_id_type=IdType.WIKIDATA_ID,
+            ),
+        ]
+
+        if sources_dir is not None:
+            for provider in SourceConfig.get_providers(sources_dir):
+                definitions.extend(provider.external_resources)
+        return definitions
+
+    @staticmethod
+    def get_importers(sources_dir: Path | None = None) -> list[ImporterConfig]:
         """
         Each name of a SourceProvider is associated with one or more Importers.
         These importers extract information from the source.
@@ -134,11 +406,19 @@ class SourceConfig:
         """
         # TODO: in the future this should prob be a dict[str, [tuple[importer], ...]]
         return [
-            ("linguameta", LinguaMetaImporter),
-            ("glottolog", GlottologImporter),
-            ("glotscript", GlotscriptImporter),
-            ("pycountry", PycountryImporter),
-            ("wikipedia", WikipediaImporter),
-            ("sil", SILImporter),
-            ("iana", IANAImporter),
+            ImporterConfig("linguameta", LinguaMetaImporter),
+            ImporterConfig("glottolog", GlottologImporter),
+            ImporterConfig("glotscript", GlotscriptImporter),
+            ImporterConfig("pycountry", PycountryImporter),
+            ImporterConfig("unicode_ucd", UnicodeImporter),
+            ImporterConfig("wikipedia", WikipediaImporter),
+            ImporterConfig("sil", SILImporter),
+            ImporterConfig("iana", IANAImporter),
+            # TODO: ugly, need to find out a nicer way.
+            ImporterConfig(
+                "external_resources",
+                ExternalResourceImporter,
+                data_path_name=None,
+                kwargs={"definitions": SourceConfig.get_external_resource_definitions(sources_dir)},
+            ),
         ]

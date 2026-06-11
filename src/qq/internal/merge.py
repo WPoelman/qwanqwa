@@ -56,7 +56,7 @@ _FIELD_TO_STRATEGY = {
 
 # Fields where multiple values should be concatenated/merged rather than
 # resolved by priority.
-_LIST_FIELDS = frozenset({"deprecated_codes"})
+_LIST_FIELDS = frozenset({"deprecated_codes", "external_resources", "unicode_ranges"})
 
 # Fields where conflicts are expected and should not be recorded.
 # Name disagreements are irrelevant because multilingual names live in NameDataCache.

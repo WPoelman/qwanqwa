@@ -92,6 +92,10 @@
     id: "Canonical ID",
     full_name: "Full name",
     iso_15924: "ISO 15924",
+    unicode_alias: "Unicode script",
+    unicode_character_count: "Unicode characters",
+    unicode_range_count: "Unicode ranges",
+    unicode_ranges: "Code point ranges",
     is_historical: "Historical",
     languoid_count: "Languoid count",
     country_code: "Country code",
@@ -104,8 +108,11 @@
     speaker_count: true,
     wikipedia_article_count: true,
     wikipedia_active_users: true,
+    unicode_character_count: true,
+    unicode_range_count: true,
   };
   const WIKIPEDIA_URL_KEY = "wikipedia_url";
+  const RESOURCE_GROUPS = ["Datasets", "Reference", "Typology"];
   const propertySections = {
     languoid: [
       { title: "Names", keys: ["name", "endonym", "description"] },
@@ -118,6 +125,7 @@
     script: [
       { title: "Names", keys: ["name", "full_name"] },
       { title: "Identifiers", keys: ["iso_15924", "id"] },
+      { title: "Unicode", keys: ["unicode_alias", "unicode_character_count", "unicode_range_count", "unicode_ranges"] },
       { title: "Coverage", keys: ["languoid_count", "is_historical"] },
     ],
     region: [
@@ -148,8 +156,10 @@
   const entityTypeEl = document.getElementById("entity-type");
   const entityNameEl = document.getElementById("entity-name");
   const entitySubtitleEl = document.getElementById("entity-subtitle");
+  const entityActionsEl = document.getElementById("entity-actions");
   const entityWarningEl = document.getElementById("entity-warning");
   const propertiesEl = document.getElementById("properties");
+  const resourcesEl = document.getElementById("resources");
   const relationsEl = document.getElementById("relations");
   const graphEl = document.getElementById("graph");
   const graphViewEl = document.getElementById("graph-view");
@@ -814,6 +824,178 @@
     return Object.values(bestById);
   }
 
+  function renderEntityActions() {
+    entityActionsEl.replaceChildren();
+  }
+
+  function propertyBackedResources(detail) {
+    const resources = [];
+
+    if (detail.p.glottocode) {
+      resources.push({
+        group: "Reference",
+        label: "Glottolog",
+        links: [
+          {
+            href: "https://glottolog.org/resource/languoid/id/" + encodeURIComponent(detail.p.glottocode),
+            text: detail.p.glottocode + " ↗",
+          },
+        ],
+      });
+    }
+    if (detail.p.wikidata_id) {
+      resources.push({
+        group: "Reference",
+        label: "Wikidata",
+        links: [
+          {
+            href: "https://www.wikidata.org/wiki/" + encodeURIComponent(detail.p.wikidata_id),
+            text: detail.p.wikidata_id + " ↗",
+          },
+        ],
+      });
+    }
+    if (detail.p.wikipedia_url) {
+      resources.push({
+        group: "Reference",
+        label: "Wikipedia",
+        links: [{ href: detail.p.wikipedia_url, text: detail.p.wikipedia_code + " ↗" }],
+      });
+    }
+
+    return resources;
+  }
+
+  function sourceBackedResources(detail) {
+    return (detail.resources || []).map(function (resource) {
+      return {
+        group: resource.group,
+        label: resource.label,
+        links: [
+          {
+            code: resource.code,
+            href: resource.url,
+            text: resource.code + " ↗",
+            count: resource.count,
+          },
+        ],
+      };
+    });
+  }
+
+  function resourceLinks(summary, detail) {
+    if (summary.t !== "languoid") {
+      return [];
+    }
+
+    const seen = {};
+    return propertyBackedResources(detail)
+      .concat(sourceBackedResources(detail))
+      .map(function (resource) {
+        const links = resource.links.filter(function (link) {
+          const key = resource.group + "::" + resource.label + "::" + link.href;
+          if (seen[key]) {
+            return false;
+          }
+          seen[key] = true;
+          return true;
+        });
+        if (links.length === 0) {
+          return null;
+        }
+        return Object.assign({}, resource, { links: links });
+      })
+      .filter(Boolean);
+  }
+
+  function formatResourceCount(count) {
+    if (!count || count < 1) {
+      return "";
+    }
+    if (count >= 1000) {
+      return "1000+";
+    }
+    if (count >= 500) {
+      return "500+";
+    }
+    if (count >= 100) {
+      return "100+";
+    }
+    if (count >= 50) {
+      return "50+";
+    }
+    if (count >= 10) {
+      return "10+";
+    }
+    return String(count);
+  }
+
+  function renderResources(summary, detail) {
+    resourcesEl.replaceChildren();
+
+    const links = resourceLinks(summary, detail);
+    if (links.length === 0) {
+      resourcesEl.textContent = "No external resources found.";
+      return;
+    }
+
+    RESOURCE_GROUPS.forEach(function (groupName) {
+      const groupLinks = links.filter(function (resource) {
+        return resource.group === groupName;
+      });
+      if (groupLinks.length === 0) {
+        return;
+      }
+
+      const group = document.createElement("section");
+      group.className = "resource-group";
+
+      const title = document.createElement("h3");
+      title.className = "resource-group-title";
+      title.textContent = groupName;
+      group.appendChild(title);
+
+      groupLinks.forEach(function (resource) {
+        const row = document.createElement("div");
+        row.className = "resource-row";
+
+        const label = document.createElement("div");
+        label.className = "resource-label";
+        label.textContent = resource.label;
+        row.appendChild(label);
+
+        const values = document.createElement("div");
+        values.className = "resource-values";
+        resource.links.forEach(function (linkData, index) {
+          if (index > 0) {
+            const separator = document.createElement("span");
+            separator.className = "resource-separator";
+            separator.textContent = "·";
+            values.appendChild(separator);
+          }
+          const link = document.createElement("a");
+          link.className = "resource-link property-link";
+          link.href = linkData.href;
+          link.target = "_blank";
+          link.rel = "noreferrer noopener";
+          link.textContent = linkData.text;
+          values.appendChild(link);
+          const countText = formatResourceCount(linkData.count);
+          if (countText) {
+            const count = document.createElement("span");
+            count.className = "resource-count";
+            count.textContent = countText + (countText === "1" ? " dataset" : " datasets");
+            values.appendChild(count);
+          }
+        });
+        row.appendChild(values);
+        group.appendChild(row);
+      });
+
+      resourcesEl.appendChild(group);
+    });
+  }
+
   function renderProperties(summary, detail) {
     propertiesEl.replaceChildren();
     propertySections[summary.t].forEach(function (section) {
@@ -1383,8 +1565,10 @@
   }
 
   function renderLoading() {
+    entityActionsEl.replaceChildren();
     entityWarningEl.textContent = "";
     propertiesEl.textContent = "Loading properties…";
+    resourcesEl.textContent = "Loading resources…";
     relationsEl.textContent = "Loading connections…";
     graphEl.replaceChildren();
     resetGraphViewport();
@@ -1439,16 +1623,20 @@
     }
     const detail = detailsFor(entityId);
     if (!detail) {
+      entityActionsEl.replaceChildren();
       entityWarningEl.textContent = "";
       propertiesEl.textContent = "No properties found.";
+      resourcesEl.textContent = "No external resources found.";
       relationsEl.textContent = "No connections found.";
       return;
     }
     if (state.pendingId !== entityId) {
       return;
     }
+    renderEntityActions(entity, detail);
     renderEntityWarning(detail);
     renderProperties(entity, detail);
+    renderResources(entity, detail);
     renderRelations(entityId, detail);
     renderGraph(entity, detail);
     searchResultsEl.replaceChildren();

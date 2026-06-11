@@ -176,6 +176,10 @@ class EntityResolver:
         """Get the full identity for a canonical ID, returns None if not found"""
         return self._identities.get(canonical_id)
 
+    def identities(self):
+        """Iterate over all registered entity identities."""
+        return self._identities.values()
+
     def get_all_identifiers(self, canonical_id: CanonicalId) -> dict[IdType, str] | None:
         """Get all identifiers for an entity, returns None if not found"""
         identity = self.get_identity(canonical_id)

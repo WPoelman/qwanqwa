@@ -131,7 +131,10 @@ class LinguaMetaImporter(BaseImporter):
         # Store language description
         if desc := data.get("language_description"):
             if description_text := desc.get("description"):
-                languoid.description = description_text
+                # Format like a normal sentence.
+                if isinstance(description_text, str) and description_text:
+                    txt = description_text[:1].upper() + description_text[1:]
+                    languoid.description = f"{txt}." if not txt.endswith(".") else txt
 
         # Set endangerment status from TSV lookup
         bcp47 = data.get("bcp_47_code")

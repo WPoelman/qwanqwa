@@ -17,9 +17,11 @@ class DataSource(Enum):
     WIKIDATA = 30
     GLOTSCRIPT = 40
     PYCOUNTRY = 50
+    UNICODE = 55
     WIKIPEDIA = 60
     SIL = 70
     IANA = 80
+    EXTERNAL_RESOURCES = 90
 
 
 class IdType(Enum):
@@ -84,6 +86,25 @@ class WikipediaInfo:
     code: str | None = None
     article_count: int | None = None
     active_users: int | None = None
+
+
+class ExternalResourceGroup(Enum):
+    """Display groups for external resource links."""
+
+    DATASETS = "Datasets"
+    REFERENCE = "Reference"
+    TYPOLOGY = "Typology"
+
+
+@dataclass
+class ExternalResource:
+    """External resource link known to contain this languoid."""
+
+    label: str
+    group: ExternalResourceGroup
+    url: str
+    code: str | None = None
+    count: int | None = None
 
 
 @dataclass
