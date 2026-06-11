@@ -26,20 +26,20 @@ Requires `pandas`, `tqdm`, `matplotlib`, and `huggingface_hub` (installed ad-hoc
 
 ## Results
 
-Scanning 1,286 multilingual datasets (8,189 unique language codes):
+Scanning 1,940 multilingual datasets (8,201 unique language codes):
 
 | Status | Count |
 |---|---|
-| Valid | 8,122 |
+| Valid | 8,127 |
 | Deprecated | 23 |
 | Country code | 19 |
-| Unknown | 25 |
+| Unknown | 32 |
 
-**99.2% of codes resolve correctly.** The remaining issues:
+**99.1% of codes resolve correctly.** The remaining issues:
 
 - **23 deprecated codes** from retired ISO 639-3 entries (splits, merges, duplicates) and withdrawn BCP-47/ISO 639-1 codes (`iw` -> `he`, `in` -> `id`, `ji` -> `yi`, `mo` -> `ro`).
 - **19 country codes** where dataset authors tagged a country instead of a language (e.g., `jp` instead of `ja`, `cn` instead of `zh`).
-- **25 unknown codes** -- mostly HuggingFace-specific tags (`multilingual`, `code`, `xx`), private-use `q*` codes, and a few unresolvable entries.
+- **32 unknown codes** -- mostly HuggingFace-specific tags (`multilingual`, `code`, `xx`), private-use `q*` codes, and a few unresolvable entries.
 
 ## Output files
 

@@ -1,11 +1,13 @@
 # Qwanqwa (`qq`): Language Metadata
 
-A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geographic data, and traversable relationships across ~27,256 languoids.
+A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geographic data, and traversable relationships across ~27,391 languoids.
 
 **Name**: **Q**wan**q**wa is a phonetic spelling of 'ቋንቋ', which means *language* in Amharic; `qq` is short to type.
 
 > [!NOTE]
 > Explore in your browser: https://wesselpoelman.nl/qq/
+>
+> Python package: https://pypi.org/project/qwanqwa/
 >
 > Demo video: https://youtu.be/D9MmGCmJeNg
 >
@@ -178,9 +180,11 @@ See the [`examples/`](https://github.com/WPoelman/qwanqwa/tree/main/examples/) d
 
 ## Case studies
 
+The browser explorer supports metadata inspection and graph traversal, and language pages link to matching HuggingFace Hub dataset filters for available language identifiers.
+
 The [`case-studies/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/) directory contains runnable analyses that use qq:
 
-- **[`huggingface-audit/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/huggingface-audit/)**: Scans all multilingual datasets on the HuggingFace Hub and classifies every `language:` tag as valid, deprecated, a misused country code, or unknown. qq resolves 99.2% of the 8,189 codes; the rest are deprecated, misused country codes, or HuggingFace-specific tags.
+- **[`huggingface-audit/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/huggingface-audit/)**: Scans 1,940 multilingual datasets on the HuggingFace Hub and classifies every `language:` tag as valid, deprecated, a misused country code, or unknown. qq resolves 99.1% of the 8,201 codes; the rest are deprecated, misused country codes, or HuggingFace-specific tags.
 - **[`linking-datasets/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/linking-datasets/)**: Links four lexical datasets (Concepticon, WordNet, Etymon, Phonotacticon) that each use a different identifier standard. qq resolves these four to a shared canonical ID: 102 languages are covered by all four.
 - **[`latex-tables/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/latex-tables/)**: Generates a LaTeX table of language metadata (identifiers, scripts, speaker counts, families) for an imaginary 30-language NLP benchmark.
 - **[`identifier-coverage/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/identifier-coverage/)**: Visualizes which combinations of identifier standards (Glottocode, ISO 639-3, ISO 639-1, Wikidata) cover which languoids as an UpSet plot.
