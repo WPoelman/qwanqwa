@@ -962,6 +962,19 @@
         const label = document.createElement("div");
         label.className = "resource-label";
         label.textContent = resource.label;
+        if (resource.label === "Hugging Face") {
+          const hint = document.createElement("button");
+          hint.type = "button";
+          hint.className = "resource-hint";
+          hint.textContent = "?";
+          hint.dataset.tooltip =
+            "Hugging Face combines multiple language filters as AND, so QQ shows one link per matching language tag.";
+          hint.setAttribute(
+            "aria-label",
+            "Hugging Face combines multiple language filters as AND, so QQ shows one link per matching language tag."
+          );
+          label.appendChild(hint);
+        }
         row.appendChild(label);
 
         const values = document.createElement("div");
