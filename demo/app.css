@@ -140,7 +140,6 @@ a:focus-visible {
   margin: 0 0 0.55rem;
 }
 
-.recent-trail,
 .entity-subtitle,
 .entity-type,
 .search-label,
@@ -196,19 +195,6 @@ a:focus-visible {
 
 .stat-badge.is-region {
   border-color: var(--badge-region);
-}
-
-.recent-trail {
-  margin-top: 0.55rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  align-items: center;
-  font-size: 0.88rem;
-}
-
-.recent-trail-below {
-  margin-top: 0.8rem;
 }
 
 .recent-link {

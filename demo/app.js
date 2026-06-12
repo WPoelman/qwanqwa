@@ -13,7 +13,6 @@
   const nameBucketLoads = {};
   const availableNameBuckets = (data.meta.counts && data.meta.counts.nameBuckets) || data.meta.nameBuckets || {};
   const SEARCH_RESULT_LIMIT = 24;
-  const RECENT_TRAIL_LIMIT = 6;
   const SHORT_LABEL_LIMIT = 18;
   const SHORT_LABEL_SLICE = 16;
   const IDENTIFIER_EXACT_RANK = 0;
@@ -142,7 +141,6 @@
     graphView: "mixed",
     graphCategoryLimits: Object.assign({}, GRAPH_CATEGORY_DEFAULTS),
     expandedRelationGroups: {},
-    recentIds: [],
   };
   const RELATION_LIST_LIMIT = 10;
   const RELATION_GROUP_PRIORITY = {
@@ -164,7 +162,6 @@
   const relationsEl = document.getElementById("relations");
   const graphEl = document.getElementById("graph");
   const graphViewEl = document.getElementById("graph-view");
-  const recentTrailEl = document.getElementById("recent-trail");
   const introSourcesEl = document.getElementById("intro-sources");
 
   (function renderStats() {
@@ -1608,36 +1605,13 @@
     state.graphCategoryLimits = Object.assign({}, GRAPH_CATEGORY_DEFAULTS);
   }
 
-  function renderRecentTrail() {
-    recentTrailEl.replaceChildren();
-    if (state.recentIds.length < 2) {
-      return;
-    }
-    state.recentIds.forEach(function (entityId) {
-      const entity = summaries[entityId];
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "recent-link" + (entityId === state.currentId ? " current" : "");
-      button.textContent = entity.n;
-      button.addEventListener("click", function () {
-        navigateTo(entityId);
-      });
-      recentTrailEl.appendChild(button);
-    });
-  }
-
   async function renderEntity(entityId) {
     const entity = Object.assign({ id: entityId }, summaries[entityId]);
     state.pendingId = entityId;
     state.currentId = entityId;
-    state.recentIds = [entityId]
-      .concat(state.recentIds.filter(function (id) {
-        return id !== entityId;
-      }))
-      .slice(0, RECENT_TRAIL_LIMIT);
+
     resetGraphState(true);
     state.expandedRelationGroups = {};
-    renderRecentTrail();
     entityTypeEl.textContent = titleCase(entity.t);
     entityNameEl.textContent = entity.n;
     entitySubtitleEl.textContent = entity.s;
