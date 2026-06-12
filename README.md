@@ -1,6 +1,6 @@
 # Qwanqwa (`qq`): Language Metadata
 
-A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geographic data, and traversable relationships across ~27,391 languoids.
+A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geographic data, and traversable relationships across ~27,319 languoids.
 
 **Name**: **Q**wan**q**wa is a phonetic spelling of 'ቋንቋ', which means *language* in Amharic; `qq` is short to type.
 

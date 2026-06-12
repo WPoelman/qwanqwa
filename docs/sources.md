@@ -35,7 +35,7 @@ Language table used to add exact eWAVE resource links by Glottocode and eWAVE la
 * Source: https://github.com/cisnlp/glotscript
 * License: CC BY-SA 4.0
 * Paper: https://aclanthology.org/2024.lrec-main.687/
-* Last updated: 11-06-2026
+* Last updated: 12-06-2026
 
 Individual sources documented in [GlotScript README](https://github.com/cisnlp/GlotScript/blob/main/metadata/README.md)
 
@@ -44,7 +44,7 @@ Individual sources documented in [GlotScript README](https://github.com/cisnlp/G
 * Source: https://github.com/glottolog/glottolog-cldf.git
 * License: CC BY 4.0
 * Website: https://glottolog.org/
-* Last updated: 11-06-2026
+* Last updated: 12-06-2026
 
 ## Grambank
 
@@ -78,7 +78,7 @@ IANA Language Subtag Registry (BCP 47 / RFC 5646): deprecated language subtag ma
 * License: CC BY-SA 4.0
 * Paper: https://aclanthology.org/2024.lrec-main.921/
 * Website: https://github.com/google-research/url-nlp/tree/main/linguameta
-* Last updated: 11-06-2026
+* Last updated: 12-06-2026
 
 Individual sources documented in [LinguaMeta README](https://github.com/google-research/url-nlp/blob/main/linguameta/README.md)
 
@@ -95,7 +95,7 @@ Language table used to add exact PHOIBLE resource links by Glottocode.
 
 * Source: https://github.com/pycountry/pycountry
 * License: LGPL-2.1 or later
-* Last updated: 11-06-2026
+* Last updated: 12-06-2026
 
 Builds on Debian iso-codes [project](https://salsa.debian.org/iso-codes-team/iso-codes)
 

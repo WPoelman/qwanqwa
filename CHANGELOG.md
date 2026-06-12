@@ -11,6 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - NLLB-style codes support improvements
 - Additional convenience methods on Languoid
 
+## [1.1.0] - 2026-06-12
+
+### Added
+- Demo website
+- Links to external resources and matching methods
+  - huggingface
+  - CLLD datasets
+  - UD
+- Additional sources
+  - Unicode ranges for scripts
+  - iso 639 5 mapping with glottocodes
+
+### Fixed
+- Improved search
+- Make region traversal more intuitive
+
 ## [1.0.4] - 2026-02-28
 
 ### Added
