@@ -464,12 +464,10 @@ class GeographicRegion(TraversableEntity):
     # TODO: going from region to region should probably follow the parent-child idea of Languoid as well
     @property
     def languoids(self) -> list[Languoid]:
-        """Get all languoids in this region and its child regions (transitive)."""
+        """Get languoids directly in this region and recursively in child regions."""
         langs = set(self.direct_languoids)
         for child in self.child_regions:
             langs.update(child.languoids)
-        for sub in self.subdivisions:
-            langs.update(sub.direct_languoids)
         return list(langs)
 
     @property

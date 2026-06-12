@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 
 from qq.access import Database, DeprecatedCodeWarning
-from qq.data_model import IdType, LanguoidLevel
+from qq.data_model import IdType, LanguoidLevel, RelationType
 from qq.importers.glotscript_importer import GlotscriptImporter
 from qq.importers.glottolog_importer import GlottologImporter
 from qq.importers.iana_importer import IANAImporter
@@ -414,6 +414,45 @@ class TestGeographicTransitiveClosure:
         direct = {lang.id for lang in nl.direct_languoids}
         transitive = {lang.id for lang in nl.languoids}
         assert direct.issubset(transitive)
+
+    def test_country_languoids_include_subdivision_languoids(self, access):
+        """Country queries should include languages attached to child subdivisions."""
+        nl = access.store.get("region:nl")
+        nh = access.store.get("region:nl-nh")
+        dutch = access.get("nl")
+        assert nl is not None
+        assert nh is not None
+
+        nh.add_relation(RelationType.LANGUOIDS_IN_REGION, dutch.id)
+
+        assert dutch in nh.direct_languoids
+        assert dutch in nl.languoids
+
+    def test_country_scripts_include_subdivision_languoid_scripts(self, access):
+        """Region scripts are derived from transitive languoids."""
+        nl = access.store.get("region:nl")
+        nh = access.store.get("region:nl-nh")
+        dutch = access.get("nl")
+        assert nl is not None
+        assert nh is not None
+
+        nh.add_relation(RelationType.LANGUOIDS_IN_REGION, dutch.id)
+
+        script_codes = {script.iso_15924 for script in nl.scripts}
+        assert "Latn" in script_codes
+
+    def test_subdivision_languoids_do_not_inherit_parent_country_languoids(self, access):
+        """The transitive relation is from country to subdivision, not subdivision to country."""
+        nl = access.store.get("region:nl")
+        nh = access.store.get("region:nl-nh")
+        dutch = access.get("nl")
+        assert nl is not None
+        assert nh is not None
+
+        nl.add_relation(RelationType.LANGUOIDS_IN_REGION, dutch.id)
+
+        assert dutch in nl.direct_languoids
+        assert dutch not in nh.languoids
 
 
 class TestDescendantScripts:
