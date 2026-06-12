@@ -887,6 +887,11 @@ a:focus-visible {
   outline: none;
 }
 
+.relation-list.is-family-tree .relation-item {
+  width: calc(100% - var(--family-indent, 0rem));
+  margin-left: var(--family-indent, 0rem);
+}
+
 @media (max-width: 1479px) {
   .page {
     padding-top: 0.9rem;
@@ -941,14 +946,28 @@ a:focus-visible {
     text-align: left;
   }
 
-  .property,
-  .resource-row {
-    grid-template-columns: 1fr;
-    gap: 0.35rem;
+  .property {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.35rem 0.6rem;
+  }
+
+  .property-label {
+    grid-column: 1 / -1;
+  }
+
+  .property-value {
+    grid-column: 1;
   }
 
   .copy-button {
-    justify-self: start;
+    grid-column: 2;
+    justify-self: end;
+    align-self: start;
+  }
+
+  .resource-row {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
   }
 
   .site-sidebar {

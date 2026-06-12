@@ -1127,20 +1127,25 @@
       wrapper.appendChild(header);
 
       const list = document.createElement("div");
-      list.className = "relation-list";
+      list.className = "relation-list" + (group.l === "Family tree" ? " is-family-tree" : "");
       const groupKey = relationExpansionKey(entityId, group.l);
       const isExpanded = state.expandedRelationGroups[groupKey] === true;
-      const visibleCount = isExpanded ? group.i.length : Math.min(group.i.length, RELATION_LIST_LIMIT);
+      const relationIds = group.l === "Family tree" ? group.i.slice().reverse() : group.i.slice();
+      const visibleCount = isExpanded ? relationIds.length : Math.min(relationIds.length, RELATION_LIST_LIMIT);
 
-      group.i.slice(0, visibleCount).forEach(function (relatedEntityId) {
-        list.appendChild(makeEntityButton(relatedEntityId, "relation-item"));
+      relationIds.slice(0, visibleCount).forEach(function (relatedEntityId, index) {
+        const item = makeEntityButton(relatedEntityId, "relation-item");
+        if (group.l === "Family tree") {
+          item.style.setProperty("--family-indent", Math.min(index, 6) * 0.85 + "rem");
+        }
+        list.appendChild(item);
       });
 
-      if (group.i.length > RELATION_LIST_LIMIT && !isExpanded) {
+      if (relationIds.length > RELATION_LIST_LIMIT && !isExpanded) {
         const expand = document.createElement("button");
         expand.type = "button";
         expand.className = "relation-expand";
-        expand.textContent = `Expand (${countLabel(group.i.length - RELATION_LIST_LIMIT, "more item", "more items")})`;
+        expand.textContent = `Expand (${countLabel(relationIds.length - RELATION_LIST_LIMIT, "more item", "more items")})`;
         expand.addEventListener("click", function () {
           state.expandedRelationGroups[groupKey] = true;
           renderRelations(entityId, detail);
