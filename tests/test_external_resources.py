@@ -39,7 +39,18 @@ def test_applies_source_backed_resource_links(tmp_path):
     resource_by_label = {resource.label: resource for resource in lang.external_resources}
 
     assert resource_by_label["Glottolog"].url == "https://glottolog.org/resource/languoid/id/dutc1256"
+    assert resource_by_label["Glottolog"].source_name == "qq"
+    assert resource_by_label["Glottolog"].match_id_type is IdType.GLOTTOCODE
+    assert resource_by_label["Glottolog"].match_value == "dutc1256"
+
     assert resource_by_label["Grambank"].url == "https://grambank.clld.org/languages/dutc1256"
+    assert resource_by_label["Grambank"].source_name == "grambank"
+    assert resource_by_label["Grambank"].source_file == "languages.csv"
+    assert resource_by_label["Grambank"].match_column == "Glottocode"
+    assert resource_by_label["Grambank"].match_id_type is IdType.GLOTTOCODE
+    assert resource_by_label["Grambank"].match_value == "dutc1256"
+    assert resource_by_label["Grambank"].code_column == "ID"
+
     assert resource_by_label["AfBo"].url == "https://afbo.info/languages/dutchnld"
     assert "PHOIBLE" not in resource_by_label
     assert "WALS" not in resource_by_label
@@ -97,6 +108,11 @@ def test_applies_dspace_item_json_resource_links(tmp_path):
 
     assert resource_by_label["Universal Dependencies"].code == "nld"
     assert resource_by_label["Universal Dependencies"].url == "http://hdl.handle.net/11234/1-6149"
+    assert resource_by_label["Universal Dependencies"].source_name == "universal_dependencies"
+    assert resource_by_label["Universal Dependencies"].source_file == "item.json"
+    assert resource_by_label["Universal Dependencies"].match_column == "dc.language.iso"
+    assert resource_by_label["Universal Dependencies"].match_id_type is IdType.ISO_639_3
+    assert resource_by_label["Universal Dependencies"].match_value == "nld"
 
 
 def test_applies_huggingface_tag_resource_links(tmp_path):
@@ -129,6 +145,12 @@ def test_applies_huggingface_tag_resource_links(tmp_path):
     hf_resources = [resource for resource in lang.external_resources if resource.label == "Hugging Face"]
 
     assert {(resource.code, resource.count) for resource in hf_resources} == {("nl", 53), ("nld", 17)}
+    assert {(resource.match_value, resource.match_id_type) for resource in hf_resources} == {
+        ("nl", IdType.BCP_47),
+        ("nld", IdType.ISO_639_3),
+    }
+    assert {resource.source_name for resource in hf_resources} == {"huggingface_dataset_tags"}
+    assert {resource.source_file for resource in hf_resources} == {"tags.json"}
     assert {resource.url for resource in hf_resources} == {
         "https://huggingface.co/datasets?filter=language:nl",
         "https://huggingface.co/datasets?filter=language:nld",

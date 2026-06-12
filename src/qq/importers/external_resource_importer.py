@@ -47,7 +47,7 @@ class ExternalResourceImporter(BaseImporter):
             if not code:
                 continue
             lang = self._get_languoid(identity.canonical_id)
-            if self._add_resource(lang, definition, code):
+            if self._add_resource(lang, definition, code, match_value=code):
                 added += 1
         return added
 
@@ -71,7 +71,7 @@ class ExternalResourceImporter(BaseImporter):
             if not canonical_id:
                 continue
             lang = self._get_languoid(canonical_id)
-            if self._add_resource(lang, definition, code, count):
+            if self._add_resource(lang, definition, code, count, match_value=match_value):
                 added += 1
         return added
 
@@ -156,6 +156,7 @@ class ExternalResourceImporter(BaseImporter):
         definition: ExternalResourceDefinition,
         code: str,
         count: int | None = None,
+        match_value: str | None = None,
     ) -> bool:
         url = definition.url_template.format(code=code)
         if any(resource.url == url for resource in lang.external_resources):
@@ -172,6 +173,12 @@ class ExternalResourceImporter(BaseImporter):
                 code=code,
                 url=url,
                 count=count,
+                source_name=definition.source_name or "qq",
+                source_file=definition.filename,
+                match_column=definition.match_column,
+                match_id_type=definition.match_id_type,
+                match_value=match_value,
+                code_column=definition.code_column,
             )
         )
         return True

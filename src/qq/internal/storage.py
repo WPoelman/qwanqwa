@@ -218,7 +218,14 @@ class DataManager:
         """Reconstruct entity from dict"""
         import inspect
 
-        from qq.data_model import DeprecatedCode, ExternalResource, ExternalResourceGroup, RelationType, WikipediaInfo
+        from qq.data_model import (
+            DeprecatedCode,
+            ExternalResource,
+            ExternalResourceGroup,
+            IdType,
+            RelationType,
+            WikipediaInfo,
+        )
 
         # Get valid parameter names from entity class __init__
         sig = inspect.signature(entity_class.__init__)
@@ -246,6 +253,12 @@ class DataManager:
                     url=resource["url"],
                     code=resource.get("code"),
                     count=resource.get("count"),
+                    source_name=resource.get("source_name"),
+                    source_file=resource.get("source_file"),
+                    match_column=resource.get("match_column"),
+                    match_id_type=IdType(resource["match_id_type"]) if resource.get("match_id_type") else None,
+                    match_value=resource.get("match_value"),
+                    code_column=resource.get("code_column"),
                 )
                 if isinstance(resource, dict)
                 else resource
