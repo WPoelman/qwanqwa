@@ -23,6 +23,7 @@
   const MULTILINGUAL_EXACT_RANK = 4;
   const MULTILINGUAL_PREFIX_RANK = 5;
   const MULTILINGUAL_SUBSTRING_RANK = 6;
+  const RELATED_NAME_RANK = NAME_SUBSTRING_RANK;
   const GRAPH_WIDTH = 640;
   const GRAPH_HEIGHT = 420;
   const GRAPH_CENTER_X = GRAPH_WIDTH / 2;
@@ -566,7 +567,9 @@
     if (a.rank !== b.rank) {
       return a.rank - b.rank;
     }
-    return a.entity.n.localeCompare(b.entity.n) || a.entity.id.localeCompare(b.entity.id);
+    const aSort = a.sortText || a.entity.n;
+    const bSort = b.sortText || b.entity.n;
+    return aSort.localeCompare(bSort) || a.entity.n.localeCompare(b.entity.n) || a.entity.id.localeCompare(b.entity.id);
   }
 
   function renderScoredSearchResults(scored, normalizedQuery) {
@@ -586,7 +589,7 @@
       if (match === null) {
         continue;
       }
-      scored.push({ entity: entity, rank: match.rank, matchText: match.text });
+      scored.push({ entity: entity, rank: match.rank, matchText: match.text, sortText: match.sortText });
     }
 
     return scored;
@@ -640,6 +643,10 @@
       const substringName = firstSubstring(entity.m, normalized);
       if (substringName) {
         return { rank: NAME_SUBSTRING_RANK, text: "Contains: " + substringName };
+      }
+      const relatedName = firstSubstring(entity.a || [], normalized);
+      if (relatedName) {
+        return { rank: RELATED_NAME_RANK, text: "Related family: " + relatedName, sortText: relatedName };
       }
       return null;
     }
@@ -955,6 +962,8 @@
       title.textContent = groupName;
       group.appendChild(title);
 
+      nHFDatasets = groupLinks.filter(i => i.label === "Hugging Face").length;
+
       groupLinks.forEach(function (resource) {
         const row = document.createElement("div");
         row.className = "resource-row";
@@ -962,7 +971,7 @@
         const label = document.createElement("div");
         label.className = "resource-label";
         label.textContent = resource.label;
-        if (resource.label === "Hugging Face") {
+        if (resource.label === "Hugging Face" && nHFDatasets > 1) {
           const hint = document.createElement("button");
           hint.type = "button";
           hint.className = "resource-hint";

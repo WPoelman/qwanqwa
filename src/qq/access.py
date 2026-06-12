@@ -253,6 +253,7 @@ class Database:
         2. Exact name/endonym matches
         3. Prefix name/endonym matches
         4. Substring name/endonym matches
+        5. Related family/macrolanguage name matches, sorted by the matched related name
 
         Example:
             >>> db.search("dutch")
@@ -292,9 +293,16 @@ class Database:
                 else:
                     continue
 
-                candidate_rank = (score, lang.name or lang.bcp_47 or lang.id, lang.id)
+                candidate_rank = (score, candidate_lower, lang.id)
                 if best_score is None or candidate_rank < best_score:
                     best_score = candidate_rank
+
+            for candidate in self._related_search_names(lang):
+                candidate_lower = candidate.lower()
+                if query_lower in candidate_lower:
+                    candidate_rank = (3, candidate_lower, lang.id)
+                    if best_score is None or candidate_rank < best_score:
+                        best_score = candidate_rank
 
             if best_score is not None:
                 scored[lang.id] = best_score
@@ -308,6 +316,27 @@ class Database:
                 if len(results) >= limit:
                     break
         return results
+
+    def _related_search_names(self, lang: Languoid) -> list[str]:
+        """Related names that can help find a languoid."""
+        if lang.is_dialect:
+            return []
+
+        related = [*lang.family_tree]
+        if lang.macrolanguage is not None:
+            related.append(lang.macrolanguage)
+
+        names: list[str] = []
+        seen: set[str] = set()
+        for entity in related:
+            for candidate in [entity.name, entity.endonym]:
+                if not candidate:
+                    continue
+                key = candidate.lower()
+                if key not in seen:
+                    seen.add(key)
+                    names.append(candidate)
+        return names
 
     def is_deprecated(self, code: str, id_type: IdType | None = None) -> bool:
         """Check if a code is deprecated/retired.

@@ -187,6 +187,31 @@ class TestSearch:
         assert results
         assert results[0].name == "Dutch"
 
+    def test_search_finds_languoid_by_ancestor_name(self):
+        from qq.internal.data_store import DataStore
+
+        store = DataStore()
+        resolver = EntityResolver()
+
+        parent_id = resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "azte1234"})
+        parent = Languoid(parent_id, store, name="Aztec", glottocode="azte1234")
+        store.add(parent)
+
+        intermediate_id = resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "isth1246"})
+        intermediate = Languoid(intermediate_id, store, name="Isthmus-Pipil Nahuatl", glottocode="isth1246")
+        intermediate.add_relation(RelationType.PARENT_LANGUOID, parent.id)
+        store.add(intermediate)
+
+        pipil_id = resolver.find_or_create_canonical_id({IdType.ISO_639_3: "ppl"})
+        pipil = Languoid(pipil_id, store, name="Pipil", iso_639_3="ppl")
+        pipil.add_relation(RelationType.PARENT_LANGUOID, intermediate.id)
+        store.add(pipil)
+
+        search_access = Database(store, resolver)
+        results = search_access.search("Nahuatl")
+
+        assert any(result.name == "Pipil" for result in results)
+
 
 class TestDeprecated:
     def test_is_deprecated_true(self, access):

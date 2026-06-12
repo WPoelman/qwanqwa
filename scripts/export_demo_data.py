@@ -195,10 +195,19 @@ def export_languoid_summary(entity: Languoid) -> dict[str, Any]:
         ]
     )
     names = clean_list([entity.name, entity.endonym])
+    related_names = []
+    if not entity.is_dialect:
+        for related in [*entity.family_tree, entity.macrolanguage]:
+            if related is None:
+                continue
+            for name in clean_list([related.name, related.endonym]):
+                if name not in related_names:
+                    related_names.append(name)
     search_terms = clean_list(
         [
             *names,
             *identifiers,
+            *related_names,
         ]
     )
     return {
@@ -208,6 +217,7 @@ def export_languoid_summary(entity: Languoid) -> dict[str, Any]:
         "q": " ".join(search_terms).lower(),
         "i": identifiers,
         "m": names,
+        "a": related_names,
         "d": deprecated_codes,
         "b": bucket_for(entity.id),
     }
