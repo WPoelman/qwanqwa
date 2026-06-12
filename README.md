@@ -162,6 +162,11 @@ qq status
 # Update sources (only needed if you want to rebuild the database,
 # not necessary in normal use)
 qq update
+
+# For publishing the web-based explorer
+qq export-demo
+qq publish-demo <output-path>
+qq prepare-release
 ```
 
 ## Examples

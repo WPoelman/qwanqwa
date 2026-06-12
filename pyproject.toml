@@ -67,7 +67,7 @@ exclude = ["notebooks/*", "case-studies/linking-datasets/*"]
 
 [tool.ty.src]
 # TODO: add case-studies and examples? At that point maybe just trust gitignore
-include = ["scripts", "src", "tests"]
+include = ["src", "tests"]
 
 [tool.ty.rules]
 unused-ignore-comment = "ignore"

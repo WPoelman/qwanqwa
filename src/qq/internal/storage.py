@@ -259,6 +259,7 @@ class DataManager:
                     match_id_type=IdType(resource["match_id_type"]) if resource.get("match_id_type") else None,
                     match_value=resource.get("match_value"),
                     code_column=resource.get("code_column"),
+                    url_column=resource.get("url_column"),
                 )
                 if isinstance(resource, dict)
                 else resource

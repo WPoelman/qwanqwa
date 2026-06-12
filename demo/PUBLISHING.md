@@ -19,7 +19,7 @@ This demo is developed here, but published elsewhere.
 1. Rebuild and copy the demo into the website repository:
 
    ```bash
-   uv run python scripts/publish_demo.py <output-path>
+   uv run qq publish-demo <output-path>
    ```
 
 2. Rebuild the website (if necessary, with Hugo for example):
@@ -31,5 +31,11 @@ This demo is developed here, but published elsewhere.
 - If only the HTML/CSS/JS changed and the generated data is still current, you can skip the export step:
 
   ```bash
-  uv run python scripts/publish_demo.py <output-path> --skip-export
+  uv run qq publish-demo <output-path> --skip-export
+  ```
+
+- If the output directory already exists, the command asks before replacing it. For automated publishing, pass `--yes`:
+
+  ```bash
+  uv run qq publish-demo <output-path> --yes
   ```

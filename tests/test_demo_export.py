@@ -1,7 +1,7 @@
 from qq.data_model import RelationType
+from qq.explorer.export import export_region_detail
 from qq.interface import GeographicRegion, Languoid, Script
 from qq.internal.data_store import DataStore
-from scripts.export_demo_data import export_region_detail
 
 
 def relation_items(detail, label):

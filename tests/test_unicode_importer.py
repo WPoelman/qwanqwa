@@ -1,3 +1,4 @@
+from qq import Script
 from qq.importers.unicode_importer import UnicodeImporter
 from qq.internal.entity_resolution import EntityResolver
 
@@ -19,6 +20,9 @@ def test_imports_unicode_script_ranges(tmp_path):
 
     latin = importer.entity_set.get("script:latn")
     greek = importer.entity_set.get("script:grek")
+
+    assert isinstance(latin, Script)
+    assert isinstance(greek, Script)
 
     assert latin.iso_15924 == "Latn"
     assert latin.unicode_alias == "Latin"

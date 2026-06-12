@@ -102,6 +102,39 @@ class SourceConfig:
                 website_url="https://www.wikidata.org/",
                 notes="SPARQL query for ISO 639-5 codes and Glottolog identifiers, used to merge family codes.",
             ),
+            WikidataSparqlSourceProvider(
+                name="wikidata_enwiki_sitelinks",
+                display_name="Wikidata English Wikipedia sitelinks",
+                sources_dir=sources_dir,
+                source_url="https://query.wikidata.org/sparql",
+                filename="sitelinks.json",
+                query=(
+                    "SELECT DISTINCT ?item ?article ?articleTitle WHERE { "
+                    "VALUES ?identifierProperty { wdt:P218 wdt:P219 wdt:P220 wdt:P305 wdt:P1394 wdt:P1798 } "
+                    "?item ?identifierProperty ?identifier . "
+                    "?article schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> ; schema:name ?articleTitle . "
+                    "} ORDER BY ?item"
+                ),
+                cache_duration_hours=24 * 30,
+                license="CC0",
+                website_url="https://www.wikidata.org/",
+                notes="SPARQL query for English Wikipedia sitelinks on Wikidata language items.",
+                external_resources=[
+                    ExternalResourceDefinition(
+                        label="English Wikipedia",
+                        group=ExternalResourceGroup.REFERENCE,
+                        url_template="{code}",
+                        source_name="wikidata_enwiki_sitelinks",
+                        filename="sitelinks.json",
+                        file_format=ExternalResourceFileFormat.WIKIDATA_SPARQL_BINDINGS_JSON,
+                        match_column="item",
+                        match_id_type=IdType.WIKIDATA_ID,
+                        code_column="articleTitle",
+                        url_column="article",
+                        unique_per_languoid=True,
+                    )
+                ],
+            ),
             GitSourceProvider(
                 name="glotscript",
                 sources_dir=sources_dir,

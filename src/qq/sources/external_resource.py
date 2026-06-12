@@ -10,6 +10,7 @@ class ExternalResourceFileFormat(Enum):
     CSV = "csv"
     DSPACE_ITEM_JSON = "dspace_item_json"
     HUGGINGFACE_TAGS_JSON = "huggingface_tags_json"
+    WIKIDATA_SPARQL_BINDINGS_JSON = "wikidata_sparql_bindings_json"
 
 
 @dataclass(frozen=True)
@@ -23,4 +24,5 @@ class ExternalResourceDefinition:
     match_column: str | None = None
     match_id_type: IdType | None = None
     code_column: str | None = None
+    url_column: str | None = None
     unique_per_languoid: bool = False

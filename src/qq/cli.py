@@ -196,5 +196,48 @@ def generate_docs(output):
         ) from e
 
 
+@cli.command("export-demo")
+@click.option("--output", "output_dir", type=Path, default=None, help="Directory for generated demo data")
+def export_demo(output_dir):
+    """Export static browser demo data"""
+    from qq.explorer.export import export_demo_data
+
+    data_dir = export_demo_data(output_dir)
+    click.echo(f"Wrote {data_dir}")
+
+
+@cli.command("publish-demo")
+@click.argument("output_dir", type=Path)
+@click.option("--skip-export", is_flag=True, help="Reuse current demo data instead of regenerating it first")
+@click.option("--yes", "assume_yes", is_flag=True, help="Replace an existing output directory without prompting")
+def publish_demo_cmd(output_dir, skip_export, assume_yes):
+    """Export and copy the browser demo into a target directory"""
+    from qq.explorer.publish import publish_demo
+
+    target_dir = output_dir.expanduser().resolve()
+    overwrite = False
+    if target_dir.exists():
+        if not assume_yes:
+            click.confirm(f"Replace existing directory {target_dir}?", abort=True)
+        overwrite = True
+
+    target_dir = publish_demo(output_dir, skip_export=skip_export, overwrite=overwrite)
+    click.echo(f"Published demo to {target_dir}")
+
+
+@cli.command("prepare-release")
+def prepare_release_cmd():
+    """Update sources, rebuild data, and refresh release docs"""
+    try:
+        from qq.release import prepare_release
+
+        prepare_release()
+        click.echo("Prepared release artifacts")
+    except ImportError as e:
+        raise click.ClickException(
+            f"This command requires build dependencies. Install them with: pip install qwanqwa[build]\n{e}"
+        ) from e
+
+
 if __name__ == "__main__":
     cli()

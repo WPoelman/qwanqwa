@@ -66,12 +66,12 @@ class ExternalResourceImporter(BaseImporter):
             return 0
 
         added = 0
-        for match_value, code, count in self._iter_source_codes(path, definition):
+        for match_value, code, count, url in self._iter_source_codes(path, definition):
             canonical_id = self.resolver.resolve(definition.match_id_type, match_value)
             if not canonical_id:
                 continue
             lang = self._get_languoid(canonical_id)
-            if self._add_resource(lang, definition, code, count, match_value=match_value):
+            if self._add_resource(lang, definition, code, count, match_value=match_value, url=url):
                 added += 1
         return added
 
@@ -82,6 +82,8 @@ class ExternalResourceImporter(BaseImporter):
             yield from self._iter_dspace_item_json_source_codes(path, definition)
         elif definition.file_format is ExternalResourceFileFormat.HUGGINGFACE_TAGS_JSON:
             yield from self._iter_huggingface_tags_json_source_codes(path, definition)
+        elif definition.file_format is ExternalResourceFileFormat.WIKIDATA_SPARQL_BINDINGS_JSON:
+            yield from self._iter_wikidata_sparql_bindings_json_source_codes(path, definition)
 
     def _iter_csv_source_codes(self, path: Path, definition: ExternalResourceDefinition):
         with open(path, "r", encoding="utf-8-sig", newline="") as f:
@@ -97,7 +99,8 @@ class ExternalResourceImporter(BaseImporter):
             code_column = definition.code_column or definition.match_column
             code = (row.get(code_column or "") or match_value).strip()
             if code:
-                yield match_value, code, None
+                url = (row.get(definition.url_column or "") or "").strip() or None
+                yield match_value, code, None, url
 
     def _prefer_plain_named_rows(
         self, rows: list[dict[str, str]], definition: ExternalResourceDefinition
@@ -122,7 +125,7 @@ class ExternalResourceImporter(BaseImporter):
         for item in data.get("metadata", {}).get(definition.match_column or "", []):
             match_value = (item.get("value") or "").strip()
             if match_value:
-                yield match_value, match_value, None
+                yield match_value, match_value, None, None
 
     def _iter_huggingface_tags_json_source_codes(self, path: Path, definition: ExternalResourceDefinition):
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -137,7 +140,35 @@ class ExternalResourceImporter(BaseImporter):
             if not isinstance(count, int) or count < 1:
                 continue
             if code:
-                yield code, code, count
+                yield code, code, count, None
+
+    def _iter_wikidata_sparql_bindings_json_source_codes(self, path: Path, definition: ExternalResourceDefinition):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        for binding in data.get("results", {}).get("bindings", []):
+            match_value = self._binding_value(binding, definition.match_column)
+            if not match_value:
+                continue
+            match_value = self._strip_wikidata_entity_url(match_value)
+            code = self._binding_value(binding, definition.code_column) or match_value
+            url = self._binding_value(binding, definition.url_column)
+            if definition.url_column and not url:
+                continue
+            if code:
+                yield match_value, code, None, url
+
+    @staticmethod
+    def _binding_value(binding: dict, column: str | None) -> str | None:
+        if not column:
+            return None
+        value = binding.get(column, {}).get("value")
+        return value.strip() if isinstance(value, str) and value.strip() else None
+
+    @staticmethod
+    def _strip_wikidata_entity_url(value: str) -> str:
+        prefix = "http://www.wikidata.org/entity/"
+        if value.startswith(prefix):
+            return value.removeprefix(prefix)
+        return value
 
     def _get_languoid(self, canonical_id: str) -> Languoid:
         entity = self.entity_set.get(canonical_id)
@@ -159,8 +190,9 @@ class ExternalResourceImporter(BaseImporter):
         code: str,
         count: int | None = None,
         match_value: str | None = None,
+        url: str | None = None,
     ) -> bool:
-        url = definition.url_template.format(code=code)
+        url = url or definition.url_template.format(code=code)
         if any(resource.url == url for resource in lang.external_resources):
             return False
         if definition.unique_per_languoid and any(
@@ -181,6 +213,7 @@ class ExternalResourceImporter(BaseImporter):
                 match_id_type=definition.match_id_type,
                 match_value=match_value,
                 code_column=definition.code_column,
+                url_column=definition.url_column,
             )
         )
         return True

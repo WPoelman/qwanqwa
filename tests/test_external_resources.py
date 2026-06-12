@@ -186,3 +186,54 @@ def test_can_keep_one_source_resource_per_languoid(tmp_path):
     assert [(resource.code, resource.url) for resource in wals_resources] == [
         ("ger", "https://wals.info/languoid/lect/wals_code_ger")
     ]
+
+
+def test_applies_wikidata_sitelink_resource_links(tmp_path):
+    sources_dir = tmp_path / "sources"
+    wikidata_dir = sources_dir / "wikidata_enwiki_sitelinks"
+    wikidata_dir.mkdir(parents=True)
+    (wikidata_dir / "sitelinks.json").write_text(
+        json.dumps(
+            {
+                "results": {
+                    "bindings": [
+                        {
+                            "item": {"value": "http://www.wikidata.org/entity/Q188"},
+                            "article": {"value": "https://en.wikipedia.org/wiki/German_language"},
+                            "articleTitle": {"value": "German language"},
+                        },
+                        {
+                            "item": {"value": "http://www.wikidata.org/entity/Q999"},
+                            "articleTitle": {"value": "Missing URL"},
+                        },
+                    ]
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    resolver = EntityResolver()
+    german_id = resolver.find_or_create_canonical_id({IdType.WIKIDATA_ID: "Q188"})
+    no_enwiki_id = resolver.find_or_create_canonical_id({IdType.WIKIDATA_ID: "Q12952751"})
+
+    importer = ExternalResourceImporter(resolver, SourceConfig.get_external_resource_definitions(sources_dir))
+    importer.import_data(sources_dir)
+
+    german = importer.entity_set.get(german_id)
+    assert isinstance(german, Languoid)
+
+    resource_by_label = {resource.label: resource for resource in german.external_resources}
+    assert resource_by_label["English Wikipedia"].code == "German language"
+    assert resource_by_label["English Wikipedia"].url == "https://en.wikipedia.org/wiki/German_language"
+    assert resource_by_label["English Wikipedia"].source_name == "wikidata_enwiki_sitelinks"
+    assert resource_by_label["English Wikipedia"].source_file == "sitelinks.json"
+    assert resource_by_label["English Wikipedia"].match_column == "item"
+    assert resource_by_label["English Wikipedia"].match_id_type is IdType.WIKIDATA_ID
+    assert resource_by_label["English Wikipedia"].match_value == "Q188"
+    assert resource_by_label["English Wikipedia"].code_column == "articleTitle"
+    assert resource_by_label["English Wikipedia"].url_column == "article"
+
+    no_enwiki = importer.entity_set.get(no_enwiki_id)
+    assert isinstance(no_enwiki, Languoid)
+    assert "English Wikipedia" not in {resource.label for resource in no_enwiki.external_resources}

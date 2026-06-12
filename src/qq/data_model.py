@@ -111,6 +111,7 @@ class ExternalResource:
     match_id_type: IdType | None = None  # Which ID and type to link to
     match_value: str | None = None
     code_column: str | None = None
+    url_column: str | None = None
 
 
 @dataclass

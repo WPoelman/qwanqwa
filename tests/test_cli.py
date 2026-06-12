@@ -65,7 +65,19 @@ class TestCLIBasicCommands:
     def test_help_lists_all_commands(self, runner):
         result = runner.invoke(cli, ["--help"])
         assert result.exit_code == 0
-        for cmd in ["update", "status", "verify", "rebuild", "get", "search", "validate", "generate-docs"]:
+        for cmd in [
+            "update",
+            "status",
+            "verify",
+            "rebuild",
+            "get",
+            "search",
+            "validate",
+            "generate-docs",
+            "export-demo",
+            "publish-demo",
+            "prepare-release",
+        ]:
             assert cmd in result.output
 
 
@@ -101,6 +113,25 @@ class TestCLIBuildCommands:
             result = runner.invoke(cli, ["rebuild"])
         assert result.exit_code == 0
         mock_updater.rebuild_database.assert_called_once()
+
+    def test_publish_demo_prompts_before_replacing_existing_target(self, runner, tmp_path):
+        target = tmp_path / "site"
+        target.mkdir()
+
+        result = runner.invoke(cli, ["publish-demo", str(target), "--skip-export"], input="n\n")
+
+        assert result.exit_code != 0
+        assert "Replace existing directory" in result.output
+
+    def test_publish_demo_yes_skips_replace_prompt(self, runner, tmp_path):
+        target = tmp_path / "site"
+        target.mkdir()
+
+        result = runner.invoke(cli, ["publish-demo", str(target), "--skip-export", "--yes"])
+
+        assert result.exit_code == 0
+        assert "Published demo to" in result.output
+        assert (target / "index.html").exists()
 
 
 class TestCLIGetCommand:
