@@ -125,7 +125,7 @@ def test_applies_huggingface_tag_resource_links(tmp_path):
                 "language": [
                     {"id": "language:nl", "dataset_count": 53},
                     {"id": "language:nld", "dataset_count": 17},
-                    {"id": "language:dut", "dataset_count": 4},
+                    {"id": "language:dut", "dataset_count": 0},
                     {"id": "license:cc-by-4.0", "dataset_count": 100},
                 ]
             }
@@ -135,7 +135,7 @@ def test_applies_huggingface_tag_resource_links(tmp_path):
 
     resolver = EntityResolver()
     canonical_id = resolver.find_or_create_canonical_id(
-        {IdType.BCP_47: "nl", IdType.ISO_639_1: "nl", IdType.ISO_639_3: "nld"}
+        {IdType.BCP_47: "nl", IdType.ISO_639_1: "nl", IdType.ISO_639_3: "nld", IdType.ISO_639_2B: "dut"}
     )
 
     importer = ExternalResourceImporter(resolver, SourceConfig.get_external_resource_definitions(sources_dir))

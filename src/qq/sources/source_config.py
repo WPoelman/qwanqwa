@@ -312,7 +312,7 @@ class SourceConfig:
                 name="huggingface_dataset_tags",
                 display_name="Hugging Face Datasets",
                 sources_dir=sources_dir,
-                source_url="https://huggingface.co/api/datasets?limit=1000&full=false",
+                source_url="https://huggingface.co/api/datasets?limit=1000&expand=tags",
                 filename="tags.json",
                 cache_duration_hours=24,
                 license="See Hugging Face datasets themselves.",

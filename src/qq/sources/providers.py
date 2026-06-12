@@ -559,9 +559,12 @@ class UnicodeUCDSourceProvider(SourceProvider):
         return all((self.data_dir / filename).exists() for filename in self.filenames)
 
 
-# TODO: more generic huggingface
 class HuggingFaceDatasetTagsSourceProvider(FileDownloadSourceProvider):
     """Provider that caches Hugging Face language tags with dataset counts."""
+
+    dataset_search_url = "https://huggingface.co/api/datasets"
+    page_size = 100
+    max_count = 1000
 
     def fetch(self, force: bool = False) -> bool:
         target_dir = self.data_dir
@@ -596,7 +599,6 @@ class HuggingFaceDatasetTagsSourceProvider(FileDownloadSourceProvider):
 
     def _fetch_language_tag_counts(self) -> dict[str, list[dict[str, int | str]]]:
         from collections import Counter
-        from urllib.request import Request, urlopen
 
         headers = {"User-Agent": f"qwanqwa/{qq.__version__} (https://github.com/WPoelman/qwanqwa) Python/urllib"}
         url = self.source_url
@@ -605,14 +607,10 @@ class HuggingFaceDatasetTagsSourceProvider(FileDownloadSourceProvider):
         dataset_count = 0
 
         while url:
-            request = Request(url, headers=headers)
-            with urlopen(request, timeout=60) as response:
-                datasets = json.loads(response.read().decode("utf-8"))
-                link = response.headers.get("Link")
-                base_url = response.geturl()
-
+            datasets, link, base_url = self._fetch_dataset_page(url, headers)
             page_count += 1
             dataset_count += len(datasets)
+
             for dataset in datasets:
                 tags = dataset.get("tags") or []
                 for tag in tags:
@@ -634,6 +632,62 @@ class HuggingFaceDatasetTagsSourceProvider(FileDownloadSourceProvider):
                 {"id": tag, "dataset_count": count} for tag, count in sorted(counts.items(), key=lambda item: item[0])
             ]
         }
+
+    def _fetch_dataset_page(
+        self, url: str, headers: dict[str, str], retries: int = 3
+    ) -> tuple[list[dict], str | None, str]:
+        import time
+        from urllib.error import HTTPError
+        from urllib.request import Request, urlopen
+
+        for attempt in range(retries + 1):
+            request = Request(url, headers=headers)
+            try:
+                with urlopen(request, timeout=60) as response:
+                    data = json.loads(response.read().decode("utf-8"))
+                    self._respect_rate_limit(response.headers)
+                    return data, response.headers.get("Link"), response.geturl()
+            except HTTPError as e:
+                if e.code != 429 or attempt >= retries:
+                    raise
+                wait_seconds = self._retry_after_seconds(e.headers)
+                logger.warning("Hugging Face rate limit reached; retrying in %d seconds", wait_seconds)
+                time.sleep(wait_seconds)
+
+        raise RuntimeError("unreachable")
+
+    @staticmethod
+    def _respect_rate_limit(headers) -> None:
+        import time
+
+        ratelimit = headers.get("ratelimit")
+        if not ratelimit:
+            return
+        remaining = HuggingFaceDatasetTagsSourceProvider._ratelimit_value(ratelimit, "r")
+        reset_seconds = HuggingFaceDatasetTagsSourceProvider._ratelimit_value(ratelimit, "t")
+        if remaining is not None and reset_seconds is not None and remaining <= 2:
+            logger.info("Pausing for Hugging Face API rate limit reset (%d seconds)", reset_seconds)
+            time.sleep(reset_seconds + 1)
+
+    @staticmethod
+    def _retry_after_seconds(headers) -> int:
+        retry_after = headers.get("Retry-After")
+        if retry_after and retry_after.isdigit():
+            return max(1, int(retry_after))
+        ratelimit = headers.get("ratelimit")
+        reset_seconds = HuggingFaceDatasetTagsSourceProvider._ratelimit_value(ratelimit or "", "t")
+        return max(30, (reset_seconds or 60) + 1)
+
+    @staticmethod
+    def _ratelimit_value(header: str, key: str) -> int | None:
+        prefix = f"{key}="
+        for part in header.split(";"):
+            value = part.strip()
+            if value.startswith(prefix):
+                raw = value.removeprefix(prefix)
+                if raw.isdigit():
+                    return int(raw)
+        return None
 
     @staticmethod
     def _next_link(link_header: str | None, base_url: str) -> str | None:

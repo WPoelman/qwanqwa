@@ -134,8 +134,10 @@ class ExternalResourceImporter(BaseImporter):
                 continue
             code = tag_id.removeprefix("language:").strip()
             count = item.get("dataset_count")
+            if not isinstance(count, int) or count < 1:
+                continue
             if code:
-                yield code, code, count if isinstance(count, int) else None
+                yield code, code, count
 
     def _get_languoid(self, canonical_id: str) -> Languoid:
         entity = self.entity_set.get(canonical_id)
