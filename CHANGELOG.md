@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - NLLB-style codes support improvements
 - Additional convenience methods on Languoid
 
+## [1.1.1] - 2026-06-12
+
+### Added
+
+- links to English Wikipedia articles
+- Move behavior of loose scripts into CLI
+
+### Fixed
+- cleaner UI (no more breadcrumbs)
+- Indent family relations based on family level
+- Fix weird copy button placement on small screens
+
 ## [1.1.0] - 2026-06-12
 
 ### Added

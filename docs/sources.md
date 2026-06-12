@@ -144,6 +144,15 @@ LINDAT item metadata used to add Universal Dependencies links by ISO 639-3 code.
 
 Language table used to add exact WALS resource links by Glottocode and WALS code.
 
+## Wikidata English Wikipedia sitelinks
+
+* Source: https://query.wikidata.org/sparql
+* License: CC0
+* Website: https://www.wikidata.org/
+* Last updated: 12-06-2026
+
+SPARQL query for English Wikipedia sitelinks on Wikidata language items.
+
 ## Wikidata ISO 639-5
 
 * Source: https://query.wikidata.org/sparql
