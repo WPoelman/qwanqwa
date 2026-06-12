@@ -72,6 +72,8 @@ def test_deduplicates_resource_links(tmp_path):
     importer.import_data(sources_dir)
 
     lang = importer.entity_set.get(canonical_id)
+    assert isinstance(lang, Languoid)
+
     keys = [(resource.label, resource.code) for resource in lang.external_resources]
 
     assert keys.count(("Glottolog", "dutc1256")) == 1
@@ -104,6 +106,8 @@ def test_applies_dspace_item_json_resource_links(tmp_path):
     importer.import_data(sources_dir)
 
     lang = importer.entity_set.get(canonical_id)
+    assert isinstance(lang, Languoid)
+
     resource_by_label = {resource.label: resource for resource in lang.external_resources}
 
     assert resource_by_label["Universal Dependencies"].code == "nld"
@@ -142,6 +146,8 @@ def test_applies_huggingface_tag_resource_links(tmp_path):
     importer.import_data(sources_dir)
 
     lang = importer.entity_set.get(canonical_id)
+    assert isinstance(lang, Languoid)
+
     hf_resources = [resource for resource in lang.external_resources if resource.label == "Hugging Face"]
 
     assert {(resource.code, resource.count) for resource in hf_resources} == {("nl", 53), ("nld", 17)}
@@ -173,6 +179,8 @@ def test_can_keep_one_source_resource_per_languoid(tmp_path):
     importer.import_data(sources_dir)
 
     lang = importer.entity_set.get(canonical_id)
+    assert isinstance(lang, Languoid)
+
     wals_resources = [resource for resource in lang.external_resources if resource.label == "WALS"]
 
     assert [(resource.code, resource.url) for resource in wals_resources] == [

@@ -14,6 +14,7 @@ from qq.importers import (
     SILImporter,
     UnicodeImporter,
     WikipediaImporter,
+    WikidataIso6395Importer,
 )
 from qq.sources.external_resource import ExternalResourceDefinition, ExternalResourceFileFormat
 from qq.sources.providers import (
@@ -22,6 +23,7 @@ from qq.sources.providers import (
     HuggingFaceDatasetTagsSourceProvider,
     SourceProvider,
     UnicodeUCDSourceProvider,
+    WikidataSparqlSourceProvider,
 )
 
 
@@ -81,6 +83,24 @@ class SourceConfig:
                 subpath="cldf",
                 license="CC BY 4.0",
                 website_url="https://glottolog.org/",
+            ),
+            WikidataSparqlSourceProvider(
+                name="wikidata_iso6395",
+                display_name="Wikidata ISO 639-5",
+                sources_dir=sources_dir,
+                source_url="https://query.wikidata.org/sparql",
+                filename="iso6395.json",
+                query=(
+                    "SELECT ?item ?itemLabel ?iso6395 ?glottocode WHERE { "
+                    "?item wdt:P1798 ?iso6395 . "
+                    "OPTIONAL { ?item wdt:P1394 ?glottocode . } "
+                    'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } '
+                    "} ORDER BY ?iso6395"
+                ),
+                cache_duration_hours=24 * 30,
+                license="CC0",
+                website_url="https://www.wikidata.org/",
+                notes="SPARQL query for ISO 639-5 codes and Glottolog identifiers, used to merge family codes.",
             ),
             GitSourceProvider(
                 name="glotscript",
@@ -408,6 +428,7 @@ class SourceConfig:
         return [
             ImporterConfig("linguameta", LinguaMetaImporter),
             ImporterConfig("glottolog", GlottologImporter),
+            ImporterConfig("wikidata_iso6395", WikidataIso6395Importer, data_path_name="wikidata_iso6395/iso6395.json"),
             ImporterConfig("glotscript", GlotscriptImporter),
             ImporterConfig("pycountry", PycountryImporter),
             ImporterConfig("unicode_ucd", UnicodeImporter),

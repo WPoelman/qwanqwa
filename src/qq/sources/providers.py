@@ -482,6 +482,22 @@ class FileDownloadSourceProvider(SourceProvider):
         return target_file.exists()
 
 
+class WikidataSparqlSourceProvider(FileDownloadSourceProvider):
+    """Provider for cached Wikidata SPARQL JSON results."""
+
+    endpoint_url = "https://query.wikidata.org/sparql"
+
+    def __init__(self, *args, query: str, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.query = query
+
+    def fetch(self, force: bool = False) -> bool:
+        from urllib.parse import urlencode
+
+        self.source_url = f"{self.endpoint_url}?{urlencode({'format': 'json', 'query': self.query})}"
+        return super().fetch(force=force)
+
+
 # TODO: maybe this can be reworked into the filedownloader, but instead with multiple files instead of just one?
 class UnicodeUCDSourceProvider(SourceProvider):
     """Provider for the Unicode Character Database files used by qq."""
