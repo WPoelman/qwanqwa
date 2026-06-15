@@ -13,8 +13,8 @@ from qq.importers import (
     PycountryImporter,
     SILImporter,
     UnicodeImporter,
-    WikipediaImporter,
     WikidataIso6395Importer,
+    WikipediaImporter,
 )
 from qq.sources.external_resource import ExternalResourceDefinition, ExternalResourceFileFormat
 from qq.sources.providers import (
@@ -55,10 +55,17 @@ class SourceConfig:
 
         To add a new source:
         1. Add it to this list
-        2. Specify the provider type (Git, API, or Directory)
+        2. Specify the provider type
         3. The importer will be automatically used during rebuild
            Do make sure to add an "Importer" to actually extract info from
            the source during a rebuild. See below.
+           For external resources, matching can also be done purely on a column
+           in a csv of which identifier to select and which external link can be
+           made. For example:
+                Liking to Glottolog can be done through glottocodes and
+                by adding it to the end of the URL, like this:
+
+                https://glottolog.org/resource/languoid/id/drav1251
         """
         return [
             GitSourceProvider(

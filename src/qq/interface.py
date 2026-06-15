@@ -62,7 +62,7 @@ class Languoid(TraversableEntity):
         >>> dutch.nllb_codes()              # ["nld_Latn"]
 
     Attributes:
-        bcp_47: BCP-47 language code (e.g., "nl", "zh-Hans")
+        bcp_47: BCP-47 language code (e.g., "nl")
         iso_639_3: ISO 639-3 code (e.g., "nld")
         iso_639_2t: ISO 639-2T (terminological) code (always identical to iso_639_3)
         iso_639_2b: ISO 639-2B code (e.g., "dut")
@@ -119,6 +119,8 @@ class Languoid(TraversableEntity):
         super().__init__(entity_id, data_store)
 
         # Core identifiers
+        # TODO: this could be expanded to full bcp-47 codes, but the question is which entities we return.
+        #       One option could be a Result class that contains the specific components (Languoid, Script, Region)
         self.bcp_47: str | None = bcp_47
         self.iso_639_1: str | None = iso_639_1
         self.iso_639_2b: str | None = iso_639_2b
