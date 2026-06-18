@@ -203,6 +203,7 @@ def test_reconcile_merged_languoids_updates_earlier_entity_sets():
     assert second_set.get(second_id) is None
     assert [rel.target_id for rel in script._relations[RelationType.USED_BY_LANGUOID]] == [merged_id]
 
+
 def test_script_name_prefers_pycountry():
     linguameta = EntitySet()
     pycountry = EntitySet()
