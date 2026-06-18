@@ -94,7 +94,7 @@ class SourceUpdater:
         from qq.sources.source_config import SourceConfig
 
         logger.info("Rebuilding database from current sources...")
-        build_database(self.sources_dir, SourceConfig(), LOCAL_DATA_DIR, DEFAULT_DB_FORMAT)
+        build_database(SourceConfig(self.sources_dir), LOCAL_DATA_DIR, DEFAULT_DB_FORMAT)
         logger.info("Database rebuilt successfully.")
 
     def verify_all(self) -> dict[str, bool]:

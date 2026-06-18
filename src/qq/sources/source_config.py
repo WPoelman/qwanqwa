@@ -31,8 +31,11 @@ from qq.sources.providers import (
 class ImporterConfig:
     source_name: str
     importer_cls: type[BaseImporter]
-    data_path_name: str | None = ""
+    data_path_name: str | None = None
     kwargs: dict[str, Any] = field(default_factory=dict)
+
+    def resolve_data_path(self, sources_dir: Path) -> Path:
+        return sources_dir / (self.data_path_name or self.source_name)
 
 
 class SourceConfig:
@@ -42,6 +45,9 @@ class SourceConfig:
 
     This config is used to import the sources in a consistent way.
     """
+
+    def __init__(self, sources_dir: Path):
+        self.sources_dir = sources_dir
 
     @staticmethod
     def get_providers_as_dict(sources_dir: Path) -> dict[str, SourceProvider]:
@@ -454,8 +460,7 @@ class SourceConfig:
                 definitions.extend(provider.external_resources)
         return definitions
 
-    @staticmethod
-    def get_importers(sources_dir: Path | None = None) -> list[ImporterConfig]:
+    def get_importers(self) -> list[ImporterConfig]:
         """
         Each name of a SourceProvider is associated with one or more Importers.
         These importers extract information from the source.
@@ -475,11 +480,10 @@ class SourceConfig:
             ImporterConfig("wikipedia", WikipediaImporter),
             ImporterConfig("sil", SILImporter),
             ImporterConfig("iana", IANAImporter),
-            # TODO: ugly, need to find out a nicer way.
             ImporterConfig(
                 "external_resources",
                 ExternalResourceImporter,
-                data_path_name=None,
-                kwargs={"definitions": SourceConfig.get_external_resource_definitions(sources_dir)},
+                data_path_name=".",
+                kwargs={"definitions": SourceConfig.get_external_resource_definitions(self.sources_dir)},
             ),
         ]

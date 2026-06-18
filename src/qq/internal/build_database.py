@@ -51,7 +51,6 @@ def _reconcile_merged_languoids(
 
 
 def build_database(
-    sources_dir: Path,
     source_config: SourceConfig,
     output_dir: Path,
     format: Literal["json.gz", "json", "pkl.gz"] = "json.gz",
@@ -70,19 +69,14 @@ def build_database(
 
     # -- Import phase
     # Each importer fills its own EntitySet; they share only the resolver.
-    importers = source_config.get_importers(sources_dir)
+    importers = source_config.get_importers()
     to_merge = []
     instances = []
-    # TODO: this is a bit ugly with the new external sources, can probably be done neater
     for idx, importer_config in enumerate(importers):
         display_name = importer_config.source_name.replace("_", " ").title()
         logger.info(f"[{idx + 1}/{len(importers)}] Importing {display_name}...")
 
-        source_path = (
-            sources_dir
-            if importer_config.data_path_name is None
-            else sources_dir / (importer_config.data_path_name or importer_config.source_name)
-        )
+        source_path = importer_config.resolve_data_path(source_config.sources_dir)
         imp = importer_config.importer_cls(resolver, **importer_config.kwargs)
         imp.import_data(source_path)
         to_merge.append((importer_config.importer_cls.source, imp.entity_set))
