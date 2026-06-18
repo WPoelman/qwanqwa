@@ -114,7 +114,7 @@ class TestCLIBuildCommands:
         assert result.exit_code == 0
         mock_updater.rebuild_database.assert_called_once()
 
-    def test_publish_demo_prompts_before_replacing_existing_target(self, runner, tmp_path):
+    def test_publish_demo_prompts_before_replacing_existing_target(self, runner, tmp_path, demo_assets):
         target = tmp_path / "site"
         target.mkdir()
 
@@ -123,7 +123,7 @@ class TestCLIBuildCommands:
         assert result.exit_code != 0
         assert "Replace existing directory" in result.output
 
-    def test_publish_demo_yes_skips_replace_prompt(self, runner, tmp_path):
+    def test_publish_demo_yes_skips_replace_prompt(self, runner, tmp_path, demo_assets):
         target = tmp_path / "site"
         target.mkdir()
 

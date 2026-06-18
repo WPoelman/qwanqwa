@@ -3,7 +3,7 @@ import pytest
 from qq.explorer.publish import publish_demo
 
 
-def test_publish_demo_refuses_existing_target_without_overwrite(tmp_path):
+def test_publish_demo_refuses_existing_target_without_overwrite(tmp_path, demo_assets):
     target = tmp_path / "site"
     target.mkdir()
     (target / "old.txt").write_text("old")
@@ -14,7 +14,7 @@ def test_publish_demo_refuses_existing_target_without_overwrite(tmp_path):
     assert (target / "old.txt").read_text() == "old"
 
 
-def test_publish_demo_overwrites_existing_target_when_allowed(tmp_path):
+def test_publish_demo_overwrites_existing_target_when_allowed(tmp_path, demo_assets):
     target = tmp_path / "site"
     target.mkdir()
     (target / "old.txt").write_text("old")
