@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-06-18
+
 ### Added
-- Added Wikidata script types, families, and native-label examples.
+- Added Wikidata script types, families, and examples.
 
 ### Changed
 - Script names now come from ISO 15924 data.
@@ -16,9 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed `Script.full_name`; use `Script.name` for the ISO 15924 English name.
 
-### Planned
-- NLLB-style codes support improvements
-- Additional convenience methods on Languoid
 
 ## [1.1.1] - 2026-06-12
 

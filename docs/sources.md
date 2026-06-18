@@ -8,7 +8,7 @@
 * Source: https://raw.githubusercontent.com/cldf-datasets/afbo/master/cldf/languages.csv
 * License: CC BY 4.0
 * Website: https://afbo.info/
-* Last updated: 18-06-2026
+* Last updated: 11-06-2026
 
 Language table used to add exact AfBo resource links by Glottocode and AfBo language ID.
 
@@ -17,16 +17,25 @@ Language table used to add exact AfBo resource links by Glottocode and AfBo lang
 * Source: https://raw.githubusercontent.com/cldf-datasets/apics/master/cldf/languages.csv
 * License: CC BY 3.0
 * Website: https://apics-online.info/
-* Last updated: 18-06-2026
+* Last updated: 11-06-2026
 
 Language table used to add exact APiCS resource links by Glottocode and APiCS language ID.
+
+## CLLD Meta
+
+* Source: https://raw.githubusercontent.com/cldf-datasets/cldf_meta/master/cldf/languages.csv
+* License: CC BY 4.0
+* Website: https://meta.clld.org/
+* Last updated: 18-06-2026
+
+Meta collection of CLLD datasets.
 
 ## eWAVE
 
 * Source: https://raw.githubusercontent.com/cldf-datasets/ewave/master/cldf/languages.csv
 * License: CC BY 3.0
 * Website: https://ewave-atlas.org/
-* Last updated: 18-06-2026
+* Last updated: 11-06-2026
 
 Language table used to add exact eWAVE resource links by Glottocode and eWAVE language ID.
 
@@ -51,7 +60,7 @@ Individual sources documented in [GlotScript README](https://github.com/cisnlp/G
 * Source: https://raw.githubusercontent.com/grambank/grambank/master/cldf/languages.csv
 * License: CC BY 4.0
 * Website: https://grambank.clld.org/
-* Last updated: 18-06-2026
+* Last updated: 11-06-2026
 
 Language table used to add exact Grambank resource links by Glottocode.
 
@@ -68,7 +77,7 @@ Dataset tag metadata used to add Hugging Face links only for language tags that 
 
 * Source: https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
 * License: Public (Internet Standard)
-* Last updated: 18-06-2026
+* Last updated: 11-06-2026
 
 IANA Language Subtag Registry (BCP 47 / RFC 5646): deprecated language subtag mappings
 
@@ -87,7 +96,7 @@ Individual sources documented in [LinguaMeta README](https://github.com/google-r
 * Source: https://raw.githubusercontent.com/cldf-datasets/phoible/master/cldf/languages.csv
 * License: CC BY-SA 3.0
 * Website: https://phoible.org/
-* Last updated: 18-06-2026
+* Last updated: 11-06-2026
 
 Language table used to add exact PHOIBLE resource links by Glottocode.
 
@@ -104,7 +113,7 @@ Builds on Debian iso-codes [project](https://salsa.debian.org/iso-codes-team/iso
 * Source: https://raw.githubusercontent.com/cldf-datasets/sails/master/cldf/languages.csv
 * License: CC BY-NC-ND 2.0 DE
 * Website: https://sails.clld.org/
-* Last updated: 18-06-2026
+* Last updated: 11-06-2026
 
 Language table used to add exact SAILS resource links by Glottocode and SAILS language ID.
 
@@ -113,7 +122,7 @@ Language table used to add exact SAILS resource links by Glottocode and SAILS la
 * Source: https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Retirements.tab
 * License: Custom (free use)
 * Website: https://iso639-3.sil.org/code_tables/download_tables
-* Last updated: 18-06-2026
+* Last updated: 11-06-2026
 
 ISO 639-3 retired code mappings maintained by SIL International
 
@@ -122,7 +131,7 @@ ISO 639-3 retired code mappings maintained by SIL International
 * Source: https://www.unicode.org/Public/UCD/latest/ucd/
 * License: UNICODE LICENSE V3
 * Website: https://www.unicode.org/ucd/
-* Last updated: 18-06-2026
+* Last updated: 11-06-2026
 
 Unicode Scripts.txt and PropertyValueAliases.txt used to add script code point ranges.
 
@@ -131,7 +140,7 @@ Unicode Scripts.txt and PropertyValueAliases.txt used to add script code point r
 * Source: https://lindat.mff.cuni.cz/repository/server/api/core/items/7fbbbd99-ae2d-4b91-8318-d996dbe34cbc
 * License: Universal Dependencies v2.18 License Agreement
 * Website: https://universaldependencies.org/
-* Last updated: 18-06-2026
+* Last updated: 11-06-2026
 
 LINDAT item metadata used to add Universal Dependencies links by ISO 639-3 code.
 
@@ -140,7 +149,7 @@ LINDAT item metadata used to add Universal Dependencies links by ISO 639-3 code.
 * Source: https://raw.githubusercontent.com/cldf-datasets/wals/master/cldf/languages.csv
 * License: CC BY 4.0
 * Website: https://wals.info/
-* Last updated: 18-06-2026
+* Last updated: 11-06-2026
 
 Language table used to add exact WALS resource links by Glottocode and WALS code.
 
@@ -149,7 +158,7 @@ Language table used to add exact WALS resource links by Glottocode and WALS code
 * Source: https://query.wikidata.org/sparql
 * License: CC0
 * Website: https://www.wikidata.org/
-* Last updated: 18-06-2026
+* Last updated: 12-06-2026
 
 SPARQL query for English Wikipedia sitelinks on Wikidata language items.
 
@@ -158,7 +167,7 @@ SPARQL query for English Wikipedia sitelinks on Wikidata language items.
 * Source: https://query.wikidata.org/sparql
 * License: CC0
 * Website: https://www.wikidata.org/
-* Last updated: 18-06-2026
+* Last updated: 12-06-2026
 
 SPARQL query for ISO 639-5 codes and Glottolog identifiers, used to merge family codes.
 
@@ -169,13 +178,13 @@ SPARQL query for ISO 639-5 codes and Glottolog identifiers, used to merge family
 * Website: https://www.wikidata.org/
 * Last updated: 18-06-2026
 
-ISO 15924 script type, family, and example from Wikidata.
+ISO 15924 type, family, and example from Wikidata.
 
 ## Wikipedia
 
 * Source: https://wikistats.wmcloud.org/api.php?action=dump&table=wikipedias&format=csv
 * License: CC BY-SA 4.0
 * Website: https://wikistats.wmcloud.org/
-* Last updated: 18-06-2026
+* Last updated: 11-06-2026
 
 Wikipedia edition statistics (article counts, active users) from Wikistats (Wikimedia)

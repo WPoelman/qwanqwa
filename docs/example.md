@@ -56,7 +56,7 @@ Afro-Asiatic [family]
 - Gondar Amharic (`gond1266`)
 
 ### Scripts (2)
-- Ethiopic (`Ethi`)
+- Ethiopic (Geʻez) (`Ethi`)
 
 ### Geographic Regions (1)
 - Ethiopia (`ET`)
