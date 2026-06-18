@@ -17,7 +17,13 @@ def make_minimal_store() -> tuple[DataStore, EntityResolver]:
     lang = Languoid(lang_id, store, name="Dutch", bcp_47="nl", iso_639_3="nld", speaker_count=24_000_000)
     store.add(lang)
 
-    script = Script("script:0001", store)
+    script = Script(
+        "script:0001",
+        store,
+        script_type="alphabet",
+        family="Brahmic scripts",
+        sample="abc",
+    )
     store.add(script)
 
     return store, resolver
@@ -67,6 +73,11 @@ class TestStorageRoundTrip:
         assert lang.bcp_47 == "nl"
         assert lang.iso_639_3 == "nld"
         assert lang.speaker_count == 24_000_000
+
+        script = next(e for e in loaded_store._entities.values() if isinstance(e, Script))
+        assert script.script_type == "alphabet"
+        assert script.family == "Brahmic scripts"
+        assert script.sample == "abc"
 
     @pytest.mark.parametrize("fmt", ["json", "json.gz", "pkl.gz"])
     def test_resolver_survives_roundtrip(self, tmp_path, fmt):

@@ -69,6 +69,9 @@
   };
   const propertyLabels = {
     name: "Name",
+    sample: "Example",
+    script_type: "Type",
+    family: "Family",
     endonym: "Endonym",
     bcp_47: "BCP-47",
     iso_639_1: "ISO 639-1",
@@ -122,10 +125,11 @@
       { title: "Internal", keys: ["id"] },
     ],
     script: [
-      { title: "Names", keys: ["name"] },
+      { title: "Names", keys: ["name", "sample"] },
       { title: "Identifiers", keys: ["iso_15924", "id"] },
       { title: "Unicode", keys: ["unicode_alias", "unicode_character_count", "unicode_range_count", "unicode_ranges"] },
-      { title: "Coverage", keys: ["languoid_count", "is_historical"] },
+      { title: "Classification", keys: ["script_type", "family", "is_historical"] },
+      { title: "Coverage", keys: ["languoid_count"] },
     ],
     region: [
       { title: "Names", keys: ["name", "official_name"] },

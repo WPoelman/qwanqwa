@@ -14,6 +14,7 @@ from qq.importers import (
     SILImporter,
     UnicodeImporter,
     WikidataIso6395Importer,
+    WikidataScriptMetadataImporter,
     WikipediaImporter,
 )
 from qq.sources.external_resource import ExternalResourceDefinition, ExternalResourceFileFormat
@@ -161,6 +162,28 @@ class SourceConfig:
                     "Individual sources documented in "
                     "[GlotScript README](https://github.com/cisnlp/GlotScript/blob/main/metadata/README.md)"
                 ),
+            ),
+            WikidataSparqlSourceProvider(
+                name="wikidata_script_metadata",
+                display_name="Wikidata script metadata",
+                sources_dir=sources_dir,
+                source_url="https://query.wikidata.org/sparql",
+                filename="scripts.json",
+                query=(
+                    "SELECT ?iso15924 ?item ?itemLabel ?type ?typeLabel ?family ?familyLabel ?sample WHERE { "
+                    "?item wdt:P506 ?iso15924 . "
+                    'FILTER(!STRSTARTS(?iso15924, "Qa")) '
+                    "OPTIONAL { VALUES ?type { wd:Q335806 wd:Q185087 wd:Q182133 wd:Q3781304 "
+                    "wd:Q3953107 wd:Q1191127 wd:Q9779 wd:Q2182919 } ?item wdt:P31 ?type . } "
+                    "OPTIONAL { ?item wdt:P279 ?family . ?family wdt:P31 wd:Q12775371 . } "
+                    "OPTIONAL { ?item wdt:P1705 ?sample . } "
+                    'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } '
+                    "} ORDER BY ?iso15924"
+                ),
+                cache_duration_hours=24 * 30,
+                license="CC0",
+                website_url="https://www.wikidata.org/",
+                notes="ISO 15924 type, family, and example from Wikidata.",
             ),
             # TODO: maybe get rid of pycountry and just use Debian source directly?
             GitSourceProvider(
@@ -475,6 +498,11 @@ class SourceConfig:
             ImporterConfig("glottolog", GlottologImporter),
             ImporterConfig("wikidata_iso6395", WikidataIso6395Importer, data_path_name="wikidata_iso6395/iso6395.json"),
             ImporterConfig("glotscript", GlotscriptImporter),
+            ImporterConfig(
+                "wikidata_script_metadata",
+                WikidataScriptMetadataImporter,
+                data_path_name="wikidata_script_metadata/scripts.json",
+            ),
             ImporterConfig("pycountry", PycountryImporter),
             ImporterConfig("unicode_ucd", UnicodeImporter),
             ImporterConfig("wikipedia", WikipediaImporter),

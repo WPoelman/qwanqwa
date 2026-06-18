@@ -370,6 +370,9 @@ class Script(TraversableEntity):
     Attributes:
         iso_15924: ISO 15924 four-letter script code.
         name: English script name from ISO 15924.
+        script_type: Structural type, such as alphabet, abugida, or syllabary.
+        family: Script family, such as Brahmic scripts.
+        sample: Short native label showing the script in use.
         is_historical: Whether the script is historical.
         unicode_alias: Unicode Script property alias.
         unicode_ranges: Unicode code point ranges assigned to the script.
@@ -382,6 +385,9 @@ class Script(TraversableEntity):
         data_store: EntityContainer,
         iso_15924: str | None = None,
         name: str | None = None,
+        script_type: str | None = None,
+        family: str | None = None,
+        sample: str | None = None,
         is_historical: bool = False,
         unicode_alias: str | None = None,
         unicode_ranges: list[str] | None = None,
@@ -390,6 +396,9 @@ class Script(TraversableEntity):
         super().__init__(entity_id, data_store)
         self.iso_15924: str | None = iso_15924
         self.name: str | None = name
+        self.script_type: str | None = script_type
+        self.family: str | None = family
+        self.sample: str | None = sample
         # TODO: maybe this needs to be structured as in linguameta where it's locale/languoid specific
         #       could also be through relations (like we have below)
         self.is_historical: bool = is_historical

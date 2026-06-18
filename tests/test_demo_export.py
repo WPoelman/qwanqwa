@@ -62,3 +62,25 @@ def test_region_demo_export_does_not_inherit_parent_languoids_for_subdivision():
     detail = export_region_detail(subdivision)
 
     assert "lang:nld" not in relation_items(detail, "Languoids")
+
+
+def test_script_demo_export_includes_wikidata_metadata():
+    from qq.explorer.export import export_script_detail
+
+    store = DataStore()
+    script = Script(
+        "script:deva",
+        store,
+        name="Devanagari",
+        iso_15924="Deva",
+        script_type="abugida",
+        family="Brahmic scripts",
+        sample="देवनागरी",
+    )
+    store.add(script)
+
+    detail = export_script_detail(script)
+
+    assert detail["p"]["script_type"] == "abugida"
+    assert detail["p"]["family"] == "Brahmic scripts"
+    assert detail["p"]["sample"] == "देवनागरी"

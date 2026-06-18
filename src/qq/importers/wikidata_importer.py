@@ -4,6 +4,7 @@ import json
 import logging
 from collections import defaultdict
 from pathlib import Path
+from typing import Any
 
 from qq.data_model import DataSource, IdType
 from qq.importers.base_importer import BaseImporter
@@ -80,3 +81,70 @@ class WikidataIso6395Importer(BaseImporter):
             }
             rows_by_code[iso6395].append(row)
         return dict(rows_by_code)
+
+
+class WikidataScriptMetadataImporter(BaseImporter):
+    """Enrich ISO 15924 scripts with selected Wikidata metadata."""
+
+    source = DataSource.WIKIDATA
+
+    _TYPE_PRIORITY = {
+        "Q1191127": (0, "featural"),
+        "Q3781304": (1, "semi-syllabary"),
+        "Q335806": (2, "abugida"),
+        "Q185087": (3, "abjad"),
+        "Q182133": (4, "syllabary"),
+        "Q3953107": (5, "logographic"),
+        "Q9779": (6, "alphabet"),
+        "Q2182919": (7, "alphabet"),
+    }
+
+    def import_data(self, data_path: Path) -> None:
+        if not data_path.exists():
+            raise FileNotFoundError(f"Wikidata script metadata not found: {data_path}")
+
+        data = json.loads(data_path.read_text(encoding="utf-8"))
+        rows_by_code: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for binding in data.get("results", {}).get("bindings", []):
+            code = binding.get("iso15924", {}).get("value", "")
+            if len(code) != 4 or code.lower().startswith("qa"):
+                continue
+            rows_by_code[code].append(binding)
+
+        enriched = 0
+        for code, rows in rows_by_code.items():
+            script = self.get_or_create_script(f"script:{code.lower()}")
+            script.iso_15924 = code
+            script.script_type = self._select_type(rows)
+            script.family = self._select_text(rows, "familyLabel")
+            script.sample = self._select_sample(rows)
+            enriched += 1
+
+        logger.info("Enriched %d scripts with Wikidata metadata", enriched)
+        self.log_stats()
+
+    @classmethod
+    def _select_type(cls, rows: list[dict[str, Any]]) -> str | None:
+        candidates = []
+        for row in rows:
+            uri = row.get("type", {}).get("value", "")
+            qid = uri.rsplit("/", 1)[-1]
+            if qid in cls._TYPE_PRIORITY:
+                candidates.append(cls._TYPE_PRIORITY[qid])
+        return min(candidates)[1] if candidates else None
+
+    @staticmethod
+    def _select_text(rows: list[dict[str, Any]], key: str) -> str | None:
+        values = {row.get(key, {}).get("value", "").strip() for row in rows}
+        values.discard("")
+        return min(values, key=lambda value: (len(value), value.casefold())) if values else None
+
+    @classmethod
+    def _select_sample(cls, rows: list[dict[str, Any]]) -> str | None:
+        values = {
+            row.get("sample", {}).get("value", "").strip()
+            for row in rows
+            if len(row.get("sample", {}).get("value", "").strip()) <= 80
+        }
+        values.discard("")
+        return min(values, key=lambda value: (len(value), value.casefold())) if values else None

@@ -8,7 +8,7 @@ from qq.importers.pycountry_importer import PycountryImporter
 from qq.importers.sil_importer import SILImporter
 from qq.importers.unicode_importer import UnicodeImporter
 from qq.importers.wikipedia_importer import WikipediaImporter
-from qq.importers.wikidata_importer import WikidataIso6395Importer
+from qq.importers.wikidata_importer import WikidataIso6395Importer, WikidataScriptMetadataImporter
 
 __all__ = [
     "BaseImporter",
@@ -22,4 +22,5 @@ __all__ = [
     "UnicodeImporter",
     "WikipediaImporter",
     "WikidataIso6395Importer",
+    "WikidataScriptMetadataImporter",
 ]

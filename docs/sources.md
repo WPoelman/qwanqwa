@@ -162,6 +162,15 @@ SPARQL query for English Wikipedia sitelinks on Wikidata language items.
 
 SPARQL query for ISO 639-5 codes and Glottolog identifiers, used to merge family codes.
 
+## Wikidata script metadata
+
+* Source: https://query.wikidata.org/sparql
+* License: CC0
+* Website: https://www.wikidata.org/
+* Last updated: 18-06-2026
+
+ISO 15924 script type, family, and example from Wikidata.
+
 ## Wikipedia
 
 * Source: https://wikistats.wmcloud.org/api.php?action=dump&table=wikipedias&format=csv

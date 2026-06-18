@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added Wikidata script types, families, and native-label examples.
+
 ### Changed
 - Script names now come from ISO 15924 data.
 

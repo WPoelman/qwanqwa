@@ -353,6 +353,9 @@ def export_script_detail(entity: Script) -> dict[str, Any]:
         "p": clean_none_dict(
             {
                 "name": make_property(entity.name),
+                "sample": make_property(entity.sample),
+                "script_type": make_property(entity.script_type),
+                "family": make_property(entity.family),
                 "iso_15924": make_property(entity.iso_15924),
                 "unicode_alias": make_property(entity.unicode_alias),
                 "unicode_character_count": make_property(entity.unicode_character_count),
