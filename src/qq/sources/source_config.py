@@ -27,6 +27,9 @@ from qq.sources.providers import (
     WikidataSparqlSourceProvider,
 )
 
+ONE_WEEK = 24 * 7
+ONE_MONTH = 24 * 30
+
 
 @dataclass(frozen=True)
 class ImporterConfig:
@@ -111,7 +114,7 @@ class SourceConfig:
                     'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } '
                     "} ORDER BY ?iso6395"
                 ),
-                cache_duration_hours=24 * 30,
+                cache_duration_hours=ONE_MONTH,
                 license="CC0",
                 website_url="https://www.wikidata.org/",
                 notes="SPARQL query for ISO 639-5 codes and Glottolog identifiers, used to merge family codes.",
@@ -129,7 +132,7 @@ class SourceConfig:
                     "?article schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> ; schema:name ?articleTitle . "
                     "} ORDER BY ?item"
                 ),
-                cache_duration_hours=24 * 30,
+                cache_duration_hours=ONE_MONTH,
                 license="CC0",
                 website_url="https://www.wikidata.org/",
                 notes="SPARQL query for English Wikipedia sitelinks on Wikidata language items.",
@@ -180,7 +183,7 @@ class SourceConfig:
                     'SERVICE wikibase:label { bd:serviceParam wikibase:language "en". } '
                     "} ORDER BY ?iso15924"
                 ),
-                cache_duration_hours=24 * 30,
+                cache_duration_hours=ONE_MONTH,
                 license="CC0",
                 website_url="https://www.wikidata.org/",
                 notes="ISO 15924 type, family, and example from Wikidata.",
@@ -200,7 +203,7 @@ class SourceConfig:
                 display_name="Unicode Character Database",
                 sources_dir=sources_dir,
                 source_url="https://www.unicode.org/Public/UCD/latest/ucd/",
-                cache_duration_hours=24 * 30,
+                cache_duration_hours=ONE_MONTH,
                 license="UNICODE LICENSE V3",
                 website_url="https://www.unicode.org/ucd/",
                 notes="Unicode Scripts.txt and PropertyValueAliases.txt used to add script code point ranges.",
@@ -210,7 +213,7 @@ class SourceConfig:
                 sources_dir=sources_dir,
                 source_url="https://wikistats.wmcloud.org/api.php?action=dump&table=wikipedias&format=csv",
                 filename="wikipedia.csv",
-                cache_duration_hours=24 * 7,  # Cache for 1 week
+                cache_duration_hours=ONE_WEEK,
                 license="CC BY-SA 4.0",
                 website_url="https://wikistats.wmcloud.org/",
                 notes="Wikipedia edition statistics (article counts, active users) from Wikistats (Wikimedia)",
@@ -220,7 +223,7 @@ class SourceConfig:
                 sources_dir=sources_dir,
                 source_url="https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Retirements.tab",
                 filename="iso_639_3_retirements.tab",
-                cache_duration_hours=24 * 30,  # Cache for one month
+                cache_duration_hours=ONE_MONTH,
                 license="Custom (free use)",
                 website_url="https://iso639-3.sil.org/code_tables/download_tables",
                 notes="ISO 639-3 retired code mappings maintained by SIL International",
@@ -230,7 +233,7 @@ class SourceConfig:
                 sources_dir=sources_dir,
                 source_url="https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry",
                 filename="language-subtag-registry",
-                cache_duration_hours=24 * 30,  # Cache for one month
+                cache_duration_hours=ONE_MONTH,
                 license="Public (Internet Standard)",
                 website_url="https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry",
                 notes="IANA Language Subtag Registry (BCP 47 / RFC 5646): deprecated language subtag mappings",
@@ -241,7 +244,7 @@ class SourceConfig:
                 sources_dir=sources_dir,
                 source_url="https://raw.githubusercontent.com/grambank/grambank/master/cldf/languages.csv",
                 filename="languages.csv",
-                cache_duration_hours=24 * 30,
+                cache_duration_hours=ONE_MONTH,
                 license="CC BY 4.0",
                 website_url="https://grambank.clld.org/",
                 notes="Language table used to add exact Grambank resource links by Glottocode.",
@@ -264,7 +267,7 @@ class SourceConfig:
                 sources_dir=sources_dir,
                 source_url="https://raw.githubusercontent.com/cldf-datasets/phoible/master/cldf/languages.csv",
                 filename="languages.csv",
-                cache_duration_hours=24 * 30,
+                cache_duration_hours=ONE_MONTH,
                 license="CC BY-SA 3.0",
                 website_url="https://phoible.org/",
                 notes="Language table used to add exact PHOIBLE resource links by Glottocode.",
@@ -287,7 +290,7 @@ class SourceConfig:
                 sources_dir=sources_dir,
                 source_url="https://raw.githubusercontent.com/cldf-datasets/wals/master/cldf/languages.csv",
                 filename="languages.csv",
-                cache_duration_hours=24 * 30,
+                cache_duration_hours=ONE_MONTH,
                 license="CC BY 4.0",
                 website_url="https://wals.info/",
                 notes="Language table used to add exact WALS resource links by Glottocode and WALS code.",
@@ -311,7 +314,7 @@ class SourceConfig:
                 sources_dir=sources_dir,
                 source_url="https://raw.githubusercontent.com/cldf-datasets/apics/master/cldf/languages.csv",
                 filename="languages.csv",
-                cache_duration_hours=24 * 30,
+                cache_duration_hours=ONE_MONTH,
                 license="CC BY 3.0",
                 website_url="https://apics-online.info/",
                 notes="Language table used to add exact APiCS resource links by Glottocode and APiCS language ID.",
@@ -334,7 +337,7 @@ class SourceConfig:
                 sources_dir=sources_dir,
                 source_url="https://raw.githubusercontent.com/cldf-datasets/ewave/master/cldf/languages.csv",
                 filename="languages.csv",
-                cache_duration_hours=24 * 30,
+                cache_duration_hours=ONE_MONTH,
                 license="CC BY 3.0",
                 website_url="https://ewave-atlas.org/",
                 notes="Language table used to add exact eWAVE resource links by Glottocode and eWAVE language ID.",
@@ -357,7 +360,7 @@ class SourceConfig:
                 sources_dir=sources_dir,
                 source_url="https://raw.githubusercontent.com/cldf-datasets/afbo/master/cldf/languages.csv",
                 filename="languages.csv",
-                cache_duration_hours=24 * 30,
+                cache_duration_hours=ONE_MONTH,
                 license="CC BY 4.0",
                 website_url="https://afbo.info/",
                 notes="Language table used to add exact AfBo resource links by Glottocode and AfBo language ID.",
@@ -380,7 +383,7 @@ class SourceConfig:
                 sources_dir=sources_dir,
                 source_url="https://raw.githubusercontent.com/cldf-datasets/sails/master/cldf/languages.csv",
                 filename="languages.csv",
-                cache_duration_hours=24 * 30,
+                cache_duration_hours=ONE_MONTH,
                 license="CC BY-NC-ND 2.0 DE",
                 website_url="https://sails.clld.org/",
                 notes="Language table used to add exact SAILS resource links by Glottocode and SAILS language ID.",
@@ -403,7 +406,7 @@ class SourceConfig:
                 sources_dir=sources_dir,
                 source_url="https://raw.githubusercontent.com/cldf-datasets/cldf_meta/master/cldf/languages.csv",
                 filename="languages.csv",
-                cache_duration_hours=24 * 30,
+                cache_duration_hours=ONE_MONTH,
                 license="CC BY 4.0",
                 website_url="https://meta.clld.org/",
                 notes="Meta collection of CLLD datasets.",
@@ -426,7 +429,7 @@ class SourceConfig:
                 sources_dir=sources_dir,
                 source_url="https://huggingface.co/api/datasets?limit=1000&expand=tags",
                 filename="tags.json",
-                cache_duration_hours=24,
+                cache_duration_hours=ONE_WEEK,
                 license="See Hugging Face datasets themselves.",
                 website_url="https://huggingface.co/datasets",
                 notes=(
@@ -461,7 +464,7 @@ class SourceConfig:
                     "https://lindat.mff.cuni.cz/repository/server/api/core/items/7fbbbd99-ae2d-4b91-8318-d996dbe34cbc"
                 ),
                 filename="item.json",
-                cache_duration_hours=24 * 7,
+                cache_duration_hours=ONE_WEEK,
                 license="Universal Dependencies v2.18 License Agreement",
                 website_url="https://universaldependencies.org/",
                 notes="LINDAT item metadata used to add Universal Dependencies links by ISO 639-3 code.",
@@ -519,7 +522,11 @@ class SourceConfig:
         return [
             ImporterConfig("linguameta", LinguaMetaImporter),
             ImporterConfig("glottolog", GlottologImporter),
-            ImporterConfig("wikidata_iso6395", WikidataIso6395Importer, data_path_name="wikidata_iso6395/iso6395.json"),
+            ImporterConfig(
+                "wikidata_iso6395",
+                WikidataIso6395Importer,
+                data_path_name="wikidata_iso6395/iso6395.json",
+            ),
             ImporterConfig("glotscript", GlotscriptImporter),
             ImporterConfig(
                 "wikidata_script_metadata",
