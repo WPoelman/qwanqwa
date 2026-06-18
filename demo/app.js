@@ -148,8 +148,13 @@
   const RELATION_LIST_LIMIT = 10;
   const RELATION_GROUP_PRIORITY = {
     Scripts: 0,
-    Regions: 1,
-    Parent: 2,
+    Regions: 5,
+    "Family tree": 10,
+    Parent: 20,
+    Children: 30,
+    Siblings: 40,
+    Macrolanguage: 50,
+    "Individual languages": 60,
   };
 
   const statsEl = document.getElementById("stats");
