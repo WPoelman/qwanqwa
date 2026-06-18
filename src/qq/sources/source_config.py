@@ -397,6 +397,29 @@ class SourceConfig:
                     )
                 ],
             ),
+            FileDownloadSourceProvider(
+                name="clld_meta",
+                display_name="CLLD Meta",
+                sources_dir=sources_dir,
+                source_url="https://raw.githubusercontent.com/cldf-datasets/cldf_meta/master/cldf/languages.csv",
+                filename="languages.csv",
+                cache_duration_hours=24 * 30,
+                license="CC BY 4.0",
+                website_url="https://meta.clld.org/",
+                notes="Meta collection of CLLD datasets.",
+                external_resources=[
+                    ExternalResourceDefinition(
+                        label="CLLD Meta",
+                        group=ExternalResourceGroup.TYPOLOGY,
+                        url_template="https://meta.clld.org/languages/{code}",
+                        source_name="clld_meta",
+                        filename="languages.csv",
+                        match_column="Glottocode",
+                        match_id_type=IdType.GLOTTOCODE,
+                        code_column="ID",
+                    )
+                ],
+            ),
             HuggingFaceDatasetTagsSourceProvider(
                 name="huggingface_dataset_tags",
                 display_name="Hugging Face Datasets",
