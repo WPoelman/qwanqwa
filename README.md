@@ -18,7 +18,7 @@ A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geo
 - **Identifiers**: BCP-47, ISO 639-1, ISO 639-3, ISO 639-2B, ISO 639-2T, ISO 639-5, Glottocode, Wikidata ID, Wikipedia ID, NLLB-style codes
 - **Geographic information**: Countries, subdivisions, regions, which can be traversed, including from languoids and back
 - **Speaker information**: Population counts, UNESCO endangerment status
-- **Writing systems**: ISO 15924 script codes with canonical/historical metadata and Unicode ranges
+- **Writing systems**: ISO 15924 script codes and names, canonical/historical metadata, and Unicode ranges
 - **Multilingual names**: Language names in 500+ languages
 - **Relationships**: Traversable graph of language families, scripts, and geographic regions
 - **Phylogenetic data**: Language family trees from Glottolog

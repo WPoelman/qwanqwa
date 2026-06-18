@@ -273,9 +273,7 @@ class PycountryImporter(BaseImporter):
             script.iso_15924 = alpha_4
 
             if name := script_data.get("name"):
-                script.full_name = self._clean_name(name)
-                if not script.name:
-                    script.name = self._clean_name(name)
+                script.name = name
             enriched_count += 1
 
         logger.info(f"Imported/enriched {enriched_count} scripts with ISO 15924 data")

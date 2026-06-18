@@ -160,6 +160,12 @@ def _merge_field(
     values.sort(key=lambda pair: pair[0].value)
     winner_source, winner_value = values[0]
 
+    if entity_class is Script and field_name == "name":
+        for source, value in values:
+            if source == DataSource.PYCOUNTRY:
+                return value, None
+        return winner_value, None
+
     # Some fields have expected disagreements that should not be recorded
     if field_name in _NO_CONFLICT_FIELDS:
         return winner_value, None

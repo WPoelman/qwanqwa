@@ -534,7 +534,11 @@ class TestPycountryImporter:
         latn = importer.entity_set.get("script:latn")
         assert latn is not None
         assert latn.iso_15924 == "Latn"
-        assert latn.full_name == "Latin"
+        assert latn.name == "Latin"
+
+        hans = importer.entity_set.get("script:hans")
+        assert hans is not None
+        assert hans.name == "Han (Simplified variant)"
 
     def test_clean_name_strips_parenthetical(self, importer):
         assert PycountryImporter._clean_name("Korea, Republic of (South Korea)") == "Korea, Republic of"

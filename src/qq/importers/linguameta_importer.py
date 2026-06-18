@@ -419,15 +419,13 @@ class LinguaMetaImporter(BaseImporter):
         for script_entry in script_map:
             script_info = script_entry.get("script", {})
             script_code = script_info.get("name", "").lower()
-            full_name = script_info.get("full_name")
-
             if not script_code or script_code == "xxxx" or script_code == "brai":
                 continue
 
             script_id = f"script:{script_code.lower()}"
             script = self.get_or_create_script(script_id)
             script.iso_15924 = script_code.capitalize()
-            script.name = full_name
+            script.name = script_info.get("full_name")
             imported_count += 1
 
         logger.info(f"Imported {imported_count} scripts (filtered out invalid/Braille)")

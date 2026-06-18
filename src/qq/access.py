@@ -401,8 +401,6 @@ class Database:
         """
         Search for scripts by name (case-insensitive partial match).
 
-        Searches both short name and full name.
-
         Example:
             >>> db.search_scripts("latin")
             [Script(Latin, code=Latn)]
@@ -410,9 +408,7 @@ class Database:
         query_lower = query.lower()
         results = []
         for script in self.store.all_of_type(Script):
-            if (script.name and query_lower in script.name.lower()) or (
-                script.full_name and query_lower in script.full_name.lower()
-            ):
+            if script.name and query_lower in script.name.lower():
                 results.append(script)
                 if len(results) >= limit:
                     break

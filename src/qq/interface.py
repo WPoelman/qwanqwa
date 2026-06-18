@@ -365,7 +365,16 @@ class Languoid(TraversableEntity):
 
 
 class Script(TraversableEntity):
-    """Writing system entity"""
+    """Writing system entity.
+
+    Attributes:
+        iso_15924: ISO 15924 four-letter script code.
+        name: English script name from ISO 15924.
+        is_historical: Whether the script is historical.
+        unicode_alias: Unicode Script property alias.
+        unicode_ranges: Unicode code point ranges assigned to the script.
+        unicode_character_count: Number of assigned Unicode code points.
+    """
 
     def __init__(
         self,
@@ -373,7 +382,6 @@ class Script(TraversableEntity):
         data_store: EntityContainer,
         iso_15924: str | None = None,
         name: str | None = None,
-        full_name: str | None = None,
         is_historical: bool = False,
         unicode_alias: str | None = None,
         unicode_ranges: list[str] | None = None,
@@ -382,7 +390,6 @@ class Script(TraversableEntity):
         super().__init__(entity_id, data_store)
         self.iso_15924: str | None = iso_15924
         self.name: str | None = name
-        self.full_name: str | None = full_name
         # TODO: maybe this needs to be structured as in linguameta where it's locale/languoid specific
         #       could also be through relations (like we have below)
         self.is_historical: bool = is_historical

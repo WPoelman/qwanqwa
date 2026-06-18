@@ -336,11 +336,11 @@ def export_languoid_detail(
 
 def export_script_summary(entity: Script) -> dict[str, Any]:
     identifiers = clean_list([entity.iso_15924])
-    names = clean_list([entity.name, entity.full_name])
+    names = clean_list([entity.name])
     return {
         "t": "script",
         "n": entity.name or entity.iso_15924 or entity.id,
-        "s": " / ".join(clean_list([entity.iso_15924, entity.full_name])),
+        "s": " / ".join(clean_list([entity.iso_15924])),
         "q": " ".join(clean_list([*names, *identifiers])).lower(),
         "i": identifiers,
         "m": names,
@@ -353,7 +353,6 @@ def export_script_detail(entity: Script) -> dict[str, Any]:
         "p": clean_none_dict(
             {
                 "name": make_property(entity.name),
-                "full_name": make_property(entity.full_name),
                 "iso_15924": make_property(entity.iso_15924),
                 "unicode_alias": make_property(entity.unicode_alias),
                 "unicode_character_count": make_property(entity.unicode_character_count),

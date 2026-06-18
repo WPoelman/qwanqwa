@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Script names now come from ISO 15924 data.
+
+### Removed
+- Removed `Script.full_name`; use `Script.name` for the ISO 15924 English name.
+
 ### Planned
 - NLLB-style codes support improvements
 - Additional convenience methods on Languoid

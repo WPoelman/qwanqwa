@@ -202,3 +202,31 @@ def test_reconcile_merged_languoids_updates_earlier_entity_sets():
     assert second_set.get(merged_id) is not None
     assert second_set.get(second_id) is None
     assert [rel.target_id for rel in script._relations[RelationType.USED_BY_LANGUOID]] == [merged_id]
+
+def test_script_name_prefers_pycountry():
+    linguameta = EntitySet()
+    pycountry = EntitySet()
+    linguameta.add(Script("script:kawi", linguameta, name="Chorasmian"))
+    pycountry.add(Script("script:kawi", pycountry, name="Kawi"))
+
+    store = merge(
+        [
+            (LinguaMetaImporter.source, linguameta),
+            (PycountryImporter.source, pycountry),
+        ]
+    )
+
+    script = store.get("script:kawi")
+    assert isinstance(script, Script)
+    assert script.name == "Kawi"
+
+
+def test_script_name_falls_back_to_linguameta():
+    linguameta = EntitySet()
+    linguameta.add(Script("script:tulu", linguameta, name="Tulu-Tigalari"))
+
+    store = merge([(LinguaMetaImporter.source, linguameta)])
+
+    script = store.get("script:tulu")
+    assert isinstance(script, Script)
+    assert script.name == "Tulu-Tigalari"

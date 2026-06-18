@@ -90,7 +90,6 @@
     endangerment_status: "Endangerment",
     description: "Description",
     id: "Canonical ID",
-    full_name: "Full name",
     iso_15924: "ISO 15924",
     unicode_alias: "Unicode script",
     unicode_character_count: "Unicode characters",
@@ -123,7 +122,7 @@
       { title: "Internal", keys: ["id"] },
     ],
     script: [
-      { title: "Names", keys: ["name", "full_name"] },
+      { title: "Names", keys: ["name"] },
       { title: "Identifiers", keys: ["iso_15924", "id"] },
       { title: "Unicode", keys: ["unicode_alias", "unicode_character_count", "unicode_range_count", "unicode_ranges"] },
       { title: "Coverage", keys: ["languoid_count", "is_historical"] },
