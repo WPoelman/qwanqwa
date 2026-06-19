@@ -48,6 +48,8 @@ qq = "qq.cli:cli"
 [project.optional-dependencies]
 # For users who want to rebuild the database from sources
 build = ["pandas>=2.2.2", "requests>=2.25.0"]
+# For exporting the interoperable CLDF/CSVW package
+cldf = ["pycldf>=1.40.0"]
 
 [project.urls]
 "Homepage" = "https://github.com/WPoelman/qwanqwa"

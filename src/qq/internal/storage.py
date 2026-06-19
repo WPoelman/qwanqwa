@@ -140,6 +140,14 @@ class DataManager:
             },
         }
 
+        context = getattr(store, "export_context", None)
+        if context is not None:
+            data["export"] = context.metadata_dict()
+        elif getattr(store, "provenance", None):
+            from dataclasses import asdict
+
+            data["export"] = {"provenance": [asdict(record) for record in store.provenance]}
+
         for entity_id, entity in store._entities.items():
             data["entities"][entity_id] = self._serialize_entity(entity)
 
@@ -188,6 +196,10 @@ class DataManager:
         logger.debug(f"Loaded {len(store._entities)} entities")
 
         resolver = self._deserialize_resolver(data["resolver"])
+        store._export_metadata = data.get("export", {})
+        from qq.exporters.loading import context_from_loaded
+
+        context_from_loaded(store, resolver, input_path)
         return store, resolver
 
     def _serialize_entity(self, entity: "TraversableEntity") -> dict[str, Any]:

@@ -196,13 +196,47 @@ def generate_docs(output):
         ) from e
 
 
+@cli.command("exporters")
+def exporters_cmd():
+    """List registered output exporters."""
+    from qq.exporters import list_exporters
+
+    for name in list_exporters():
+        click.echo(name)
+
+
+@cli.command("export")
+@click.argument("name")
+@click.option("--output", "output_path", type=Path, required=True, help="Output file or directory")
+def export_cmd(name, output_path):
+    """Export the installed canonical database snapshot."""
+    from qq.constants import DEFAULT_DB_PATH
+    from qq.exporters import export as run_export
+    from qq.exporters.loading import load_export_context
+
+    try:
+        result = run_export(name, load_export_context(DEFAULT_DB_PATH), output_path)
+    except KeyError as exc:
+        raise click.ClickException(str(exc)) from exc
+    except ModuleNotFoundError as exc:
+        if exc.name == "pycldf":
+            raise click.ClickException(
+                "The cldf exporter requires optional dependencies. Install: pip install qwanqwa[cldf]"
+            ) from exc
+        raise
+    click.echo(f"Wrote {result}")
+
+
 @cli.command("export-demo")
 @click.option("--output", "output_dir", type=Path, default=None, help="Directory for generated demo data")
 def export_demo(output_dir):
     """Export static browser demo data"""
-    from qq.explorer.export import export_demo_data
+    from qq.constants import DEFAULT_DB_PATH
+    from qq.explorer.export import DEFAULT_DATA_DIR
+    from qq.exporters import export as run_export
+    from qq.exporters.loading import load_export_context
 
-    data_dir = export_demo_data(output_dir)
+    data_dir = run_export("demo", load_export_context(DEFAULT_DB_PATH), output_dir or DEFAULT_DATA_DIR)
     click.echo(f"Wrote {data_dir}")
 
 
@@ -235,7 +269,8 @@ def prepare_release_cmd():
         click.echo("Prepared release artifacts")
     except ImportError as e:
         raise click.ClickException(
-            f"This command requires build dependencies. Install them with: pip install qwanqwa[build]\n{e}"
+            f"This command requires build and CLDF dependencies. "
+            f"Install them with: pip install qwanqwa[build,cldf]\n{e}"
         ) from e
 
 

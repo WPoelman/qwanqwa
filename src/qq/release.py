@@ -12,7 +12,11 @@ import re
 
 from qq import Database
 from qq.constants import EXAMPLE_PATH, README_PATH, SOURCES_DIR, SOURCES_DOCS_PATH
-from qq.explorer.export import export_demo_data
+from qq.explorer.export import DEFAULT_DATA_DIR
+from qq.exporters import export as run_export
+from qq.exporters.loading import load_export_context
+from qq.constants import DEFAULT_DB_PATH
+from pathlib import Path
 from qq.sources.docs_generator import write_sources_documentation
 from qq.sources.updater import SourceUpdater
 
@@ -155,8 +159,11 @@ def prepare_release() -> None:
     write_sources_documentation(sources_dir, SOURCES_DOCS_PATH)
     logger.info("Updated sources file with last checked info.")
 
-    demo_data_dir = export_demo_data()
+    context = load_export_context(DEFAULT_DB_PATH)
+    demo_data_dir = run_export("demo", context, DEFAULT_DATA_DIR)
     logger.info(f"Updated browser demo data in {demo_data_dir}")
+    cldf_dir = run_export("cldf", context, Path(__file__).resolve().parents[2] / "dist" / "cldf")
+    logger.info(f"Updated CLDF package in {cldf_dir}")
 
     # Load database and regenerate example docs
     logger.info("Loading database...")

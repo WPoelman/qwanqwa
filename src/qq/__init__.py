@@ -14,6 +14,7 @@ from qq.data_model import (
     WikipediaInfo,
 )
 from qq.interface import GeographicRegion, Languoid, Script
+from qq.exporters import register_exporter
 
 __version__ = version("qwanqwa")
 logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -32,5 +33,6 @@ __all__ = [
     "NameData",
     "NameEntry",
     "Script",
+    "register_exporter",
     "WikipediaInfo",
 ]

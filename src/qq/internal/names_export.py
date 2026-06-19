@@ -29,7 +29,7 @@ class NamesExporter:
         exported_count = 0
 
         with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-            for entity_id, name_data in name_data_dict.items():
+            for entity_id, name_data in sorted(name_data_dict.items()):
                 if not name_data:
                     continue
 
@@ -74,6 +74,21 @@ class NamesLoader:
         except Exception as e:
             logger.warning(f"Failed to load names for {entity_id}: {e}")
             return None
+
+    def load_all(self) -> dict[CanonicalId, list[NameEntry]]:
+        """Load the complete archive for export workflows."""
+        if self._zipfile is None:
+            if not self.zip_path.exists():
+                return {}
+            self._zipfile = zipfile.ZipFile(self.zip_path, "r")
+        result = {}
+        for filename in sorted(self._zipfile.namelist()):
+            if not filename.endswith(".json"):
+                continue
+            entity_id = filename[:-5]
+            with self._zipfile.open(filename) as handle:
+                result[entity_id] = [NameEntry(**entry) for entry in json.load(handle)]
+        return result
 
     def close(self):
         """Close the zip file."""

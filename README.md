@@ -163,10 +163,17 @@ qq status
 # not necessary in normal use)
 qq update
 
-# For publishing the web-based explorer
+# Export registered output formats
+qq exporters
+qq export demo --output demo/data
+qq export cldf --output dist/cldf
+
+# Compatibility wrapper and release workflow
 qq export-demo
 qq publish-demo <output-path>
 qq prepare-release
+
+# CLDF export requires: pip install "qwanqwa[cldf]"
 ```
 
 ## Examples

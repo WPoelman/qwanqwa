@@ -428,8 +428,35 @@ def write_script(path: Path, global_name: str, key: str | None, payload: Any) ->
     path.write_text(text, encoding="utf-8")
 
 
-def export_sources_metadata() -> list[dict[str, str]]:
+def export_sources_metadata(context=None) -> list[dict[str, str]]:
     sources = []
+    if context is not None and context.source_metadata:
+        for meta in context.source_metadata.values():
+            last_updated = meta.get("last_updated")
+            if last_updated:
+                try:
+                    from datetime import datetime
+
+                    last_updated = datetime.fromisoformat(last_updated).strftime("%d-%m-%Y")
+                except ValueError:
+                    pass
+            sources.append(
+                clean_none_dict(
+                    {
+                        "name": meta.get("display_name")
+                        or (meta["name"].title() if len(meta["name"]) > 4 else meta["name"].upper()),
+                        "source_url": meta.get("source_url"),
+                        "license": meta.get("license"),
+                        "paper_url": meta.get("paper_url"),
+                        "website_url": meta.get("website_url")
+                        if meta.get("website_url") != meta.get("source_url")
+                        else None,
+                        "last_updated": last_updated,
+                        "notes": meta.get("notes"),
+                    }
+                )
+            )
+        return sorted(sources, key=lambda item: item["name"].lower())
     for provider in SourceConfig.get_providers(SOURCES_DIR):
         meta = provider.metadata
         item = clean_none_dict(
@@ -447,13 +474,21 @@ def export_sources_metadata() -> list[dict[str, str]]:
     return sorted(sources, key=lambda item: item["name"].lower())
 
 
-def export_demo_data(output_dir: Path | None = None) -> Path:
+def export_demo_data(output_dir: Path | None = None, context=None) -> Path:
     data_dir = output_dir or DEFAULT_DATA_DIR
     chunks_dir = data_dir / "chunks"
     name_buckets_dir = data_dir / "names"
 
-    db = Database.load()
-    sources = export_sources_metadata()
+    if context is None:
+        db = Database.load()
+        context = getattr(db.store, "export_context", None)
+    else:
+        from qq.exporters.name_cache import ExportNameCache
+
+        db = Database(context.store, context.resolver)
+        if context.names:
+            db.store.name_cache = ExportNameCache(context.names)  # type: ignore[invalid-assignment]
+    sources = export_sources_metadata(context)
 
     if data_dir.exists():
         shutil.rmtree(data_dir)

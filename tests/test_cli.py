@@ -77,6 +77,8 @@ class TestCLIBasicCommands:
             "export-demo",
             "publish-demo",
             "prepare-release",
+            "export",
+            "exporters",
         ]:
             assert cmd in result.output
 

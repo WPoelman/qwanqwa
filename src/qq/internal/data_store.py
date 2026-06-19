@@ -23,6 +23,10 @@ class DataStore:
         self._type_index: dict[type, set[str]] = defaultdict(set)
         # Name cache (set by Database for Languoid.name_in())
         self.name_cache: "NameDataCache | None" = None
+        # Canonical build/export metadata, attached when available.
+        self.export_context = None
+        self.provenance = []
+        self._export_metadata = {}
 
     def add(self, entity: TraversableEntity) -> None:
         """Add an entity to the store"""

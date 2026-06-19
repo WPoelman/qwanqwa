@@ -129,6 +129,7 @@ class NameEntry:
     bcp_47_code: str | None = None
     locale_id: CanonicalId | None = None
     is_canonical: bool | None = None
+    source_name: str | None = None
 
 
 @dataclass

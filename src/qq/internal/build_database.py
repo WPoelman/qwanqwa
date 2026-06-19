@@ -7,9 +7,10 @@ from qq.data_model import ID_TYPE_TO_ATTR
 from qq.importers.base_importer import DataSource, EntitySet
 from qq.interface import Languoid
 from qq.internal.entity_resolution import EntityResolver
-from qq.internal.merge import merge
+from qq.internal.merge_provenance import MergeSource, merge
+from qq.internal.build_snapshot import attribute_name_data, make_export_context
+from qq.exporters.native import NativeExporter
 from qq.internal.names_merge import merge_name_data, remap_name_data_keys, resolve_locale_codes
-from qq.internal.storage import DataManager
 from qq.internal.validation import DataValidator
 from qq.sources.source_config import SourceConfig
 
@@ -71,6 +72,7 @@ def build_database(
     # Each importer fills its own EntitySet; they share only the resolver.
     importers = source_config.get_importers()
     to_merge = []
+    configured_sources = []
     instances = []
     for idx, importer_config in enumerate(importers):
         display_name = importer_config.source_name.replace("_", " ").title()
@@ -80,14 +82,17 @@ def build_database(
         imp = importer_config.importer_cls(resolver, **importer_config.kwargs)
         imp.import_data(source_path)
         to_merge.append((importer_config.importer_cls.source, imp.entity_set))
-        instances.append(imp)
+        configured_sources.append(
+            MergeSource(importer_config.source_name, idx, importer_config.importer_cls.source, imp.entity_set)
+        )
+        instances.append((importer_config.source_name, imp))
 
     # -- Merge phase
     # Combine all per-source EntitySets into the final DataStore.
     reconciled = _reconcile_merged_languoids(to_merge, resolver)
     if reconciled:
         logger.info(f"Reconciled {len(reconciled)} stale languoid IDs across importer entity sets")
-        for imp in instances:
+        for _source_name, imp in instances:
             if hasattr(imp, "name_data") and imp.name_data:
                 remapped = remap_name_data_keys(imp.name_data, reconciled)
                 imp.name_data.clear()
@@ -95,7 +100,7 @@ def build_database(
 
     logger.info("Merging entity sets into final DataStore")
     conflicts_file = build_log_dir / "conflicts.json"
-    store = merge(to_merge, conflicts_file)
+    store = merge(configured_sources, conflicts_file)
 
     # Log entity resolution statistics
     logger.info("Entity Resolution Statistics:")
@@ -122,7 +127,7 @@ def build_database(
         logger.info(f"  {entity_type}: {count}")
 
     # Collect and merge name data from all importers
-    all_name_data = [imp.name_data for imp in instances if hasattr(imp, "name_data") and imp.name_data]
+    all_name_data, name_provenance = attribute_name_data(instances)
     if all_name_data:
         name_data_dict = merge_name_data(all_name_data)
         name_data_dict = resolve_locale_codes(name_data_dict, resolver)
@@ -132,7 +137,7 @@ def build_database(
     # Save the database
     output_path = output_dir / f"db.{format}"
     logger.info(f"Saving database to {output_path}...")
-    manager = DataManager(format)
-    manager.save_dataset(store, output_path, resolver, name_data_dict)
+    context = make_export_context(store, resolver, name_data_dict, source_config, name_provenance)
+    NativeExporter(format).export(context, output_path)
 
     return store, resolver
