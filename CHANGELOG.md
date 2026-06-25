@@ -9,9 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Parsing of bigger BCP 47 and NLLB-style codes.
+- `Database.resolve_tag()` for resolving a language tag to its languoid, script, and region components.
+- Direct ISO/BCP source importers for SIL ISO 639-3, Library of Congress ISO 639-2, IANA Language Subtag Registry, and Unicode UCD data.
+- Script examples inferred from languoid endonyms when the text matches the script's Unicode ranges.
 
 ### Changed
 - The Languoid `bcp_47` is filled when it's safe to infer it from other sources.
+- Rebuilt the packaged database from the new direct ISO/BCP sources.
+- Simplified geographic regions to country/territory-level regions imported by QQ.
+- Unified file downloads through one source provider that supports both single-file and multi-file sources.
+
+### Removed
+- Removed the `pycountry` source dependency and importer.
+- Removed region subdivision imports and region hierarchy fields that QQ did not use.
 
 ## [1.1.2] - 2026-06-18
 
