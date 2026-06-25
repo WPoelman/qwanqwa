@@ -532,7 +532,7 @@ class HuggingFaceDatasetTagsSourceProvider(FileDownloadSourceProvider):
         target_dir = self.data_dir
         if not self.filename:
             raise ValueError("Filename should not be empty.")
-        target_file = target_dir / Path(self.filename)
+        target_file = target_dir / self.filename
 
         logger.info(f"Fetching {self.name} from {self.source_url}...")
 
