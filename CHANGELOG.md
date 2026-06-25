@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-06-25
+
 ### Added
 - Parsing of bigger BCP 47 and NLLB-style codes.
 - `Database.resolve_tag()` for resolving a language tag to its languoid, script, and region components.
