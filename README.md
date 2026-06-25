@@ -120,6 +120,19 @@ db.convert("nl", IdType.ISO_639_3)    # "nld"
 db.convert("dutc1256", IdType.ISO_639_3) # "nld"
 db.convert("mol", IdType.ISO_639_3)   # "ron" (deprecated alias normalized silently)
 
+# Full BCP-47-like tags and NLLB-style language-script tags are accepted by
+# guess() and convert(); script/region subtags are ignored for languoid lookup.
+db.guess("nl-Latn-NL").name       # "Dutch"
+db.convert("nl-Latn-NL", IdType.ISO_639_3)  # "nld"
+db.convert("nld_Latn", IdType.BCP_47)       # "nl"
+
+# If you want the language, script, and region components, use resolve_tag().
+# Note that this only covers these three parts, not more specific region codes.
+tag = db.resolve_tag("nl-Latn-NL")
+tag.languoid.name        # "Dutch"
+tag.script.iso_15924     # "Latn"
+tag.region.country_code  # "NL"
+
 # NLLB-style codes
 dutch.nllb_codes()              # ["nld_Latn"]
 dutch.nllb_codes(use_bcp_47=True) # ["nl_Latn"]

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Parsing of bigger BCP 47 and NLLB-style codes.
+
+### Changed
+- The Languoid `bcp_47` is filled when it's safe to infer it from other sources.
+
 ## [1.1.2] - 2026-06-18
 
 ### Added

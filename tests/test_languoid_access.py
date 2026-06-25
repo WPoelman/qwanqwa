@@ -79,6 +79,50 @@ class TestGuess:
         with pytest.raises(KeyError, match="not found"):
             access.guess("xyzxyz")
 
+    def test_guess_accepts_full_bcp47_tag(self, access):
+        dutch = access.guess("nl-Latn-NL")
+        assert dutch.name == "Dutch"
+
+    def test_guess_accepts_underscore_nlp_tag(self, access):
+        dutch = access.guess("nld_Latn")
+        assert dutch.name == "Dutch"
+
+    def test_guess_normalizes_language_subtag_case(self, access):
+        dutch = access.guess("NL")
+        assert dutch.name == "Dutch"
+
+
+class TestResolveTag:
+    def test_resolve_tag_returns_languoid_script_and_region(self, access):
+        result = access.resolve_tag("nl-Latn-NL")
+
+        assert result.normalized == "nl-Latn-NL"
+        assert result.language_subtag == "nl"
+        assert result.script_subtag == "Latn"
+        assert result.region_subtag == "NL"
+        assert result.languoid is not None
+        assert result.languoid.name == "Dutch"
+        assert result.script is not None
+        assert result.script.iso_15924 == "Latn"
+        assert result.region is not None
+        assert result.region.country_code == "NL"
+
+    def test_resolve_tag_accepts_underscore_nlp_tag(self, access):
+        result = access.resolve_tag("nld_Latn")
+
+        assert result.normalized == "nld-Latn"
+        assert result.languoid is not None
+        assert result.languoid.name == "Dutch"
+        assert result.script is not None
+        assert result.script.iso_15924 == "Latn"
+        assert result.region is None
+
+    def test_resolve_tag_keeps_unresolved_region_subtag(self, access):
+        result = access.resolve_tag("es-419")
+
+        assert result.region_subtag == "419"
+        assert result.region is None
+
 
 class TestConvert:
     def test_convert_bcp47_to_iso639_3(self, access):
@@ -91,6 +135,26 @@ class TestConvert:
 
     def test_convert_not_found_returns_none(self, access):
         result = access.convert("zzz", IdType.BCP_47, IdType.ISO_639_3)
+        assert result is None
+
+    def test_convert_accepts_full_bcp47_tag(self, access):
+        result = access.convert("nl-Latn-NL", IdType.BCP_47, IdType.ISO_639_3)
+        assert result == "nld"
+
+    def test_convert_accepts_underscore_nlp_tag_when_guessing_source_type(self, access):
+        result = access.convert("nld_Latn", IdType.BCP_47)
+        assert result == "nl"
+
+    def test_convert_normalizes_language_subtag_case_when_guessing_source_type(self, access):
+        result = access.convert("NL", IdType.ISO_639_3)
+        assert result == "nld"
+
+    def test_convert_accepts_underscore_nlp_tag_with_explicit_source_type(self, access):
+        result = access.convert("nld_Latn", IdType.ISO_639_3, IdType.BCP_47)
+        assert result == "nl"
+
+    def test_convert_with_explicit_source_type_does_not_guess_other_types(self, access):
+        result = access.convert("nld-Latn", IdType.BCP_47, IdType.BCP_47)
         assert result is None
 
     def test_convert_deprecated_alias_to_primary_identifier(self, access):

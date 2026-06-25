@@ -5,6 +5,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar, overload
 
+from qq.bcp47 import ResolvedLanguageTag, parse_language_tag
 from qq.constants import DEFAULT_DB_PATH
 from qq.data_model import ID_TYPE_TO_ATTR, CanonicalId, EndangermentStatus, IdType, LanguoidLevel, NameData
 from qq.interface import GeographicRegion, Languoid, Script
@@ -47,7 +48,15 @@ class IdConversion:
             >>> ic.convert("nl", IdType.BCP_47, IdType.ISO_639_3)
             'nld'
         """
+        # First try it as a regular tag
         canonical_id = self.resolver.resolve(from_type, code)
+
+        # The see if we need to parse / extract the lang tag from a bigger tag
+        if not canonical_id:
+            language_subtag = parse_language_tag(code).language
+            if language_subtag is not None:
+                canonical_id = self.resolver.resolve(from_type, language_subtag)
+
         if not canonical_id:
             return None
 
@@ -159,17 +168,30 @@ class Database:
 
     def guess(self, code: str) -> Languoid:
         """
-        Try to find a languoid by checking all known identifier types.
+        Try to find a languoid by checking known identifier types.
+
+        Full BCP-47-like tags and NLLB-style underscore tags are accepted; only
+        their language/languoid subtag is used for lookup.
 
         Use with caution: the same string may exist in multiple identifier systems.
 
+        Example:
+            >>> db.guess("nld").name
+            'Dutch'
+            >>> db.guess("nl-Latn-NL").name
+            'Dutch'
+            >>> db.guess("nld_Latn").name
+            'Dutch'
+
         Raises:
-            KeyError: If not found with any identifier type
+            KeyError: If not found with any known identifier type
         """
         deprecated_error = None
+        parsed = parse_language_tag(code)
+        lookup_code = parsed.language or parsed.normalized
         for id_type in IdType:
             try:
-                return self.get(code, id_type)
+                return self.get(lookup_code, id_type)
             except KeyError as e:
                 if deprecated_error is None and "deprecated" in str(e):
                     deprecated_error = e
@@ -205,11 +227,17 @@ class Database:
             'nld'
             >>> db.convert("mol", IdType.ISO_639_3)
             'ron'
+            >>> db.convert("nl-Latn-NL", IdType.ISO_639_3)
+            'nld'
+            >>> db.convert("nld_Latn", IdType.BCP_47)
+            'nl'
         """
         # This is a bit messy since the signature flips, I want to keep the order of "from" and "to", see the overloads
         if type_b is None:
             to_type = type_a
             from_type = None
+            parsed = parse_language_tag(code)
+            code = parsed.language or parsed.normalized
             for id_type in IdType:
                 if self.resolver.resolve(id_type, code) is not None:
                     from_type = id_type
@@ -222,6 +250,50 @@ class Database:
             to_type = type_b
 
         return self._id_conversion.convert(code, from_type, to_type)
+
+    def resolve_tag(self, tag: str) -> ResolvedLanguageTag:
+        """Resolve a BCP-47-like tag to QQ graph entities where possible.
+
+        ``guess()`` and ``convert()`` intentionally discard everything except
+        the language/languoid subtag. Use this method when the script and region
+        components are also relevant.
+
+        Example:
+            >>> tag = db.resolve_tag("nl-Latn-NL")
+            >>> tag.languoid.name
+            'Dutch'
+            >>> tag.script.iso_15924
+            'Latn'
+            >>> tag.region.country_code
+            'NL'
+        """
+
+        parsed = parse_language_tag(tag)
+
+        languoid = None
+        if parsed.language is not None:
+            for id_type in IdType:
+                canonical_id = self.resolver.resolve(id_type, parsed.language)
+                entity = self.store.get(canonical_id) if canonical_id is not None else None
+                if isinstance(entity, Languoid):
+                    languoid = entity
+                    break
+
+        script = None
+        if parsed.script is not None:
+            try:
+                script = self.get_script(parsed.script)
+            except KeyError:
+                pass
+
+        region = None
+        if parsed.region is not None:
+            try:
+                region = self.get_region(parsed.region)
+            except KeyError:
+                pass
+
+        return ResolvedLanguageTag.from_parsed(parsed, languoid=languoid, script=script, region=region)
 
     def get_names(self, code: str, id_type: IdType = IdType.BCP_47) -> dict[CanonicalId, NameData] | None:
         """

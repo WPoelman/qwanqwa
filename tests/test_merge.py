@@ -14,7 +14,7 @@ from qq.importers.sil_importer import SILImporter
 from qq.importers.wikipedia_importer import WikipediaImporter
 from qq.interface import GeographicRegion, Languoid, Script
 from qq.internal.entity_resolution import EntityResolver
-from qq.internal.build_database import _reconcile_merged_languoids
+from qq.internal.build_database import _fill_missing_bcp47_codes, _reconcile_merged_languoids
 from qq.internal.merge import merge
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -231,3 +231,66 @@ def test_script_name_falls_back_to_linguameta():
     script = store.get("script:tulu")
     assert isinstance(script, Script)
     assert script.name == "Tulu-Tigalari"
+
+
+def test_fill_missing_bcp47_prefers_iso_639_1():
+    from qq.internal.data_store import DataStore
+
+    store = DataStore()
+    resolver = EntityResolver()
+    lang_id = resolver.find_or_create_canonical_id({IdType.ISO_639_1: "nl", IdType.ISO_639_3: "nld"})
+    store.add(Languoid(lang_id, store, name="Dutch", iso_639_1="nl", iso_639_3="nld"))
+
+    assert _fill_missing_bcp47_codes(store, resolver) == 1
+
+    lang = store.get(lang_id)
+    assert isinstance(lang, Languoid)
+    assert lang.bcp_47 == "nl"
+    assert resolver.resolve(IdType.BCP_47, "nl") == lang_id
+
+
+def test_fill_missing_bcp47_falls_back_to_iso_639_3():
+    from qq.internal.data_store import DataStore
+
+    store = DataStore()
+    resolver = EntityResolver()
+    lang_id = resolver.find_or_create_canonical_id({IdType.ISO_639_3: "tok"})
+    store.add(Languoid(lang_id, store, name="Toki Pona", iso_639_3="tok"))
+
+    assert _fill_missing_bcp47_codes(store, resolver) == 1
+
+    lang = store.get(lang_id)
+    assert isinstance(lang, Languoid)
+    assert lang.bcp_47 == "tok"
+    assert resolver.resolve(IdType.BCP_47, "tok") == lang_id
+
+
+def test_fill_missing_bcp47_does_not_use_iso_639_5():
+    from qq.internal.data_store import DataStore
+
+    store = DataStore()
+    resolver = EntityResolver()
+    family_id = resolver.find_or_create_canonical_id({IdType.ISO_639_5: "phi"})
+    store.add(Languoid(family_id, store, name="Philippine languages", iso_639_5="phi", level=LanguoidLevel.FAMILY))
+
+    assert _fill_missing_bcp47_codes(store, resolver) == 0
+
+    family = store.get(family_id)
+    assert isinstance(family, Languoid)
+    assert family.bcp_47 is None
+    assert resolver.resolve(IdType.BCP_47, "phi") is None
+
+
+def test_fill_missing_bcp47_preserves_existing_value():
+    from qq.internal.data_store import DataStore
+
+    store = DataStore()
+    resolver = EntityResolver()
+    lang_id = resolver.find_or_create_canonical_id({IdType.BCP_47: "x-existing", IdType.ISO_639_3: "xaa"})
+    store.add(Languoid(lang_id, store, bcp_47="x-existing", iso_639_3="xaa"))
+
+    assert _fill_missing_bcp47_codes(store, resolver) == 0
+
+    lang = store.get(lang_id)
+    assert isinstance(lang, Languoid)
+    assert lang.bcp_47 == "x-existing"
