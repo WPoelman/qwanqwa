@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal
 
 from qq.constants import LOG_SEP
-from qq.data_model import ID_TYPE_TO_ATTR
+from qq.data_model import ID_TYPE_TO_ATTR, IdType
 from qq.importers.base_importer import DataSource, EntitySet
 from qq.interface import Languoid
 from qq.internal.entity_resolution import EntityResolver
@@ -48,6 +48,30 @@ def _reconcile_merged_languoids(
             reconciled[stale_id] = target_id
 
     return reconciled
+
+
+def _fill_missing_bcp47_codes(store, resolver: EntityResolver) -> int:
+    """Fill missing BCP-47 language subtags from known ISO language codes.
+
+    Use ISO 639-1 when available according to the spec "shortest available code",
+    otherwise use ISO 639-3. ISO 639-5 family codes are intentionally not used.
+    """
+
+    filled = 0
+    for languoid in store.all_of_type(Languoid):
+        if languoid.bcp_47:
+            continue
+
+        code = languoid.iso_639_1 or languoid.iso_639_3
+        if not code:
+            continue
+
+        languoid.bcp_47 = code
+        if resolver.resolve(IdType.BCP_47, code) is None:
+            resolver.register_alias(IdType.BCP_47, code, languoid.id)
+        filled += 1
+
+    return filled
 
 
 def build_database(
@@ -96,6 +120,10 @@ def build_database(
     logger.info("Merging entity sets into final DataStore")
     conflicts_file = build_log_dir / "conflicts.json"
     store = merge(to_merge, conflicts_file)
+
+    filled_bcp47 = _fill_missing_bcp47_codes(store, resolver)
+    if filled_bcp47:
+        logger.info(f"Filled {filled_bcp47} missing BCP-47 language subtags from ISO identifiers")
 
     # Log entity resolution statistics
     logger.info("Entity Resolution Statistics:")
