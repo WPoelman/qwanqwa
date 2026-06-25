@@ -28,6 +28,16 @@ wikidata = db.convert("nld", IdType.ISO_639_3, IdType.WIKIDATA_ID)
 print(f"ISO 639-3 'nld' -> Wikidata: {wikidata}")
 print()
 
+# Parsing BCP-47-like tags or NLLB-style tags
+print("Parsing a language tag:")
+tag = db.resolve_tag("nl-Latn-NL")
+print(f"  Original tag: {tag.original}")
+print(f"  Normalized tag: {tag.normalized}")
+print(f"  Language: {tag.languoid.name if tag.languoid else None}")
+print(f"  Script: {tag.script.name if tag.script else None}")
+print(f"  Region: {tag.region.name if tag.region else None}")
+print()
+
 # Batch conversions
 print("Batch conversion from BCP-47 to ISO 639-3:")
 bcp_codes = ["en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ar"]
