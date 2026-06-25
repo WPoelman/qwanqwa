@@ -102,9 +102,6 @@
     languoid_count: "Languoid count",
     country_code: "Country code",
     official_name: "Official name",
-    subdivision_code: "Subdivision code",
-    subdivision_type: "Subdivision type",
-    parent_country_code: "Parent country code",
   };
   const PROPERTY_NUMBER_KEYS = {
     speaker_count: true,
@@ -133,8 +130,7 @@
     ],
     region: [
       { title: "Names", keys: ["name", "official_name"] },
-      { title: "Identifiers", keys: ["country_code", "subdivision_code", "parent_country_code", "id"] },
-      { title: "Classification", keys: ["subdivision_type", "is_historical"] },
+      { title: "Identifiers", keys: ["country_code", "id"] },
     ],
   };
   const state = {
