@@ -84,3 +84,13 @@ Subtag: Latn
 Description: Latin
 Added: 2005-10-16
 %%
+%%
+Type: region
+Subtag: BE
+Description: Belgium
+Added: 2005-10-16
+%%
+Type: region
+Subtag: DE
+Description: Germany
+Added: 2005-10-16

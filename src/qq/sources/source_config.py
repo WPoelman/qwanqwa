@@ -10,7 +10,7 @@ from qq.importers import (
     GlottologImporter,
     IANAImporter,
     LinguaMetaImporter,
-    PycountryImporter,
+    LOCImporter,
     SILImporter,
     UnicodeImporter,
     WikidataIso6395Importer,
@@ -19,11 +19,11 @@ from qq.importers import (
 )
 from qq.sources.external_resource import ExternalResourceDefinition, ExternalResourceFileFormat
 from qq.sources.providers import (
+    DownloadFile,
     FileDownloadSourceProvider,
     GitSourceProvider,
     HuggingFaceDatasetTagsSourceProvider,
     SourceProvider,
-    UnicodeUCDSourceProvider,
     WikidataSparqlSourceProvider,
 )
 
@@ -188,21 +188,58 @@ class SourceConfig:
                 website_url="https://www.wikidata.org/",
                 notes="ISO 15924 type, family, and example from Wikidata.",
             ),
-            # TODO: maybe get rid of pycountry and just use Debian source directly?
-            GitSourceProvider(
-                name="pycountry",
+            FileDownloadSourceProvider(
+                name="sil_iso6393",
+                display_name="SIL ISO 639-3 Code Set",
                 sources_dir=sources_dir,
-                source_url="https://github.com/pycountry/pycountry",
-                branch="main",
-                subpath="src/pycountry/databases",
-                license="LGPL-2.1 or later",
-                notes="Builds on Debian iso-codes [project](https://salsa.debian.org/iso-codes-team/iso-codes)",
+                source_url="https://iso639-3.sil.org/code_tables/download_tables",
+                files=[
+                    DownloadFile(
+                        url="https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab",
+                        filename="iso-639-3.tab",
+                    ),
+                    DownloadFile(
+                        url="https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Retirements.tab",
+                        filename="iso_639_3_retirements.tab",
+                    ),
+                ],
+                cache_duration_hours=ONE_MONTH,
+                license="Custom (free use with attribution; see SIL terms)",
+                website_url="https://iso639-3.sil.org/code_tables/download_tables",
+                notes=(
+                    "Active and retired ISO 639-3 code tables maintained by SIL International. "
+                    "QQ incorporates the identifiers unchanged and attributes SIL as the source."
+                ),
             ),
-            UnicodeUCDSourceProvider(
+            FileDownloadSourceProvider(
+                name="loc",
+                display_name="Library of Congress ISO 639-2",
+                sources_dir=sources_dir,
+                source_url="https://www.loc.gov/standards/iso639-2/ISO-639-2_utf-8.txt",
+                filename="ISO-639-2_utf-8.txt",
+                cache_duration_hours=ONE_MONTH,
+                license="Library of Congress public data / terms",
+                website_url="https://www.loc.gov/standards/iso639-2/",
+                notes=(
+                    "Official ISO 639-2 Language Coding Agency table used for ISO 639-1, "
+                    "ISO 639-2B, and ISO 639-2T mappings."
+                ),
+            ),
+            FileDownloadSourceProvider(
                 name="unicode_ucd",
                 display_name="Unicode Character Database",
                 sources_dir=sources_dir,
                 source_url="https://www.unicode.org/Public/UCD/latest/ucd/",
+                files=[
+                    DownloadFile(
+                        url="https://www.unicode.org/Public/UCD/latest/ucd/Scripts.txt",
+                        filename="Scripts.txt",
+                    ),
+                    DownloadFile(
+                        url="https://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt",
+                        filename="PropertyValueAliases.txt",
+                    ),
+                ],
                 cache_duration_hours=ONE_MONTH,
                 license="UNICODE LICENSE V3",
                 website_url="https://www.unicode.org/ucd/",
@@ -219,16 +256,6 @@ class SourceConfig:
                 notes="Wikipedia edition statistics (article counts, active users) from Wikistats (Wikimedia)",
             ),
             FileDownloadSourceProvider(
-                name="sil",
-                sources_dir=sources_dir,
-                source_url="https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Retirements.tab",
-                filename="iso_639_3_retirements.tab",
-                cache_duration_hours=ONE_MONTH,
-                license="Custom (free use)",
-                website_url="https://iso639-3.sil.org/code_tables/download_tables",
-                notes="ISO 639-3 retired code mappings maintained by SIL International",
-            ),
-            FileDownloadSourceProvider(
                 name="iana",
                 sources_dir=sources_dir,
                 source_url="https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry",
@@ -236,7 +263,10 @@ class SourceConfig:
                 cache_duration_hours=ONE_MONTH,
                 license="Public (Internet Standard)",
                 website_url="https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry",
-                notes="IANA Language Subtag Registry (BCP 47 / RFC 5646): deprecated language subtag mappings",
+                notes=(
+                    "IANA Language Subtag Registry (BCP 47 / RFC 5646): language, script, region, and "
+                    "deprecated subtag mappings"
+                ),
             ),
             FileDownloadSourceProvider(
                 name="grambank",
@@ -533,10 +563,10 @@ class SourceConfig:
                 WikidataScriptMetadataImporter,
                 data_path_name="wikidata_script_metadata/scripts.json",
             ),
-            ImporterConfig("pycountry", PycountryImporter),
+            ImporterConfig("sil_iso6393", SILImporter),
+            ImporterConfig("loc", LOCImporter),
             ImporterConfig("unicode_ucd", UnicodeImporter),
             ImporterConfig("wikipedia", WikipediaImporter),
-            ImporterConfig("sil", SILImporter),
             ImporterConfig("iana", IANAImporter),
             ImporterConfig(
                 "external_resources",

@@ -28,7 +28,7 @@ The NoRaRe input is read from `data/norare-data.zip`. If it is missing, the scri
 |---|---|---|---|
 | Concepticon (BabelNet) | 600 | 592 | 98.7% |
 | WordNet synsets | 520 | 514 | 98.8% |
-| Etymon | 397 | 397 | 100% |
+| Etymon | 397 | 396 | 99.7% |
 | Phonotacticon | 519 | 517 | 99.6% |
 | NoRaRe | 53 | 53 | 100% |
 
@@ -42,7 +42,7 @@ Unresolved codes are listed in `unresolved.txt`.
 |---|---|
 | Concepticon only | 55 |
 | WordNet only | 0 |
-| Etymon only | 91 |
+| Etymon only | 90 |
 | Phonotacticon only | 325 |
 | NoRaRe only | 0 |
 | Concepticon ∩ WordNet | 509 |

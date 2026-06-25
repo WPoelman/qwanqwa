@@ -10,7 +10,8 @@ from qq.data_model import IdType
 from qq.importers.glotscript_importer import GlotscriptImporter
 from qq.importers.glottolog_importer import GlottologImporter
 from qq.importers.linguameta_importer import LinguaMetaImporter
-from qq.importers.pycountry_importer import PycountryImporter
+from qq.importers.iana_importer import IANAImporter
+from qq.importers.loc_importer import LOCImporter
 from qq.importers.sil_importer import SILImporter
 from qq.importers.wikipedia_importer import WikipediaImporter
 from qq.internal.entity_resolution import EntityResolver
@@ -34,9 +35,10 @@ def access():
         ("linguameta", LinguaMetaImporter),
         ("glottolog", GlottologImporter),
         ("glotscript", GlotscriptImporter),
-        ("pycountry", PycountryImporter),
+        ("sil_iso6393", SILImporter),
+        ("loc", LOCImporter),
+        ("iana", IANAImporter),
         ("wikipedia", WikipediaImporter),
-        ("sil", SILImporter),
     ]
 
     resolver.find_or_create_canonical_id({IdType.ISO_639_3: "ron"})

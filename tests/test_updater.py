@@ -20,7 +20,7 @@ def mock_providers(temp_base_dir):
     """Create mock providers for testing"""
     providers = []
 
-    for name in ["linguameta", "glottolog", "glotscript", "pycountry", "wikipedia"]:
+    for name in ["linguameta", "glottolog", "glotscript", "sil_iso6393", "loc", "wikipedia"]:
         provider = Mock(spec=DirectorySourceProvider)
         provider.name = name
         provider.metadata = SourceMetadata(
@@ -59,7 +59,7 @@ class TestSourceUpdater:
         updater = SourceUpdater(temp_base_dir)
         results = updater.update_all(rebuild=False)
 
-        assert len(results) == 5
+        assert len(results) == len(mock_providers)
         assert all(results.values())
 
         for provider in mock_providers:
@@ -76,7 +76,7 @@ class TestSourceUpdater:
         updater = SourceUpdater(temp_base_dir)
         results = updater.update_all(rebuild=False)
 
-        assert len(results) == 5
+        assert len(results) == len(mock_providers)
         assert not any(results.values())
 
     @patch("qq.sources.source_config.SourceConfig.get_providers")
@@ -194,7 +194,7 @@ class TestSourceUpdater:
         updater = SourceUpdater(temp_base_dir)
         results = updater.verify_all()
 
-        assert len(results) == 5
+        assert len(results) == len(mock_providers)
         assert all(results.values())
 
 
@@ -230,4 +230,4 @@ class TestSourceUpdaterIntegration:
         assert all(verify_results.values())
 
         status = updater.get_status()
-        assert len(status) == 5
+        assert len(status) == len(mock_providers)

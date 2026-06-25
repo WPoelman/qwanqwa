@@ -16,7 +16,7 @@ Requires `pandas`, `tqdm`, `matplotlib`, and `huggingface_hub` (installed ad-hoc
 
 ## What it does
 
-1. **Fetches metadata** from the HuggingFace Hub API for all datasets with >10 language tags (only metadata, not dataset content).
+1. **Fetches metadata** from the HuggingFace Hub API for all datasets with at least 10 language tags (only metadata, not dataset content).
 2. **Classifies each language tag** by resolving it against qq's identifier database.
 3. **Reports results** across four categories:
    - **Valid** -- resolves to a known languoid
@@ -30,16 +30,16 @@ Scanning 1,940 multilingual datasets (8,201 unique language codes):
 
 | Status | Count |
 |---|---|
-| Valid | 8,127 |
-| Deprecated | 23 |
-| Country code | 19 |
-| Unknown | 32 |
+| Valid | 8,131 |
+| Deprecated | 17 |
+| Country code | 18 |
+| Unknown | 35 |
 
 **99.1% of codes resolve correctly.** The remaining issues:
 
-- **23 deprecated codes** from retired ISO 639-3 entries (splits, merges, duplicates) and withdrawn BCP-47/ISO 639-1 codes (`iw` -> `he`, `in` -> `id`, `ji` -> `yi`, `mo` -> `ro`).
-- **19 country codes** where dataset authors tagged a country instead of a language (e.g., `jp` instead of `ja`, `cn` instead of `zh`).
-- **32 unknown codes** -- mostly HuggingFace-specific tags (`multilingual`, `code`, `xx`), private-use `q*` codes, and a few unresolvable entries.
+- **17 deprecated codes** from retired ISO 639-3 entries (splits, merges, duplicates) and withdrawn BCP-47/ISO 639-1 codes (`iw` -> `he`, `in` -> `id`, `ji` -> `yi`, `mo` -> `ro`).
+- **18 country codes** where dataset authors tagged a country instead of a language (e.g., `jp` instead of `ja`, `cn` instead of `zh`).
+- **35 unknown codes** -- mostly HuggingFace-specific tags (`multilingual`, `code`, `xx`), private-use `q*` codes, and a few unresolvable entries.
 
 ## Output files
 

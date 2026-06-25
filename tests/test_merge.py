@@ -4,17 +4,22 @@ from pathlib import Path
 
 import pytest
 
-from qq.data_model import IdType, LanguageScope, LanguoidLevel, RelationType
+from qq.data_model import DataSource, IdType, LanguageScope, LanguoidLevel, RelationType
 from qq.importers.base_importer import EntitySet
 from qq.importers.glotscript_importer import GlotscriptImporter
 from qq.importers.glottolog_importer import GlottologImporter
 from qq.importers.linguameta_importer import LinguaMetaImporter
-from qq.importers.pycountry_importer import PycountryImporter
+from qq.importers.iana_importer import IANAImporter
+from qq.importers.loc_importer import LOCImporter
 from qq.importers.sil_importer import SILImporter
 from qq.importers.wikipedia_importer import WikipediaImporter
 from qq.interface import GeographicRegion, Languoid, Script
 from qq.internal.entity_resolution import EntityResolver
-from qq.internal.build_database import _fill_missing_bcp47_codes, _reconcile_merged_languoids
+from qq.internal.build_database import (
+    _fill_missing_bcp47_codes,
+    _fill_missing_script_samples_from_endonyms,
+    _reconcile_merged_languoids,
+)
 from qq.internal.merge import merge
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -30,9 +35,10 @@ def merged_store():
         ("linguameta", LinguaMetaImporter),
         ("glottolog", GlottologImporter),
         ("glotscript", GlotscriptImporter),
-        ("pycountry", PycountryImporter),
+        ("sil_iso6393", SILImporter),
+        ("loc", LOCImporter),
+        ("iana", IANAImporter),
         ("wikipedia", WikipediaImporter),
-        ("sil", SILImporter),
     ]
 
     # Pre-register languoids needed by SIL (ron, knw, huc)
@@ -71,7 +77,7 @@ class TestMergeIntegration:
         assert len(regions) >= 2
 
     def test_dutch_merged_from_multiple_sources(self, merged_store):
-        """Dutch should have data merged from linguameta, glottolog, glotscript, pycountry, wikipedia."""
+        """Dutch should have data merged from linguameta, glottolog, glotscript, SIL/LOC, and wikipedia."""
         store, resolver = merged_store
         dutch_id = resolver.resolve(IdType.ISO_639_3, "nld")
         dutch = store.get(dutch_id)
@@ -86,7 +92,7 @@ class TestMergeIntegration:
         assert dutch.glottocode == "dutc1256"
         assert dutch.level == LanguoidLevel.LANGUAGE
 
-        # From pycountry
+        # From SIL ISO 639-3
         assert dutch.scope == LanguageScope.INDIVIDUAL
 
     def test_dutch_has_parent_relation(self, merged_store):
@@ -125,20 +131,14 @@ class TestMergeIntegration:
         assert dutch.wikipedia is not None
         assert dutch.wikipedia.article_count == 2150000
 
-    def test_region_enriched_by_pycountry(self, merged_store):
-        """Netherlands region should have official_name from pycountry."""
+    def test_region_enriched_by_iana(self, merged_store):
+        """Netherlands region should be available from IANA region subtags."""
         store, resolver = merged_store
         nl = store.get("region:nl")
         assert nl is not None
         assert isinstance(nl, GeographicRegion)
-        assert nl.official_name == "Kingdom of the Netherlands"
-
-    def test_subdivision_exists(self, merged_store):
-        """Subdivisions from pycountry should be in merged store."""
-        store, resolver = merged_store
-        nh = store.get("region:nl-nh")
-        assert nh is not None
-        assert nh.subdivision_code == "NL-NH"
+        assert nl.country_code == "NL"
+        assert nl.name == "Netherlands"
 
     def test_deprecated_code_from_sil(self, merged_store):
         """SIL deprecated codes should be on merged entities."""
@@ -204,16 +204,16 @@ def test_reconcile_merged_languoids_updates_earlier_entity_sets():
     assert [rel.target_id for rel in script._relations[RelationType.USED_BY_LANGUOID]] == [merged_id]
 
 
-def test_script_name_prefers_pycountry():
+def test_script_name_prefers_unicode():
     linguameta = EntitySet()
-    pycountry = EntitySet()
+    unicode = EntitySet()
     linguameta.add(Script("script:kawi", linguameta, name="Chorasmian"))
-    pycountry.add(Script("script:kawi", pycountry, name="Kawi"))
+    unicode.add(Script("script:kawi", unicode, name="Kawi"))
 
     store = merge(
         [
             (LinguaMetaImporter.source, linguameta),
-            (PycountryImporter.source, pycountry),
+            (DataSource.UNICODE, unicode),
         ]
     )
 
@@ -294,3 +294,23 @@ def test_fill_missing_bcp47_preserves_existing_value():
     lang = store.get(lang_id)
     assert isinstance(lang, Languoid)
     assert lang.bcp_47 == "x-existing"
+
+
+def test_fill_missing_script_samples_from_matching_endonyms():
+    from qq.internal.data_store import DataStore
+
+    store = DataStore()
+    greek = Languoid("lang:ell", store, name="Greek", endonym="Ελληνικά")
+    greek_script = Script("script:grek", store, iso_15924="Grek", unicode_ranges=["U+0370..U+03FF"])
+    latin_script = Script("script:latn", store, iso_15924="Latn", unicode_ranges=["U+0041..U+005A", "U+0061..U+007A"])
+
+    store.add(greek)
+    store.add(greek_script)
+    store.add(latin_script)
+    greek.add_relation(RelationType.USES_SCRIPT, greek_script.id, is_canonical=True)
+    greek_script.add_relation(RelationType.USED_BY_LANGUOID, greek.id, is_canonical=True)
+    latin_script.add_relation(RelationType.USED_BY_LANGUOID, greek.id, is_canonical=True)
+
+    assert _fill_missing_script_samples_from_endonyms(store) == 1
+    assert greek_script.sample == "Ελληνικά"
+    assert latin_script.sample is None

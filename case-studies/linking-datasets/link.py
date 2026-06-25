@@ -96,21 +96,22 @@ def collect_codes_phonotacticon(zip_path: Path, inner_path: str, resolver) -> tu
     return glottocodes, iso_codes
 
 
-def collect_codes_norare(zip_path: Path, inner_path: str) -> tuple[set[str], set[str]]:
-    """Collect language codes from norare-data/norare.tsv (inside zip).
+def collect_codes_norare(zip_path: Path, inner_path: str | None = None) -> tuple[set[str], set[str]]:
+    """Collect language codes from norare.tsv inside a NoRaRe zip archive.
 
     The LANGUAGE column holds mostly ISO 639-1 lowercase codes (e.g. 'en',
-    'de') with a few ISO 639-3 codes (e.g. 'eng', 'tpi').  The special value
+    'de') with a few ISO 639-3 codes (e.g. 'eng', 'tpi'). The special value
     'global' carries no language information and is skipped.
-
-    Returns
-    -------
-    bcp47_codes : ISO 639-1 / BCP-47 two-letter codes (lowercase)
-    iso3_codes  : ISO 639-3 three-letter codes
     """
     bcp47_codes: set[str] = set()
     iso3_codes: set[str] = set()
     with zipfile.ZipFile(zip_path) as zf:
+        if inner_path is None or inner_path not in zf.namelist():
+            candidates = [name for name in zf.namelist() if name.endswith("/norare.tsv") or name == "norare.tsv"]
+            if not candidates:
+                raise FileNotFoundError(f"Could not find norare.tsv in {zip_path}")
+            inner_path = sorted(candidates, key=lambda name: (name.count("/"), name))[0]
+
         with zf.open(inner_path) as raw:
             reader = csv.DictReader(io.TextIOWrapper(raw, encoding="utf-8"), delimiter="\t")
             for row in reader:
@@ -231,10 +232,7 @@ def main() -> None:
     print(f"  {len(phono_glottocodes)} Glottocodes, {len(phono_iso_codes)} ISO codes found\n")
 
     print("Reading NoRaRe data...")
-    norare_bcp47_codes, norare_iso3_codes = collect_codes_norare(
-        DATA_DIR / "norare-data.zip",
-        "norare-data/norare.tsv",
-    )
+    norare_bcp47_codes, norare_iso3_codes = collect_codes_norare(DATA_DIR / "norare-data.zip")
     norare_total = len(norare_bcp47_codes) + len(norare_iso3_codes)
     print(f"  {len(norare_bcp47_codes)} BCP-47 codes, {len(norare_iso3_codes)} ISO 639-3 codes found\n")
 

@@ -17,6 +17,7 @@ ROA_GAL
 ROA_TARA
 
 # Etymon
+p_sla
 
 # Phonotacticon
 huzh1238
