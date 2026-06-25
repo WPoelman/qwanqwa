@@ -43,15 +43,7 @@ class MergeStrategy(Enum):
     MANUAL = "manual"
 
 
-_FIELD_TO_STRATEGY = {
-    # This one is tricky because country / region codes can be deprecated, but
-    # still in a transitionary phase. So it's both historical and not.
-    # LinguaMeta and pycountry do not agree for 7 values. I check manual
-    # resolution and pycountry is more strict with transitional codes, so I
-    # interpret Historical as to refer to the ISO codes. Pycountry is also
-    # updated more often.
-    (GeographicRegion, "is_historical"): (MergeStrategy.MANUAL, DataSource.PYCOUNTRY),
-}
+_FIELD_TO_STRATEGY = {}
 
 
 # Fields where multiple values should be concatenated/merged rather than
@@ -161,9 +153,10 @@ def _merge_field(
     winner_source, winner_value = values[0]
 
     if entity_class is Script and field_name == "name":
-        for source, value in values:
-            if source == DataSource.PYCOUNTRY:
-                return value, None
+        for preferred in (DataSource.UNICODE, DataSource.WIKIDATA):
+            for source, value in values:
+                if source == preferred:
+                    return value, None
         return winner_value, None
 
     # Some fields have expected disagreements that should not be recorded
@@ -174,8 +167,7 @@ def _merge_field(
     conflict = None
     unique_values = _unique_values([v for _, v in values])
     if len(unique_values) > 1:
-        # TODO: this is a bit messy, but per field strategies is also annoying
-        # luckily this is only one field at the moment: Region.is_historical
+        # TODO: this is a bit messy, but per-field strategies are also annoying.
         key = (entity_class, field_name)
         strategy, preferred_source = _FIELD_TO_STRATEGY.get(key, (MergeStrategy.SOURCE_PRIORITY, None))
         if strategy == MergeStrategy.SOURCE_PRIORITY:

@@ -15,6 +15,12 @@ def _generate_source_section(provider: SourceProvider) -> list[str]:
     if source_url := meta.source_url:
         lines.append(f"* Source: {source_url}")
 
+    download_files = getattr(provider, "files", None)
+    if download_files:
+        lines.append("* Files:")
+        for file in download_files:
+            lines.append(f"  * `{file.filename}`: {file.url}")
+
     if license := meta.license:
         lines.append(f"* License: {license}")
 

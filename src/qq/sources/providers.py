@@ -398,16 +398,25 @@ class DirectorySourceProvider(SourceProvider):
         return self.local_path.exists()
 
 
+@dataclass(frozen=True)
+class DownloadFile:
+    """A single file to download into a source directory."""
+
+    url: str
+    filename: str
+
+
 class FileDownloadSourceProvider(SourceProvider):
-    """Provider for single-file downloads (TSV, CSV, etc.)"""
+    """Provider for sources made up of one or more downloadable files."""
 
     def __init__(
         self,
         name: str,
         sources_dir: Path,
-        source_url: str,
-        filename: str,
         license: str,
+        source_url: str | None = None,
+        filename: str | None = None,
+        files: list[DownloadFile] | None = None,
         cache_duration_hours: int = 24,
         paper_url: str | None = None,
         website_url: str | None = None,
@@ -415,6 +424,11 @@ class FileDownloadSourceProvider(SourceProvider):
         external_resources: list[object] | None = None,
         display_name: str | None = None,
     ):
+        if files is None and (source_url is None or filename is None):
+            raise ValueError("FileDownloadSourceProvider requires either files or source_url + filename")
+        if files is not None and filename is not None:
+            raise ValueError("Use either files or filename, not both")
+
         super().__init__(
             name,
             sources_dir,
@@ -428,18 +442,24 @@ class FileDownloadSourceProvider(SourceProvider):
             display_name=display_name,
         )
         self.filename = filename
+        self.files = files
         self.cache_duration_hours = cache_duration_hours
 
-        self.source_url: str  # see above
+    @property
+    def _download_files(self) -> list[DownloadFile]:
+        if self.files is not None:
+            return self.files
+        if self.source_url is None or self.filename is None:
+            raise ValueError("FileDownloadSourceProvider has no download files configured")
+        return [DownloadFile(url=self.source_url, filename=self.filename)]
 
     def fetch(self, force: bool = False) -> bool:
-        """Download file"""
+        """Download all configured files."""
         target_dir = self.data_dir
-        target_file = target_dir / self.filename
+        files = self._download_files
+        target_files = [target_dir / file.filename for file in files]
 
-        logger.info(f"Fetching {self.name} from {self.source_url}...")
-
-        if not force and target_file.exists() and self.metadata._last_updated:
+        if not force and all(path.exists() for path in target_files) and self.metadata._last_updated:
             age_hours = (datetime.now() - self.metadata._last_updated).total_seconds() / 3600
             if age_hours < self.cache_duration_hours:
                 logger.info(f"{self.name} cache is still valid (age: {age_hours:.1f} hours)")
@@ -451,23 +471,27 @@ class FileDownloadSourceProvider(SourceProvider):
             from urllib.request import Request, urlopen
 
             headers = {"User-Agent": f"qwanqwa/{qq.__version__} (https://github.com/WPoelman/qwanqwa) Python/urllib"}
-            request = Request(self.source_url, headers=headers)
-
-            with urlopen(request, timeout=30) as response:
-                content = response.read()
-                logger.info(f"Successfully downloaded {self.name} ({len(content)} bytes)")
+            downloads: list[tuple[Path, bytes]] = []
+            for file in files:
+                logger.info(f"Fetching {self.name}/{file.filename} from {file.url}...")
+                request = Request(file.url, headers=headers)
+                with urlopen(request, timeout=30) as response:
+                    content = response.read()
+                    logger.info(f"Successfully downloaded {self.name}/{file.filename} ({len(content)} bytes)")
+                    downloads.append((target_dir / file.filename, content))
         except Exception as e:
             logger.error(f"Failed to download {self.name}: {e}")
             return False
 
         target_dir.mkdir(parents=True, exist_ok=True)
-        with open(target_file, "wb") as f:
-            f.write(content)
+        for target_file, content in downloads:
+            with open(target_file, "wb") as f:
+                f.write(content)
 
         self.metadata._version = datetime.now().strftime(DATETIME_FMT)
         self.metadata._last_updated = datetime.now()
         self.metadata._last_checked = datetime.now()
-        self.metadata._checksum = self._file_checksum(target_file)
+        self.metadata._checksum = self._calculate_checksum(target_dir)
         self._save_metadata()
 
         return True
@@ -477,9 +501,8 @@ class FileDownloadSourceProvider(SourceProvider):
         return self.metadata._version
 
     def verify(self) -> bool:
-        """Verify the downloaded file exists."""
-        target_file = self.data_dir / self.filename
-        return target_file.exists()
+        """Verify all downloaded files exist."""
+        return all((self.data_dir / file.filename).exists() for file in self._download_files)
 
 
 class WikidataSparqlSourceProvider(FileDownloadSourceProvider):
@@ -498,83 +521,6 @@ class WikidataSparqlSourceProvider(FileDownloadSourceProvider):
         return super().fetch(force=force)
 
 
-# TODO: maybe this can be reworked into the filedownloader, but instead with multiple files instead of just one?
-class UnicodeUCDSourceProvider(SourceProvider):
-    """Provider for the Unicode Character Database files used by qq."""
-
-    filenames = ("Scripts.txt", "PropertyValueAliases.txt")
-
-    def __init__(
-        self,
-        name: str,
-        sources_dir: Path,
-        source_url: str,
-        license: str,
-        cache_duration_hours: int = 24 * 30,
-        paper_url: str | None = None,
-        website_url: str | None = None,
-        notes: str | None = None,
-        external_resources: list[object] | None = None,
-        display_name: str | None = None,
-    ):
-        super().__init__(
-            name,
-            sources_dir,
-            license,
-            SourceType.FILE,
-            source_url=source_url,
-            website_url=website_url,
-            paper_url=paper_url,
-            notes=notes,
-            external_resources=external_resources,
-            display_name=display_name,
-        )
-        self.cache_duration_hours = cache_duration_hours
-        self.source_url: str
-
-    def fetch(self, force: bool = False) -> bool:
-        logger.info(f"Fetching {self.name} from {self.source_url}...")
-
-        if not force and self.verify() and self.metadata._last_updated:
-            age_hours = (datetime.now() - self.metadata._last_updated).total_seconds() / 3600
-            if age_hours < self.cache_duration_hours:
-                logger.info(f"{self.name} cache is still valid (age: {age_hours:.1f} hours)")
-                self.metadata._last_checked = datetime.now()
-                self._save_metadata()
-                return False
-
-        try:
-            from urllib.parse import urljoin
-            from urllib.request import Request, urlopen
-
-            headers = {"User-Agent": f"qwanqwa/{qq.__version__} (https://github.com/WPoelman/qwanqwa) Python/urllib"}
-            self.data_dir.mkdir(parents=True, exist_ok=True)
-            for filename in self.filenames:
-                url = urljoin(self.source_url, filename)
-                request = Request(url, headers=headers)
-                with urlopen(request, timeout=30) as response:
-                    content = response.read()
-                (self.data_dir / filename).write_bytes(content)
-                logger.info(f"Downloaded {filename} ({len(content)} bytes)")
-        except Exception as e:
-            logger.error(f"Failed to download {self.name}: {e}")
-            return False
-
-        self.metadata._version = datetime.now().strftime(DATETIME_FMT)
-        self.metadata._last_updated = datetime.now()
-        self.metadata._last_checked = datetime.now()
-        self.metadata._checksum = self._calculate_checksum(self.data_dir)
-        self._save_metadata()
-
-        return True
-
-    def get_version(self) -> str | None:
-        return self.metadata._version
-
-    def verify(self) -> bool:
-        return all((self.data_dir / filename).exists() for filename in self.filenames)
-
-
 class HuggingFaceDatasetTagsSourceProvider(FileDownloadSourceProvider):
     """Provider that caches Hugging Face language tags with dataset counts."""
 
@@ -584,7 +530,9 @@ class HuggingFaceDatasetTagsSourceProvider(FileDownloadSourceProvider):
 
     def fetch(self, force: bool = False) -> bool:
         target_dir = self.data_dir
-        target_file = target_dir / self.filename
+        if not self.filename:
+            raise ValueError("Filename should not be empty.")
+        target_file = target_dir / Path(self.filename)
 
         logger.info(f"Fetching {self.name} from {self.source_url}...")
 

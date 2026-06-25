@@ -8,7 +8,7 @@
 * Source: https://raw.githubusercontent.com/cldf-datasets/afbo/master/cldf/languages.csv
 * License: CC BY 4.0
 * Website: https://afbo.info/
-* Last updated: 11-06-2026
+* Last updated: 25-06-2026
 
 Language table used to add exact AfBo resource links by Glottocode and AfBo language ID.
 
@@ -17,7 +17,7 @@ Language table used to add exact AfBo resource links by Glottocode and AfBo lang
 * Source: https://raw.githubusercontent.com/cldf-datasets/apics/master/cldf/languages.csv
 * License: CC BY 3.0
 * Website: https://apics-online.info/
-* Last updated: 11-06-2026
+* Last updated: 25-06-2026
 
 Language table used to add exact APiCS resource links by Glottocode and APiCS language ID.
 
@@ -26,7 +26,7 @@ Language table used to add exact APiCS resource links by Glottocode and APiCS la
 * Source: https://raw.githubusercontent.com/cldf-datasets/cldf_meta/master/cldf/languages.csv
 * License: CC BY 4.0
 * Website: https://meta.clld.org/
-* Last updated: 18-06-2026
+* Last updated: 25-06-2026
 
 Meta collection of CLLD datasets.
 
@@ -35,7 +35,7 @@ Meta collection of CLLD datasets.
 * Source: https://raw.githubusercontent.com/cldf-datasets/ewave/master/cldf/languages.csv
 * License: CC BY 3.0
 * Website: https://ewave-atlas.org/
-* Last updated: 11-06-2026
+* Last updated: 25-06-2026
 
 Language table used to add exact eWAVE resource links by Glottocode and eWAVE language ID.
 
@@ -44,7 +44,7 @@ Language table used to add exact eWAVE resource links by Glottocode and eWAVE la
 * Source: https://github.com/cisnlp/glotscript
 * License: CC BY-SA 4.0
 * Paper: https://aclanthology.org/2024.lrec-main.687/
-* Last updated: 18-06-2026
+* Last updated: 25-06-2026
 
 Individual sources documented in [GlotScript README](https://github.com/cisnlp/GlotScript/blob/main/metadata/README.md)
 
@@ -53,14 +53,14 @@ Individual sources documented in [GlotScript README](https://github.com/cisnlp/G
 * Source: https://github.com/glottolog/glottolog-cldf.git
 * License: CC BY 4.0
 * Website: https://glottolog.org/
-* Last updated: 18-06-2026
+* Last updated: 25-06-2026
 
 ## Grambank
 
 * Source: https://raw.githubusercontent.com/grambank/grambank/master/cldf/languages.csv
 * License: CC BY 4.0
 * Website: https://grambank.clld.org/
-* Last updated: 11-06-2026
+* Last updated: 25-06-2026
 
 Language table used to add exact Grambank resource links by Glottocode.
 
@@ -69,7 +69,7 @@ Language table used to add exact Grambank resource links by Glottocode.
 * Source: https://huggingface.co/api/datasets?limit=1000&expand=tags
 * License: See Hugging Face datasets themselves.
 * Website: https://huggingface.co/datasets
-* Last updated: 18-06-2026
+* Last updated: 25-06-2026
 
 Dataset tag metadata used to add Hugging Face links only for language tags that occur on the Hub.
 
@@ -77,7 +77,7 @@ Dataset tag metadata used to add Hugging Face links only for language tags that 
 
 * Source: https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry
 * License: Public (Internet Standard)
-* Last updated: 11-06-2026
+* Last updated: 25-06-2026
 
 IANA Language Subtag Registry (BCP 47 / RFC 5646): deprecated language subtag mappings
 
@@ -87,51 +87,58 @@ IANA Language Subtag Registry (BCP 47 / RFC 5646): deprecated language subtag ma
 * License: CC BY-SA 4.0
 * Paper: https://aclanthology.org/2024.lrec-main.921/
 * Website: https://github.com/google-research/url-nlp/tree/main/linguameta
-* Last updated: 18-06-2026
+* Last updated: 25-06-2026
 
 Individual sources documented in [LinguaMeta README](https://github.com/google-research/url-nlp/blob/main/linguameta/README.md)
+
+## Library of Congress ISO 639-2
+
+* Source: https://www.loc.gov/standards/iso639-2/ISO-639-2_utf-8.txt
+* License: Library of Congress public data / terms
+* Website: https://www.loc.gov/standards/iso639-2/
+* Last updated: 25-06-2026
+
+Official ISO 639-2 Language Coding Agency table used for ISO 639-1, ISO 639-2B, and ISO 639-2T mappings.
 
 ## PHOIBLE
 
 * Source: https://raw.githubusercontent.com/cldf-datasets/phoible/master/cldf/languages.csv
 * License: CC BY-SA 3.0
 * Website: https://phoible.org/
-* Last updated: 11-06-2026
+* Last updated: 25-06-2026
 
 Language table used to add exact PHOIBLE resource links by Glottocode.
-
-## Pycountry
-
-* Source: https://github.com/pycountry/pycountry
-* License: LGPL-2.1 or later
-* Last updated: 18-06-2026
-
-Builds on Debian iso-codes [project](https://salsa.debian.org/iso-codes-team/iso-codes)
 
 ## SAILS
 
 * Source: https://raw.githubusercontent.com/cldf-datasets/sails/master/cldf/languages.csv
 * License: CC BY-NC-ND 2.0 DE
 * Website: https://sails.clld.org/
-* Last updated: 11-06-2026
+* Last updated: 25-06-2026
 
 Language table used to add exact SAILS resource links by Glottocode and SAILS language ID.
 
-## SIL
+## SIL ISO 639-3 Code Set
 
-* Source: https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Retirements.tab
-* License: Custom (free use)
+* Source: https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab
+* Files:
+  * `iso-639-3.tab`: https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab
+  * `iso_639_3_retirements.tab`: https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Retirements.tab
+* License: Custom (free use with attribution; see SIL terms)
 * Website: https://iso639-3.sil.org/code_tables/download_tables
-* Last updated: 11-06-2026
+* Last updated: 25-06-2026
 
-ISO 639-3 retired code mappings maintained by SIL International
+Active ISO 639-3 code table maintained by SIL International. QQ incorporates the identifiers unchanged and attributes SIL as the source.
 
 ## Unicode Character Database
 
 * Source: https://www.unicode.org/Public/UCD/latest/ucd/
+* Files:
+  * `Scripts.txt`: https://www.unicode.org/Public/UCD/latest/ucd/Scripts.txt
+  * `PropertyValueAliases.txt`: https://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt
 * License: UNICODE LICENSE V3
 * Website: https://www.unicode.org/ucd/
-* Last updated: 11-06-2026
+* Last updated: 25-06-2026
 
 Unicode Scripts.txt and PropertyValueAliases.txt used to add script code point ranges.
 
@@ -140,7 +147,7 @@ Unicode Scripts.txt and PropertyValueAliases.txt used to add script code point r
 * Source: https://lindat.mff.cuni.cz/repository/server/api/core/items/7fbbbd99-ae2d-4b91-8318-d996dbe34cbc
 * License: Universal Dependencies v2.18 License Agreement
 * Website: https://universaldependencies.org/
-* Last updated: 11-06-2026
+* Last updated: 25-06-2026
 
 LINDAT item metadata used to add Universal Dependencies links by ISO 639-3 code.
 
@@ -149,7 +156,7 @@ LINDAT item metadata used to add Universal Dependencies links by ISO 639-3 code.
 * Source: https://raw.githubusercontent.com/cldf-datasets/wals/master/cldf/languages.csv
 * License: CC BY 4.0
 * Website: https://wals.info/
-* Last updated: 11-06-2026
+* Last updated: 25-06-2026
 
 Language table used to add exact WALS resource links by Glottocode and WALS code.
 
@@ -158,7 +165,7 @@ Language table used to add exact WALS resource links by Glottocode and WALS code
 * Source: https://query.wikidata.org/sparql
 * License: CC0
 * Website: https://www.wikidata.org/
-* Last updated: 12-06-2026
+* Last updated: 25-06-2026
 
 SPARQL query for English Wikipedia sitelinks on Wikidata language items.
 
@@ -167,7 +174,7 @@ SPARQL query for English Wikipedia sitelinks on Wikidata language items.
 * Source: https://query.wikidata.org/sparql
 * License: CC0
 * Website: https://www.wikidata.org/
-* Last updated: 12-06-2026
+* Last updated: 25-06-2026
 
 SPARQL query for ISO 639-5 codes and Glottolog identifiers, used to merge family codes.
 
@@ -176,7 +183,7 @@ SPARQL query for ISO 639-5 codes and Glottolog identifiers, used to merge family
 * Source: https://query.wikidata.org/sparql
 * License: CC0
 * Website: https://www.wikidata.org/
-* Last updated: 18-06-2026
+* Last updated: 25-06-2026
 
 ISO 15924 type, family, and example from Wikidata.
 
@@ -185,6 +192,6 @@ ISO 15924 type, family, and example from Wikidata.
 * Source: https://wikistats.wmcloud.org/api.php?action=dump&table=wikipedias&format=csv
 * License: CC BY-SA 4.0
 * Website: https://wikistats.wmcloud.org/
-* Last updated: 11-06-2026
+* Last updated: 25-06-2026
 
 Wikipedia edition statistics (article counts, active users) from Wikistats (Wikimedia)

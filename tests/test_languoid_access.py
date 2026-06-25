@@ -8,7 +8,7 @@ from qq.importers.glotscript_importer import GlotscriptImporter
 from qq.importers.glottolog_importer import GlottologImporter
 from qq.importers.iana_importer import IANAImporter
 from qq.importers.linguameta_importer import LinguaMetaImporter
-from qq.importers.pycountry_importer import PycountryImporter
+from qq.importers.loc_importer import LOCImporter
 from qq.importers.sil_importer import SILImporter
 from qq.importers.wikipedia_importer import WikipediaImporter
 from qq.interface import GeographicRegion, Languoid, Script
@@ -27,10 +27,10 @@ def access():
         ("linguameta", LinguaMetaImporter),
         ("glottolog", GlottologImporter),
         ("glotscript", GlotscriptImporter),
-        ("pycountry", PycountryImporter),
-        ("wikipedia", WikipediaImporter),
-        ("sil", SILImporter),
+        ("sil_iso6393", SILImporter),
+        ("loc", LOCImporter),
         ("iana", IANAImporter),
+        ("wikipedia", WikipediaImporter),
     ]
 
     # Pre-register languoids needed by SIL
@@ -454,12 +454,6 @@ class TestGeographicProperties:
         assert nl_region is not None
         assert any(lang.id == dutch.id for lang in nl_region.languoids)
 
-    def test_subdivisions_returns_list(self, access):
-        dutch = access.get("nl")
-        nl_region = next((r for r in dutch.regions if r.country_code == "NL"), None)
-        assert nl_region is not None
-        assert isinstance(nl_region.subdivisions, list)
-
 
 class TestOfficialStatus:
     """Test Languoid.official_in_countries metadata filtering."""
@@ -476,72 +470,6 @@ class TestOfficialStatus:
         dutch = access.get("nl")
         for code in dutch.official_in_countries:
             assert code in dutch.country_codes
-
-
-class TestGeographicTransitiveClosure:
-    """Test that GeographicRegion.languoids unifies direct + child + subdivision paths."""
-
-    def test_child_regions_includes_subdivisions(self, access):
-        """NL's child regions (via HAS_CHILD_REGION) should include its provinces."""
-        nl = access.store.get("region:nl")
-        assert nl is not None
-        sub_codes = {r.subdivision_code for r in nl.child_regions if r.subdivision_code}
-        assert "NL-NH" in sub_codes
-        assert "NL-ZH" in sub_codes
-
-    def test_subdivisions_query_returns_provinces(self, access):
-        """NL's subdivisions (via store query on parent_country_code) should match."""
-        nl = access.store.get("region:nl")
-        assert nl is not None
-        sub_codes = {r.subdivision_code for r in nl.subdivisions if r.subdivision_code}
-        assert "NL-NH" in sub_codes
-
-    def test_languoids_is_superset_of_direct(self, access):
-        """languoids (transitive) must include at least everything in direct_languoids."""
-        nl = access.store.get("region:nl")
-        assert nl is not None
-        direct = {lang.id for lang in nl.direct_languoids}
-        transitive = {lang.id for lang in nl.languoids}
-        assert direct.issubset(transitive)
-
-    def test_country_languoids_include_subdivision_languoids(self, access):
-        """Country queries should include languages attached to child subdivisions."""
-        nl = access.store.get("region:nl")
-        nh = access.store.get("region:nl-nh")
-        dutch = access.get("nl")
-        assert nl is not None
-        assert nh is not None
-
-        nh.add_relation(RelationType.LANGUOIDS_IN_REGION, dutch.id)
-
-        assert dutch in nh.direct_languoids
-        assert dutch in nl.languoids
-
-    def test_country_scripts_include_subdivision_languoid_scripts(self, access):
-        """Region scripts are derived from transitive languoids."""
-        nl = access.store.get("region:nl")
-        nh = access.store.get("region:nl-nh")
-        dutch = access.get("nl")
-        assert nl is not None
-        assert nh is not None
-
-        nh.add_relation(RelationType.LANGUOIDS_IN_REGION, dutch.id)
-
-        script_codes = {script.iso_15924 for script in nl.scripts}
-        assert "Latn" in script_codes
-
-    def test_subdivision_languoids_do_not_inherit_parent_country_languoids(self, access):
-        """The transitive relation is from country to subdivision, not subdivision to country."""
-        nl = access.store.get("region:nl")
-        nh = access.store.get("region:nl-nh")
-        dutch = access.get("nl")
-        assert nl is not None
-        assert nh is not None
-
-        nl.add_relation(RelationType.LANGUOIDS_IN_REGION, dutch.id)
-
-        assert dutch in nl.direct_languoids
-        assert dutch not in nh.languoids
 
 
 class TestDescendantScripts:
@@ -668,10 +596,9 @@ class TestRegionAccess:
         assert len(regions) >= 1
         assert all(isinstance(r, GeographicRegion) for r in regions)
 
-    def test_all_countries_excludes_subdivisions(self, access):
+    def test_all_countries_have_country_codes(self, access):
         countries = access.all_countries
-        assert all(r.parent_country_code is None for r in countries)
-        assert all(not r.is_historical for r in countries)
+        assert all(r.country_code is not None for r in countries)
 
 
 class TestGenericQuery:

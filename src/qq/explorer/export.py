@@ -363,7 +363,6 @@ def export_script_detail(entity: Script) -> dict[str, Any]:
                 "unicode_ranges": make_property(
                     ", ".join(entity.unicode_ranges[:20]) if entity.unicode_ranges else None
                 ),
-                "is_historical": make_property(entity.is_historical),
                 "languoid_count": make_property(entity.languoid_count),
                 "id": make_property(entity.id),
             }
@@ -378,12 +377,12 @@ def export_script_detail(entity: Script) -> dict[str, Any]:
 
 
 def export_region_summary(entity: GeographicRegion) -> dict[str, Any]:
-    identifiers = clean_list([entity.country_code, entity.subdivision_code])
+    identifiers = clean_list([entity.country_code])
     names = clean_list([entity.name, entity.official_name])
     return {
         "t": "region",
         "n": entity.name or entity.country_code or entity.id,
-        "s": " / ".join(clean_list([entity.country_code, entity.subdivision_code])),
+        "s": entity.country_code or "",
         "q": " ".join(clean_list([*names, *identifiers])).lower(),
         "i": identifiers,
         "m": names,
@@ -398,18 +397,11 @@ def export_region_detail(entity: GeographicRegion) -> dict[str, Any]:
                 "name": make_property(entity.name),
                 "country_code": make_property(entity.country_code),
                 "official_name": make_property(entity.official_name),
-                "subdivision_code": make_property(entity.subdivision_code),
-                "subdivision_type": make_property(entity.subdivision_type),
-                "parent_country_code": make_property(entity.parent_country_code),
-                "is_historical": make_property(entity.is_historical),
                 "id": make_property(entity.id),
             }
         ),
         "r": clean_none(
             [
-                relation_group("Parent region", [entity.parent_region] if entity.parent_region else []),
-                relation_group("Child regions", entity.child_regions),
-                relation_group("Subdivisions", entity.subdivisions),
                 relation_group("Languoids", entity.languoids),
                 relation_group("Scripts", entity.scripts),
             ]

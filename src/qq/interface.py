@@ -435,7 +435,7 @@ class Script(TraversableEntity):
 
 
 class GeographicRegion(TraversableEntity):
-    """Geographic region/area"""
+    """Country- or territory-level geographic region."""
 
     def __init__(
         self,
@@ -443,34 +443,12 @@ class GeographicRegion(TraversableEntity):
         data_store: EntityContainer,
         name: str | None = None,
         country_code: str | None = None,
-        # ISO 3166-1 additional fields
         official_name: str | None = None,
-        # ISO 3166-2 subdivisions
-        subdivision_code: str | None = None,
-        subdivision_type: str | None = None,
-        parent_country_code: str | None = None,
-        # ISO 3166-3 historical countries
-        is_historical: bool = False,
     ) -> None:
         super().__init__(entity_id, data_store)
         self.name: str | None = name
         self.country_code: str | None = country_code
-
-        # ISO 3166-1 additional fields (from pycountry)
         self.official_name: str | None = official_name
-
-        # ISO 3166-2 subdivisions (states, provinces)
-        self.subdivision_code: str | None = subdivision_code
-        self.subdivision_type: str | None = subdivision_type
-        self.parent_country_code: str | None = parent_country_code
-
-        # ISO 3166-3 historical countries
-        self.is_historical: bool = is_historical
-
-    @property
-    def direct_languoids(self) -> list[Languoid]:
-        """Get languoids directly associated with this region (non-transitive)."""
-        return self.get_related(RelationType.LANGUOIDS_IN_REGION, Languoid)
 
     @property
     def scripts(self) -> list[Script]:
@@ -479,37 +457,13 @@ class GeographicRegion(TraversableEntity):
             results.update(lang.scripts)
         return list(results)
 
-    # TODO: going from region to region should probably follow the parent-child idea of Languoid as well
     @property
     def languoids(self) -> list[Languoid]:
-        """Get languoids directly in this region and recursively in child regions."""
-        langs = set(self.direct_languoids)
-        for child in self.child_regions:
-            langs.update(child.languoids)
-        return list(langs)
-
-    @property
-    def child_regions(self) -> list["GeographicRegion"]:
-        """Get child regions (via HAS_CHILD_REGION relation)."""
-        return self.get_related(RelationType.HAS_CHILD_REGION, GeographicRegion)
-
-    @property
-    def parent_region(self) -> "GeographicRegion | None":
-        """Get parent region (for subdivisions -> country, or hierarchy)"""
-        parents = self.get_related(RelationType.IS_PART_OF, GeographicRegion)
-        return parents[0] if parents else None
-
-    @property
-    def subdivisions(self) -> list["GeographicRegion"]:
-        """Get all subdivisions of this region (for countries -> states/provinces)"""
-        if not self.country_code or not isinstance(self._store, DataStore):
-            return []
-        return self._store.query(GeographicRegion, parent_country_code=self.country_code)
+        """Get languoids associated with this country or territory."""
+        return self.get_related(RelationType.LANGUOIDS_IN_REGION, Languoid)
 
     def __repr__(self) -> str:
         _fields = ", ".join(
-            f'{attr}="{value}"'
-            for attr in ["country_code", "subdivision_code", "subdivision_type", "parent_country_code"]
-            if (value := getattr(self, attr)) and value is not None
+            f'{attr}="{value}"' for attr in ["country_code"] if (value := getattr(self, attr)) and value is not None
         )
         return f'GeographicRegion(name="{self.name or self.id}", {_fields}, ...)'

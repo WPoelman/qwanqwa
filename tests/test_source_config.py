@@ -11,5 +11,5 @@ def test_importer_paths_are_resolved_from_configured_sources_dir(tmp_path):
     assert paths["wikidata_script_metadata"] == sources_dir / "wikidata_script_metadata/scripts.json"
 
     names = [config.source_name for config in importers]
-    assert names.index("glotscript") < names.index("wikidata_script_metadata") < names.index("pycountry")
+    assert names.index("glotscript") < names.index("wikidata_script_metadata") < names.index("sil_iso6393")
     assert paths["external_resources"] == sources_dir

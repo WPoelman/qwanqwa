@@ -18,8 +18,8 @@ from qq.importers.base_importer import BaseImporter, EntitySet
 from qq.importers.glotscript_importer import GlotscriptImporter
 from qq.importers.glottolog_importer import GlottologImporter
 from qq.importers.linguameta_importer import LinguaMetaImporter
-from qq.importers.pycountry_importer import PycountryImporter
 from qq.importers.iana_importer import IANAImporter
+from qq.importers.loc_importer import LOCImporter
 from qq.importers.sil_importer import SILImporter
 from qq.importers.wikipedia_importer import WikipediaImporter
 from qq.interface import GeographicRegion, Languoid, Script
@@ -408,7 +408,7 @@ class TestSILImporter:
         resolver.find_or_create_canonical_id({IdType.ISO_639_3: "huc"})
 
         imp = SILImporter(resolver)
-        imp.import_data(FIXTURES / "sil")
+        imp.import_data(FIXTURES / "sil_iso6393")
         return imp
 
     def test_merge_replacement(self, importer):
@@ -461,43 +461,19 @@ class TestSILImporter:
         assert bgh_id is None
 
 
-class TestPycountryImporter:
+class TestSILAndLOCImporters:
     @pytest.fixture
     def importer(self, resolver):
-        """Run LinguaMeta first, then pycountry for enrichment."""
+        """Run LinguaMeta first, then SIL and LOC for ISO enrichment."""
         lm = LinguaMetaImporter(resolver)
         lm.import_data(FIXTURES / "linguameta")
 
-        imp = PycountryImporter(resolver)
-        imp.import_data(FIXTURES / "pycountry")
-        return imp
+        sil = SILImporter(resolver)
+        sil.import_data(FIXTURES / "sil_iso6393")
 
-    def test_creates_country_regions(self, importer):
-        nl = importer.entity_set.get("region:nl")
-        assert nl is not None
-        assert isinstance(nl, GeographicRegion)
-        assert nl.country_code == "NL"
-        assert nl.name == "Netherlands"
-        assert nl.official_name == "Kingdom of the Netherlands"
-
-    def test_creates_historical_countries(self, importer):
-        su = importer.entity_set.get("region:su")
-        assert su is not None
-        assert su.is_historical is True
-
-    def test_creates_subdivisions(self, importer):
-        nh = importer.entity_set.get("region:nl-nh")
-        assert nh is not None
-        assert isinstance(nh, GeographicRegion)
-        assert nh.subdivision_code == "NL-NH"
-        assert nh.name == "Noord-Holland"
-        assert nh.parent_country_code == "NL"
-
-    def test_subdivision_has_parent_relation(self, importer):
-        nh = importer.entity_set.get("region:nl-nh")
-        parent_rels = nh._relations.get(RelationType.IS_PART_OF, [])
-        assert len(parent_rels) == 1
-        assert parent_rels[0].target_id == "region:nl"
+        loc = LOCImporter(resolver)
+        loc.import_data(FIXTURES / "loc")
+        return sil
 
     def test_enriches_languoid_scope_status(self, importer):
         nld_id = importer.resolver.resolve(IdType.ISO_639_3, "nld")
@@ -513,7 +489,7 @@ class TestPycountryImporter:
         assert nl_id == nld_id
 
     def test_creates_missing_languoids(self, importer):
-        """Chinese (zho) is not in linguameta fixture, should be created by pycountry."""
+        """Chinese (zho) is not in linguameta fixture, should be created by SIL."""
         zho_id = importer.resolver.resolve(IdType.ISO_639_3, "zho")
         assert zho_id is not None
         zho = importer.entity_set.get(zho_id)
@@ -521,62 +497,51 @@ class TestPycountryImporter:
         assert zho.name == "Chinese"
         assert zho.scope == LanguageScope.MACROLANGUAGE
 
-    def test_creates_family_languoids(self, importer):
-        """ISO 639-5 families should create family-level languoids."""
-        gem_id = importer.resolver.resolve(IdType.ISO_639_5, "gem")
-        assert gem_id is not None
-        gem = importer.entity_set.get(gem_id)
-        assert gem is not None
-        assert gem.name == "Germanic languages"
-        assert gem.level == LanguoidLevel.FAMILY
-
-    def test_enriches_scripts(self, importer):
-        latn = importer.entity_set.get("script:latn")
-        assert latn is not None
-        assert latn.iso_15924 == "Latn"
-        assert latn.name == "Latin"
-
-        hans = importer.entity_set.get("script:hans")
-        assert hans is not None
-        assert hans.name == "Han (Simplified variant)"
-
-    def test_clean_name_strips_parenthetical(self, importer):
-        assert PycountryImporter._clean_name("Korea, Republic of (South Korea)") == "Korea, Republic of"
-        assert PycountryImporter._clean_name("Simple Name") == "Simple Name"
+    def test_registers_iso639_2b_alias(self, importer):
+        """LOC should register ISO 639-2B aliases."""
+        dut_id = importer.resolver.resolve(IdType.ISO_639_2B, "dut")
+        nld_id = importer.resolver.resolve(IdType.ISO_639_3, "nld")
+        assert dut_id == nld_id
 
     def test_collects_name_data_for_enriched_languoids(self, importer):
-        """Pycountry should collect name data for languoids it enriches."""
+        """SIL should collect name data for languoids it enriches."""
         assert importer.name_data
         nld_id = importer.resolver.resolve(IdType.ISO_639_3, "nld")
         assert nld_id in importer.name_data
         entries = importer.name_data[nld_id]
         assert len(entries) == 1
-        assert entries[0].name == "Dutch; Flemish"
+        assert entries[0].name == "Dutch"
 
     def test_collects_name_data_for_missing_languoids(self, importer):
-        """Pycountry should collect name data for languoids it creates."""
+        """SIL should collect name data for languoids it creates."""
         zho_id = importer.resolver.resolve(IdType.ISO_639_3, "zho")
         assert zho_id in importer.name_data
         entries = importer.name_data[zho_id]
         assert entries[0].name == "Chinese"
 
-    def test_collects_name_data_for_family_languoids(self, importer):
-        """Pycountry should collect name data for family languoids."""
-        gem_id = importer.resolver.resolve(IdType.ISO_639_5, "gem")
-        assert gem_id in importer.name_data
-        entries = importer.name_data[gem_id]
-        assert entries[0].name == "Germanic languages"
+    def test_loc_does_not_create_collectives_as_iso639_3(self, resolver):
+        """LOC collective ISO 639-2 rows should not become ISO 639-3 identifiers."""
+        importer = LOCImporter(resolver)
+        importer.import_data(FIXTURES / "loc")
+
+        gem_2b = importer.resolver.resolve(IdType.ISO_639_2B, "gem")
+        gem_3 = importer.resolver.resolve(IdType.ISO_639_3, "gem")
+        assert gem_2b is not None
+        assert gem_3 is None
 
 
 class TestIANAImporter:
     @pytest.fixture
     def importer(self, resolver):
-        """Run LinguaMeta + pycountry first so IANA can resolve preferred codes."""
+        """Run LinguaMeta + SIL + LOC first so IANA can resolve preferred codes."""
         lm = LinguaMetaImporter(resolver)
         lm.import_data(FIXTURES / "linguameta")
 
-        pc = PycountryImporter(resolver)
-        pc.import_data(FIXTURES / "pycountry")
+        sil = SILImporter(resolver)
+        sil.import_data(FIXTURES / "sil_iso6393")
+
+        loc = LOCImporter(resolver)
+        loc.import_data(FIXTURES / "loc")
 
         imp = IANAImporter(resolver)
         imp.import_data(FIXTURES / "iana")

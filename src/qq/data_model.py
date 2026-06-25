@@ -16,7 +16,7 @@ class DataSource(Enum):
     LINGUAMETA = 20
     WIKIDATA = 30
     GLOTSCRIPT = 40
-    PYCOUNTRY = 50
+    LOC = 50
     UNICODE = 55
     WIKIPEDIA = 60
     SIL = 70
@@ -158,10 +158,6 @@ class RelationType(Enum):
     # Macrolanguage
     MACROLANGUAGE_OF = "macrolanguage_of"
     INDIVIDUAL_LANGUAGE_OF = "individual_language_of"
-
-    # Geographic hierarchy
-    IS_PART_OF = "is_part_of"  # For subdivisions -> countries
-    HAS_CHILD_REGION = "has_child_region"
 
 
 @dataclass

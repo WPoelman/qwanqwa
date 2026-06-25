@@ -1,0 +1,5 @@
+dut|nld|nl|Dutch; Flemish|néerlandais; flamand
+chi|zho|zh|Chinese|chinois
+ger|deu|de|German|allemand
+rum|ron|ro|Romanian; Moldavian; Moldovan|roumain; moldave
+gem|||Germanic languages|germaniques, langues

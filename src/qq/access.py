@@ -525,19 +525,13 @@ class Database:
 
     @property
     def all_regions(self) -> list[GeographicRegion]:
-        """All geographic regions (countries, subdivisions, and historical)."""
+        """All country- or territory-level geographic regions."""
         return self.store.all_of_type(GeographicRegion)
 
     @property
     def all_countries(self) -> list[GeographicRegion]:
-        """
-        All current top-level countries (excludes subdivisions and historical countries).
-        """
-        return [
-            r
-            for r in self.store.all_of_type(GeographicRegion)
-            if r.country_code is not None and r.parent_country_code is None and not r.is_historical
-        ]
+        """All current countries and territories."""
+        return [r for r in self.store.all_of_type(GeographicRegion) if r.country_code is not None]
 
     def query(self, entity_type: type[TraversableEntity], **filters: Any) -> list[Any]:
         """

@@ -39,13 +39,9 @@ for script in am.scripts[:10]:
     print(f"  - {script.name} ({script.iso_15924})")
 print()
 
-# Explore region hierarchy (subdivisions)
-print("Region hierarchy (subdivisions):")
-usa = db.get_region("US")
-print(f"Country: {usa.name} ({usa.country_code}) {usa.is_historical}")
-if usa.subdivisions:
-    print(f"  Subdivisions: {len(usa.subdivisions)}")
-    for sub in sorted(usa.subdivisions, key=lambda s: s.name)[:5]:
-        print(f"    - {sub.name} ({sub.subdivision_code})")
-    if len(usa.subdivisions) > 5:
-        print(f"    ... and {len(usa.subdivisions) - 5} more")
+# List country/territory-level regions
+print("Available country/territory regions:")
+regions = sorted(db.all_countries, key=lambda region: region.name or region.country_code or region.id)
+for region in regions[:5]:
+    print(f"  - {region.name or region.id} ({region.country_code})")
+print(f"  ... {len(regions)} total")

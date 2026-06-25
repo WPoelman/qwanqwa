@@ -5,7 +5,7 @@ from typing import Literal
 from qq.constants import LOG_SEP
 from qq.data_model import ID_TYPE_TO_ATTR, IdType
 from qq.importers.base_importer import DataSource, EntitySet
-from qq.interface import Languoid
+from qq.interface import Languoid, Script
 from qq.internal.entity_resolution import EntityResolver
 from qq.internal.merge import merge
 from qq.internal.names_merge import merge_name_data, remap_name_data_keys, resolve_locale_codes
@@ -74,6 +74,59 @@ def _fill_missing_bcp47_codes(store, resolver: EntityResolver) -> int:
     return filled
 
 
+def _fill_missing_script_samples_from_endonyms(store) -> int:
+    """Fill missing script samples from languoid endonyms when script membership is clear."""
+
+    filled = 0
+    for script in store.all_of_type(Script):
+        if script.sample or not script.unicode_ranges:
+            continue
+
+        ranges = _parse_unicode_ranges(script.unicode_ranges)
+        if not ranges:
+            continue
+
+        candidates = []
+        for languoid in script.canonical_languoids:
+            if not languoid.endonym or len(languoid.endonym) > 80:
+                continue
+            if _text_matches_script(languoid.endonym, ranges):
+                candidates.append(languoid.endonym)
+
+        if candidates:
+            script.sample = min(candidates, key=lambda value: (len(value), value.casefold()))
+            filled += 1
+
+    return filled
+
+
+def _parse_unicode_ranges(range_texts: list[str]) -> list[tuple[int, int]]:
+    ranges = []
+    for range_text in range_texts:
+        clean = range_text.removeprefix("U+")
+        if ".." in clean:
+            start, end = clean.split("..", 1)
+            end = end.removeprefix("U+")
+        else:
+            start = end = clean
+        try:
+            ranges.append((int(start, 16), int(end, 16)))
+        except ValueError:
+            continue
+    return ranges
+
+
+def _text_matches_script(text: str, ranges: list[tuple[int, int]]) -> bool:
+    letters = [char for char in text if char.isalpha()]
+    if not letters:
+        return False
+    return all(_codepoint_in_ranges(ord(char), ranges) for char in letters)
+
+
+def _codepoint_in_ranges(codepoint: int, ranges: list[tuple[int, int]]) -> bool:
+    return any(start <= codepoint <= end for start, end in ranges)
+
+
 def build_database(
     source_config: SourceConfig,
     output_dir: Path,
@@ -124,6 +177,10 @@ def build_database(
     filled_bcp47 = _fill_missing_bcp47_codes(store, resolver)
     if filled_bcp47:
         logger.info(f"Filled {filled_bcp47} missing BCP-47 language subtags from ISO identifiers")
+
+    filled_script_samples = _fill_missing_script_samples_from_endonyms(store)
+    if filled_script_samples:
+        logger.info(f"Filled {filled_script_samples} missing script samples from languoid endonyms")
 
     # Log entity resolution statistics
     logger.info("Entity Resolution Statistics:")

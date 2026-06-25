@@ -10,17 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 class IANAImporter(BaseImporter):
-    """Import deprecated language subtags from the IANA Language Subtag Registry.
+    """Import useful BCP-47 records from the IANA Language Subtag Registry.
 
     The IANA Language Subtag Registry (BCP 47 / RFC 5646) is the authoritative
-    source for deprecated BCP-47 language subtags such as the old ISO 639-1 codes
-    ``iw`` (Hebrew), ``in`` (Indonesian), ``ji`` (Yiddish), and ``mo`` (Moldavian).
-
-    For each deprecated ``Type: language`` this importer:
-    - registers the deprecated subtag in the resolver's deprecated codes
-    - if a ``Preferred-Value`` is given, registers an alias from the old code to
-      the canonical entity of the preferred code and attaches a ``DeprecatedCode``
-      object to that languoid.
+    source for BCP-47 language, script, and region subtags, including deprecated
+    language subtags such as ``iw`` (Hebrew), ``in`` (Indonesian), ``ji``
+    (Yiddish), and ``mo`` (Moldavian).
     """
 
     source = DataSource.IANA
@@ -34,11 +29,20 @@ class IANAImporter(BaseImporter):
 
         dep_count = 0
         resolved_count = 0
+        language_count = 0
+        script_count = 0
+        region_count = 0
 
         for record in records:
-            if record.get("Type") != "language":
-                continue
-            if "Deprecated" not in record:
+            record_type = record.get("Type")
+            if record_type == "language" and self._import_language_record(record):
+                language_count += 1
+            elif record_type == "script" and self._import_script_record(record):
+                script_count += 1
+            elif record_type == "region" and self._import_region_record(record):
+                region_count += 1
+
+            if record_type != "language" or "Deprecated" not in record:
                 continue
 
             subtag = record.get("Subtag", "").strip()
@@ -53,7 +57,6 @@ class IANAImporter(BaseImporter):
             if preferred:
                 reason += f", use {preferred!r} instead"
 
-            # TODO: maybe it could also be ISO 639 2B? Is this derivable from the preferred value?
             id_type = IdType.ISO_639_1 if len(subtag) == 2 else IdType.ISO_639_3
             self.resolver.register_deprecated(id_type, subtag, reason)
             dep_count += 1
@@ -78,9 +81,44 @@ class IANAImporter(BaseImporter):
 
         logger.info(
             f"IANA: {dep_count} deprecated language subtags imported, "
-            f"{resolved_count} resolved to preferred replacements"
+            f"{resolved_count} resolved to preferred replacements; "
+            f"{language_count} active language aliases, {script_count} scripts, {region_count} regions"
         )
         self.log_stats()
+
+    def _import_language_record(self, record: dict[str, str]) -> bool:
+        subtag = record.get("Subtag", "").strip()
+        if not subtag:
+            return False
+
+        canonical_id = self._resolve_preferred(subtag)
+        if canonical_id is None:
+            return False
+
+        self.resolver.register_alias(IdType.BCP_47, subtag, canonical_id)
+        return True
+
+    def _import_script_record(self, record: dict[str, str]) -> bool:
+        subtag = record.get("Subtag", "").strip()
+        if not subtag:
+            return False
+
+        script = self.get_or_create_script(f"script:{subtag.lower()}")
+        script.iso_15924 = subtag
+        if description := record.get("Description", "").strip():
+            script.name = description
+        return True
+
+    def _import_region_record(self, record: dict[str, str]) -> bool:
+        subtag = record.get("Subtag", "").strip()
+        if not subtag or len(subtag) != 2 or not subtag.isalpha():
+            return False
+
+        region = self.get_or_create_region(f"region:{subtag.lower()}")
+        region.country_code = subtag
+        if description := record.get("Description", "").strip():
+            region.name = description
+        return True
 
     def _resolve_preferred(self, preferred: str) -> CanonicalId | None:
         """Try to resolve a Preferred-Value code to a canonical ID."""
@@ -129,13 +167,10 @@ class IANAImporter(BaseImporter):
                     current = {}
                     last_key = None
                 elif line.startswith(" ") and last_key is not None:
-                    # Continuation line: append to last field
                     current[last_key] = current[last_key] + " " + line.strip()
                 elif ": " in line:
                     key, _, value = line.partition(": ")
                     key = key.strip()
-                    # If key already present (e.g. multiple Description lines),
-                    # keep the first value (primary description).
                     if key not in current:
                         current[key] = value.strip()
                     last_key = key
