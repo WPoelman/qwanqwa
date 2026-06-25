@@ -5,7 +5,7 @@
 ## Core Identifiers
 - **BCP-47**: "am"
 - **ISO 639-3**: "amh"
-- **ISO 639-2B**: None
+- **ISO 639-2B**: "amh"
 - **Glottocode**: "amha1245"
 - **Wikidata ID**: "Q28244"
 
@@ -56,7 +56,7 @@ Afro-Asiatic [family]
 - Gondar Amharic (`gond1266`)
 
 ### Scripts (2)
-- Ethiopic (Geʻez) (`Ethi`)
+- Ethiopic (`Ethi`)
 
 ### Geographic Regions (1)
 - Ethiopia (`ET`)
