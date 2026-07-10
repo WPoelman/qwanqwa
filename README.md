@@ -9,7 +9,7 @@ A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geo
 >
 > Python package: https://pypi.org/project/qwanqwa/
 >
-> Demo video: https://youtu.be/D9MmGCmJeNg
+> Demo video: https://youtu.be/RMTqWq4YMZw
 >
 > Paper (pre-print): https://arxiv.org/abs/2603.00620
 >
