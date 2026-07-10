@@ -12,6 +12,8 @@ A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geo
 > Demo video: https://youtu.be/D9MmGCmJeNg
 >
 > Paper (pre-print): https://arxiv.org/abs/2603.00620
+>
+> Zenodo: https://doi.org/10.5281/zenodo.21219618
 
 ## Features
 
@@ -203,7 +205,7 @@ The [browser explorer](https://wesselpoelman.nl/qq/) supports metadata inspectio
 
 The [`case-studies/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/) directory contains runnable analyses that use qq:
 
-- **[`huggingface-audit/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/huggingface-audit/)**: Scans 1,940 multilingual datasets on the HuggingFace Hub and classifies 8,201 unique `language:` tags as valid, deprecated, a misused country code, or unknown. qq resolves 8,131 tags (99.1%).
+- **[`huggingface-audit/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/huggingface-audit/)**: Scans 119,583 HuggingFace datasets with language tags and classifies 8,237 unique `language:` tags as valid, deprecated, a misused country code, or unknown. qq resolves 8,144 tags (98.9%) and normalizes coverage for 7,943 languoids.
 - **[`linking-datasets/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/linking-datasets/)**: Links five lexical datasets (Concepticon, WordNet, Etymon, Phonotacticon, NoRaRe) that use different identifier standards. qq resolves all NoRaRe language codes and finds 34 languages covered by all five datasets.
 - **[`latex-tables/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/latex-tables/)**: Generates a LaTeX table of language metadata (identifiers, scripts, speaker counts, families) for an imaginary 30-language NLP benchmark.
 - **[`identifier-coverage/`](https://github.com/WPoelman/qwanqwa/tree/main/case-studies/identifier-coverage/)**: Visualizes which combinations of identifier standards (Glottocode, ISO 639-3, ISO 639-1, Wikidata) cover which languoids as an UpSet plot.
