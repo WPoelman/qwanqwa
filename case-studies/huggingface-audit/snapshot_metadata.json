@@ -15,7 +15,7 @@
   "datasets_with_language_tags": 119583,
   "unique_language_tags": 8237,
   "evaluation_environment": {
-    "qwanqwa": "1.2.0",
+    "qwanqwa": "1.2.1",
     "pandas": "2.2.2",
     "python": "3.11.12"
   }
