@@ -11,7 +11,7 @@ A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geo
 >
 > Demo video: https://youtu.be/RMTqWq4YMZw
 >
-> Paper (pre-print): https://arxiv.org/abs/2603.00620
+> Paper (EMNLP 2026 System Demo): https://arxiv.org/abs/2603.00620
 >
 > Zenodo: https://doi.org/10.5281/zenodo.21219618
 
