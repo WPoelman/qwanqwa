@@ -1,0 +1,22 @@
+{
+  "title": "HuggingFace Hub language-tag snapshot used in the QQ EMNLP 2026 demo paper",
+  "collected_at": "2026-06-10",
+  "collection_method": "HuggingFace Hub HfApi.list_datasets(); dataset-card language tags only",
+  "input_file": "hf_metadata.json",
+  "input_bytes": 13945681,
+  "input_sha256": "3763c7e095fae869340c2e4ec208b7ca317bb088480ff9179537596396477e42",
+  "release_archive": {
+    "file": "hf_metadata_2026-06-10.zip",
+    "bytes": 2253800,
+    "sha256": "f0d2822fb807cb6783210ca7007f637ec802aff699427aed2b16e28e56d01bb8",
+    "contains": "hf_metadata.json"
+  },
+  "hub_datasets_returned": 1051735,
+  "datasets_with_language_tags": 119583,
+  "unique_language_tags": 8237,
+  "evaluation_environment": {
+    "qwanqwa": "1.2.0",
+    "pandas": "2.2.2",
+    "python": "3.11.12"
+  }
+}

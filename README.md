@@ -120,7 +120,7 @@ db.convert("nld", IdType.ISO_639_3, IdType.GLOTTOCODE) # "dutc1256"
 # Useful for normalizing multiple standards to one
 db.convert("nl", IdType.ISO_639_3)    # "nld"
 db.convert("dutc1256", IdType.ISO_639_3) # "nld"
-db.convert("mol", IdType.ISO_639_3)   # "ron" (deprecated alias normalized silently)
+db.convert("mo", IdType.ISO_639_3)    # "ron" (deprecated alias normalized silently)
 
 # Full BCP-47-like tags and NLLB-style language-script tags are accepted by
 # guess() and convert(); script/region subtags are ignored for languoid lookup.

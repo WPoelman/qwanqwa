@@ -28,6 +28,28 @@ warnings.filterwarnings("ignore", category=FutureWarning, module="upsetplot")
 SCRIPT_DIR = Path(__file__).parent
 PLOT_PATH = SCRIPT_DIR / "identifier_coverage.pdf"
 
+QQ_BLUE = "#1f4b99"
+QQ_LINE = "#dddddd"
+
+
+def tint(color: str, white_mix: float = 0.18) -> tuple[float, float, float]:
+    """Mix an interface color with white for less intense print bars."""
+    rgb = mpl.colors.to_rgb(color)
+    return tuple((1 - white_mix) * channel + white_mix for channel in rgb)
+
+
+PLOT_BLUE = mpl.colors.to_hex(tint(QQ_BLUE))
+
+PLOT_STYLE = {
+    "text.usetex": True,
+    "text.latex.preamble": r"\usepackage{newtxtext,newtxmath}",
+    "font.family": "serif",
+    "font.serif": ["Times New Roman"],
+    "font.size": 7,
+    "pdf.fonttype": 42,
+    "ps.fonttype": 42,
+}
+
 ATTR_LABELS = {
     "glottocode": "Glottocode",
     "iso_639_1": "ISO-639-1",
@@ -59,26 +81,26 @@ def main() -> None:
 
     membership = df.groupby(list(df.columns)).size()
 
-    with mpl.rc_context({"font.family": "serif", "font.size": 7}):
+    with mpl.rc_context(PLOT_STYLE):
         upset = UpSet(
             membership,
             sort_by="cardinality",
             show_counts=True,
             show_percentages=True,
             min_subset_size=10,
-            facecolor="#8eaec0",
+            facecolor=PLOT_BLUE,
             element_size=36,
             intersection_plot_elements=3,
         )
         fig = upset.plot()
         fig["intersections"].set_ylabel("Languoids", fontsize=10)
-        fig["intersections"].grid(axis="y", color="lightgrey", linestyle="--", alpha=0.5)
+        fig["intersections"].grid(axis="y", color=QQ_LINE, linestyle="--", alpha=0.7)
         fig["intersections"].set_axisbelow(True)
         _, current_ymax = fig["intersections"].get_ylim()
         fig["intersections"].set_ylim(0, current_ymax * 0.95)  # top get rid of overlapping labels
 
         fig["totals"].set_xlabel("Total", fontsize=10)
-        fig["totals"].grid(axis="x", color="lightgrey", linestyle="--", alpha=0.5)
+        fig["totals"].grid(axis="x", color=QQ_LINE, linestyle="--", alpha=0.7)
         fig["totals"].set_axisbelow(True)
 
         plt.savefig(PLOT_PATH, bbox_inches="tight")

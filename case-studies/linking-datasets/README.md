@@ -59,7 +59,19 @@ Unresolved codes are listed in `unresolved.txt`.
 | All four (excl. NoRaRe) | 102 |
 | All five datasets | 34 |
 
-WordNet only = 0 because WordNet uses the same BabelNet identifier format as Concepticon, and every language in WordNet also appears in Concepticon. The 509-language WordNet ∩ Concepticon intersection covers the entire WordNet.
+WordNet only = 0 because WordNet uses the same BabelNet identifier format as Concepticon, and every resolved WordNet identifier also appears in Concepticon. The 514-identifier WordNet ∩ Concepticon intersection covers the entire resolved WordNet set.
+
+### Normalization overlap figure
+
+Generate the single-column comparison of raw exact-identifier overlap and QQ-normalized languoid overlap with:
+
+```bash
+uv run --with matplotlib,numpy python case-studies/linking-datasets/plot_normalization.py
+```
+
+The figure uses the four resources evaluated in the paper and includes only identifiers that QQ resolves, so the comparison isolates normalization rather than resolution failures. With raw identifiers, 991 identifiers occur in one resource and 514 in two; none occur in three or four. After normalization, 470 languoids occur in one resource, 181 in two, 256 in three, and 102 in all four.
+
+Output: `normalization_overlap.pdf`.
 
 ### Linking examples
 
