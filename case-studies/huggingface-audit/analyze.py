@@ -2,8 +2,7 @@
 Scan HuggingFace Hub datasets for deprecated language codes.
 
 Fetches dataset metadata from the HuggingFace Hub API (language tags only,
-not dataset content), filters to multilingual datasets (>=10 languages),
-and cross-references every language tag against qq to classify it as
+not dataset content), and cross-references every language tag against qq to classify it as
 valid, deprecated, or unknown.
 
 Usage:
@@ -15,22 +14,46 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections import defaultdict
+import warnings
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import pandas as pd
 from huggingface_hub import HfApi
 from tqdm import tqdm
 
-from qq import Database, IdType
+from qq import Database, DeprecatedCodeWarning, IdType
 from qq.constants import LOG_SEP
 
 SCRIPT_DIR = Path(__file__).parent
 OUTPUT_DIR = SCRIPT_DIR / "output"
 CACHE_PATH = SCRIPT_DIR / "hf_metadata.json"
-DEFAULT_MIN_LANGUAGES = 10
-
 # ID types to try when classifying a code, in priority order.
+QQ_ORANGE = "#c04f17"
+QQ_GREEN = "#009b55"
+QQ_BLUE = "#1f4b99"
+
+
+def tint(color: str, white_mix: float = 0.18) -> tuple[float, float, float]:
+    """Mix an interface color with white for less intense bars."""
+    rgb = tuple(int(color[index : index + 2], 16) / 255 for index in (1, 3, 5))
+    return tuple((1 - white_mix) * channel + white_mix for channel in rgb)
+
+
+PLOT_ORANGE = tint(QQ_ORANGE)
+PLOT_GREEN = tint(QQ_GREEN)
+PLOT_BLUE = tint(QQ_BLUE)
+
+PLOT_STYLE = {
+    "text.usetex": True,
+    "text.latex.preamble": r"\usepackage{newtxtext,newtxmath}",
+    "font.family": "serif",
+    "font.serif": ["Times New Roman"],
+    "font.size": 7,
+    "pdf.fonttype": 42,
+    "ps.fonttype": 42,
+}
+
 LOOKUP_ORDER = [
     IdType.BCP_47,
     IdType.ISO_639_1,
@@ -80,20 +103,17 @@ def classify_code(resolver, store, code: str) -> tuple[str, str | None]:
 
     Returns (status, detail) where status is 'valid' | 'deprecated' | 'country_code' | 'unknown'.
     """
-    # First pass: try to resolve the code
-    for id_type in LOOKUP_ORDER:
-        canonical = resolver.resolve(id_type, code)
-        if canonical is not None:
-            if resolver.is_deprecated(id_type, code):
-                reason = resolver.get_deprecation(id_type, code) or ""
-                return "deprecated", reason
-            return "valid", None
-
-    # Second pass: check if deprecated without a replacement
+    # Check deprecations before successful resolution. A retired ISO code can
+    # still resolve through a lower-priority source or another identifier type;
+    # it should nevertheless be reported as deprecated rather than valid.
     for id_type in LOOKUP_ORDER:
         if resolver.is_deprecated(id_type, code):
             reason = resolver.get_deprecation(id_type, code) or ""
             return "deprecated", reason
+
+    for id_type in LOOKUP_ORDER:
+        if resolver.resolve(id_type, code) is not None:
+            return "valid", None
 
     # Check if it's a known geographic region/country code misused as a language tag
     if store.get(f"region:{code.lower()}") is not None:
@@ -208,21 +228,10 @@ def plot_identifier_distribution(
     labels = [item[0] for item in sorted_items]
     counts = [len(item[1]) for item in sorted_items]
 
-    palette = [
-        "#c4dfe6",
-        "#a8d5ba",
-        "#d4c4a8",
-        "#c4b8d4",
-        "#e0b4b4",
-        "#b8c9d4",
-        "#d4d4a8",
-        "#d4a8c4",
-        "#a8c4d4",
-        "#c4d4a8",
-    ]
+    palette = [PLOT_BLUE, PLOT_GREEN, PLOT_ORANGE]
     colors = [palette[i % len(palette)] for i in range(len(labels))]
 
-    with mpl.rc_context({"font.family": "serif"}):
+    with mpl.rc_context(PLOT_STYLE):
         size = 2
         fontsize = 7
         fig, ax = plt.subplots(figsize=(size, size))
@@ -253,7 +262,239 @@ def plot_identifier_distribution(
         plt.close()
 
 
-def analyze(datasets: list[dict], ld: Database, csv_path: Path, plot_path: Path, out_dir: Path) -> None:
+DATASET_LANGUAGE_BUCKETS = [
+    ("0", 0, 0),
+    ("1", 1, 1),
+    ("2-4", 2, 4),
+    ("5-9", 5, 9),
+    ("10-99", 10, 99),
+    ("100-199", 100, 199),
+    ("200-499", 200, 499),
+    ("500-999", 500, 999),
+    ("1,000+", 1_000, None),
+]
+
+LANGUAGE_DATASET_BUCKETS = [
+    ("0", 0, 0),
+    ("1", 1, 1),
+    ("2-4", 2, 4),
+    ("5-9", 5, 9),
+    ("10-99", 10, 99),
+    ("100-499", 100, 499),
+    ("500-999", 500, 999),
+    ("1,000+", 1_000, None),
+]
+
+
+def bucket_for(count: int, buckets: list[tuple[str, int, int | None]]) -> str:
+    """Return the bucket label for ``count`` using inclusive lower/upper bounds."""
+    for label, lower, upper in buckets:
+        if count >= lower and (upper is None or count <= upper):
+            return label
+    raise ValueError(f"No bucket for count: {count}")
+
+
+def resolve_coverage_languoid_id(ld: Database, code: str) -> str | None:
+    """Resolve a HuggingFace language tag to a QQ languoid ID for coverage counting.
+
+    Full BCP-47 and NLLB-style tags are reduced to their language subtag by
+    ``Database.guess``. Deprecated codes are counted through their replacement
+    languoid, while unresolved tags and country-code errors are skipped.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecatedCodeWarning)
+        try:
+            return ld.guess(code).id
+        except Exception:
+            return None
+
+
+def plot_bucket_counts(
+    ax,
+    labels: list[str],
+    counts: list[int],
+    *,
+    xlabel: str,
+    ylabel: str,
+    color: str,
+    fontsize: int,
+) -> None:
+    """Plot labeled bucket counts on a log-scaled horizontal axis."""
+    labels = list(reversed(labels))
+    counts = list(reversed(counts))
+    bars = ax.barh(labels, counts, color=color, edgecolor="white", linewidth=0.8)
+    max_count = max(counts) if counts else 1
+
+    for bar, count in zip(bars, counts):
+        ax.text(
+            max(count * 1.08, 1.2),
+            bar.get_y() + bar.get_height() / 2,
+            f"{count:,}",
+            ha="left",
+            va="center",
+            fontsize=fontsize,
+        )
+
+    ax.set_xscale("log")
+    ax.set_xlim(0.8, max_count * 2.2)
+    ax.set_xlabel(xlabel, fontsize=fontsize + 1)
+    ax.set_ylabel(ylabel, fontsize=fontsize + 1)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.tick_params(axis="x", labelsize=fontsize)
+    ax.tick_params(axis="y", labelsize=fontsize)
+    ax.grid(axis="x", linestyle="--", alpha=0.25)
+    ax.set_axisbelow(True)
+
+
+def write_hf_coverage_outputs(
+    all_datasets: list[dict],
+    ld: Database,
+    dataset_csv_path: Path,
+    language_csv_path: Path,
+    dataset_plot_path: Path,
+    language_plot_path: Path,
+) -> None:
+    """Write normalized HuggingFace dataset/language coverage CSVs and plots.
+
+    The coverage analysis uses all Hub datasets with at least one language tag.
+    Raw language tags are normalized to QQ languoids first, so equivalent tags
+    such as ``fr`` and ``fra`` are counted as the same language.
+    """
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+
+    language_to_datasets: dict[str, set[str]] = defaultdict(set)
+    dataset_rows = []
+    unresolved_tags: Counter[str] = Counter()
+
+    for ds in all_datasets:
+        ds_id = ds["id"]
+        normalized_ids = set()
+        unresolved_for_dataset = 0
+
+        for code in ds["languages"]:
+            languoid_id = resolve_coverage_languoid_id(ld, code)
+            if languoid_id is None:
+                unresolved_tags[code] += 1
+                unresolved_for_dataset += 1
+                continue
+            normalized_ids.add(languoid_id)
+
+        for languoid_id in normalized_ids:
+            language_to_datasets[languoid_id].add(ds_id)
+
+        normalized_count = len(normalized_ids)
+        dataset_rows.append(
+            {
+                "dataset": ds_id,
+                "raw_language_tags": len(ds["languages"]),
+                "normalized_languoids": normalized_count,
+                "unresolved_language_tags": unresolved_for_dataset,
+                "coverage_bucket": bucket_for(normalized_count, DATASET_LANGUAGE_BUCKETS),
+                "languoid_ids": ";".join(sorted(normalized_ids)),
+            }
+        )
+
+    dataset_df = pd.DataFrame(dataset_rows).sort_values(
+        ["normalized_languoids", "raw_language_tags", "dataset"], ascending=[False, False, True]
+    )
+    dataset_df.to_csv(dataset_csv_path, index=False)
+
+    language_rows = []
+    for languoid in ld.all_languoids:
+        dataset_ids = language_to_datasets.get(languoid.id, set())
+        dataset_count = len(dataset_ids)
+        language_rows.append(
+            {
+                "languoid_id": languoid.id,
+                "name": languoid.name or "",
+                "bcp_47": languoid.bcp_47 or "",
+                "iso_639_3": languoid.iso_639_3 or "",
+                "glottocode": languoid.glottocode or "",
+                "dataset_count": dataset_count,
+                "coverage_bucket": bucket_for(dataset_count, LANGUAGE_DATASET_BUCKETS),
+                "datasets": ";".join(sorted(dataset_ids)),
+            }
+        )
+
+    language_df = pd.DataFrame(language_rows).sort_values(["dataset_count", "name"], ascending=[False, True])
+    language_df.to_csv(language_csv_path, index=False)
+
+    dataset_labels = [label for label, _, _ in DATASET_LANGUAGE_BUCKETS]
+    dataset_bucket_counts = Counter(dataset_df["coverage_bucket"])
+    dataset_counts = [dataset_bucket_counts[label] for label in dataset_labels]
+
+    language_labels = [label for label, _, _ in LANGUAGE_DATASET_BUCKETS]
+    language_bucket_counts = Counter(language_df["coverage_bucket"])
+    language_counts = [language_bucket_counts[label] for label in language_labels]
+
+    with mpl.rc_context(PLOT_STYLE):
+        fontsize = 10
+
+        fig, ax = plt.subplots(figsize=(3.8, 3.1))
+        plot_bucket_counts(
+            ax,
+            dataset_labels,
+            dataset_counts,
+            xlabel="Datasets (log)",
+            ylabel="Normalized languoids",
+            color=PLOT_BLUE,
+            fontsize=fontsize,
+        )
+        plt.tight_layout(pad=0.5)
+        plt.savefig(dataset_plot_path, bbox_inches="tight")
+        plt.close()
+
+        fig, ax = plt.subplots(figsize=(3.8, 3.1))
+        plot_bucket_counts(
+            ax,
+            language_labels,
+            language_counts,
+            xlabel="Languoids (log)",
+            ylabel="HF datasets",
+            color=PLOT_GREEN,
+            fontsize=fontsize,
+        )
+        plt.tight_layout(pad=0.5)
+        plt.savefig(language_plot_path, bbox_inches="tight")
+        plt.close()
+
+    covered_languoids = int((language_df["dataset_count"] > 0).sum())
+    zero_coverage = int((language_df["dataset_count"] == 0).sum())
+
+    print(LOG_SEP)
+    print("HUGGINGFACE HUB: NORMALIZED COVERAGE")
+    print(LOG_SEP)
+    print(f"Datasets with language tags: {len(all_datasets):,}")
+    print("Datasets by normalized languoids:")
+    for label, count in zip(dataset_labels, dataset_counts):
+        print(f"  {label:<10} {count:>7,}")
+    print(f"Normalized languoids with HF coverage: {covered_languoids:,}")
+    print(f"QQ languoids without HF coverage:       {zero_coverage:,}")
+    print("Languoids by HF datasets:")
+    for label, count in zip(language_labels, language_counts):
+        print(f"  {label:<10} {count:>7,}")
+    print(f"Unresolved tag types:                  {len(unresolved_tags):,}")
+    print(f"Unresolved tag uses:                   {sum(unresolved_tags.values()):,}")
+    print(f"Dataset coverage CSV written to {dataset_csv_path.name}")
+    print(f"Language coverage CSV written to {language_csv_path.name}")
+    print(f"Dataset coverage plot saved to {dataset_plot_path.name}")
+    print(f"Languoid coverage plot saved to {language_plot_path.name}")
+
+
+def analyze(
+    datasets: list[dict],
+    all_datasets: list[dict],
+    ld: Database,
+    csv_path: Path,
+    plot_path: Path,
+    dataset_coverage_csv_path: Path,
+    language_coverage_csv_path: Path,
+    dataset_coverage_plot_path: Path,
+    language_coverage_plot_path: Path,
+    out_dir: Path,
+) -> None:
     """Analyze datasets and print report."""
     resolver = ld.resolver
     store = ld.store
@@ -297,6 +538,14 @@ def analyze(datasets: list[dict], ld: Database, csv_path: Path, plot_path: Path,
     # --- Plot ---
     code_types = {code: identify_code_type(resolver, store, code) for code in code_status}
     plot_identifier_distribution(code_types, code_datasets, plot_path)
+    write_hf_coverage_outputs(
+        all_datasets,
+        ld,
+        dataset_coverage_csv_path,
+        language_coverage_csv_path,
+        dataset_coverage_plot_path,
+        language_coverage_plot_path,
+    )
 
     # --- Summary ---
     counts = df["status"].value_counts()
@@ -408,20 +657,24 @@ def main() -> None:
     parser.add_argument(
         "--min-languages",
         type=int,
-        default=DEFAULT_MIN_LANGUAGES,
-        help="Minimum language tags per dataset (default: 10)",
+        default=1,
+        help="Minimum language tags per dataset for the identifier-quality audit (default: 1)",
     )
     args = parser.parse_args()
 
     min_lang = args.min_languages
-    suffix = f"_min{min_lang}" if min_lang != DEFAULT_MIN_LANGUAGES else ""
+    suffix = f"_min{min_lang}" if min_lang != 1 else ""
     csv_path = OUTPUT_DIR / f"results{suffix}.csv"
     plot_path = OUTPUT_DIR / f"identifier_types{suffix}.pdf"
+    dataset_coverage_csv_path = OUTPUT_DIR / "dataset_language_coverage.csv"
+    language_coverage_csv_path = OUTPUT_DIR / "language_dataset_coverage.csv"
+    dataset_coverage_plot_path = OUTPUT_DIR / "hf_dataset_coverage_buckets.pdf"
+    language_coverage_plot_path = OUTPUT_DIR / "hf_languoid_coverage_buckets.pdf"
 
     # fetch/load HF metadata
     all_datasets = fetch_hf_metadata(refresh=args.refresh)
     datasets = [ds for ds in all_datasets if len(ds["languages"]) >= min_lang]
-    print(f"Filtered to {len(datasets)} datasets with >={min_lang} language tags")
+    print(f"Filtered to {len(datasets)} datasets with >= {min_lang} language tags")
 
     if not datasets:
         print("No datasets found. Try --refresh if using a stale cache.")
@@ -435,7 +688,18 @@ def main() -> None:
     out_dir = OUTPUT_DIR
     out_dir.mkdir(exist_ok=True, parents=True)
 
-    analyze(datasets, ld, csv_path, plot_path, out_dir)
+    analyze(
+        datasets,
+        all_datasets,
+        ld,
+        csv_path,
+        plot_path,
+        dataset_coverage_csv_path,
+        language_coverage_csv_path,
+        dataset_coverage_plot_path,
+        language_coverage_plot_path,
+        out_dir,
+    )
 
 
 if __name__ == "__main__":

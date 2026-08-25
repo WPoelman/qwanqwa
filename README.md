@@ -11,7 +11,7 @@ A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geo
 >
 > Demo video: https://youtu.be/RMTqWq4YMZw
 >
-> Paper (pre-print): https://arxiv.org/abs/2603.00620
+> Paper (EMNLP 2026 System Demo): https://arxiv.org/abs/2603.00620
 >
 > Zenodo: https://doi.org/10.5281/zenodo.21219618
 
@@ -120,7 +120,7 @@ db.convert("nld", IdType.ISO_639_3, IdType.GLOTTOCODE) # "dutc1256"
 # Useful for normalizing multiple standards to one
 db.convert("nl", IdType.ISO_639_3)    # "nld"
 db.convert("dutc1256", IdType.ISO_639_3) # "nld"
-db.convert("mol", IdType.ISO_639_3)   # "ron" (deprecated alias normalized silently)
+db.convert("mo", IdType.ISO_639_3)    # "ron" (deprecated alias normalized silently)
 
 # Full BCP-47-like tags and NLLB-style language-script tags are accepted by
 # guess() and convert(); script/region subtags are ignored for languoid lookup.

@@ -167,7 +167,7 @@ build-log/
 case-studies/latex-tables/output/
 case-studies/huggingface-audit/hf_metadata.json
 case-studies/huggingface-audit/output/
-case-studies/identifier-coverage/identifier_coverage.pdf
+case-studies/**/*.pdf
 demo/data/index.js
 demo/data/chunks/
 demo/data/names/
