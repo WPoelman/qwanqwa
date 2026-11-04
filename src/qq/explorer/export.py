@@ -191,7 +191,6 @@ def languoid_regions_relation_group(entity: Languoid) -> dict[str, Any] | None:
 
 
 def export_languoid_summary(entity: Languoid) -> dict[str, Any]:
-    wikipedia = entity.wikipedia
     deprecated_codes = clean_list(
         [deprecated.code for deprecated in (entity.deprecated_codes or []) if deprecated.code]
     )
@@ -204,7 +203,7 @@ def export_languoid_summary(entity: Languoid) -> dict[str, Any]:
             entity.iso_639_5,
             entity.glottocode,
             entity.wikidata_id,
-            wikipedia.code if wikipedia else None,
+            entity.wikipedia_code,
             *deprecated_codes,
         ]
     )
@@ -237,7 +236,7 @@ def export_languoid_summary(entity: Languoid) -> dict[str, Any]:
     }
 
 
-def export_external_resources(entity: Languoid) -> list[dict[str, str]]:
+def export_external_resources(entity: Languoid) -> list[dict[str, Any]]:
     resources = []
     for resource in entity.external_resources:
         resources.append(
@@ -260,7 +259,6 @@ def export_languoid_detail(
     deprecated_replacement_index: dict[str, list[str]],
     replaced_from_index: dict[str, list[str]],
 ) -> dict[str, Any]:
-    wikipedia = entity.wikipedia
     replaced_by: list[str] = []
     own_codes = clean_list(
         [entity.bcp_47, entity.iso_639_1, entity.iso_639_2b, entity.iso_639_3, entity.iso_639_5, entity.glottocode]
@@ -281,10 +279,12 @@ def export_languoid_detail(
                 "iso_639_5": make_property(entity.iso_639_5),
                 "glottocode": make_property(entity.glottocode),
                 "wikidata_id": make_property(entity.wikidata_id),
-                "wikipedia_code": make_property(wikipedia.code if wikipedia else None),
-                "wikipedia_url": make_property(wikipedia.url if wikipedia else None),
-                "wikipedia_article_count": make_property(wikipedia.article_count if wikipedia else None),
-                "wikipedia_active_users": make_property(wikipedia.active_users if wikipedia else None),
+                "wikipedia_code": make_property(entity.wikipedia_code),
+                "wikipedia_url": make_property(entity.wikipedia_url),
+                "wikipedia_article_count": make_property(entity.wikipedia_article_count),
+                "wikipedia_active_users": make_property(entity.wikipedia_active_users),
+                "joshi_rating": make_property(entity.joshi_rating),
+                "huggingface_dataset_count": make_property(entity.huggingface_dataset_count),
                 "speaker_count": make_property(entity.speaker_count),
                 "latitude": make_property(entity.latitude),
                 "longitude": make_property(entity.longitude),
@@ -464,7 +464,10 @@ def export_demo_data(output_dir: Path | None = None) -> Path:
         summary = export_languoid_summary(entity)
         summaries[entity.id] = summary
         buckets[summary["b"]][entity.id] = export_languoid_detail(
-            db, entity, deprecated_replacement_index, replaced_from_index
+            db,
+            entity,
+            deprecated_replacement_index,
+            replaced_from_index,
         )
 
     for entity in db.all_scripts:

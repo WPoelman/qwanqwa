@@ -83,8 +83,10 @@
     wikipedia_code: "Wikipedia code",
     wikipedia_url: "Wikipedia URL",
     wikipedia_article_count: "Wikipedia articles",
-    wikipedia_active_users: "Wikipedia active users",
-    speaker_count: "Speaker count",
+    wikipedia_active_users: "Active wiki editors",
+    joshi_rating: "Joshi Rating",
+    huggingface_dataset_count: "Hugging Face",
+    speaker_count: "Speaker estimate",
     latitude: "Latitude",
     longitude: "Longitude",
     level: "Level",
@@ -104,21 +106,37 @@
     official_name: "Official name",
   };
   const PROPERTY_NUMBER_KEYS = {
+    joshi_rating: true,
+    huggingface_dataset_count: true,
     speaker_count: true,
     wikipedia_article_count: true,
     wikipedia_active_users: true,
     unicode_character_count: true,
     unicode_range_count: true,
   };
-  const WIKIPEDIA_URL_KEY = "wikipedia_url";
   const RESOURCE_GROUPS = ["Datasets", "Reference", "Typology"];
   const propertySections = {
     languoid: [
       { title: "Names", keys: ["name", "endonym", "description"] },
-      { title: "Identifiers", keys: ["bcp_47", "iso_639_1", "iso_639_2b", "iso_639_3", "iso_639_5", "glottocode", "wikidata_id"] },
+      {
+        title: "Identifiers",
+        keys: [
+          "bcp_47",
+          "iso_639_1",
+          "iso_639_2b",
+          "iso_639_3",
+          "iso_639_5",
+          "glottocode",
+          "wikidata_id",
+          "wikipedia_code",
+        ],
+      },
       { title: "Classification", keys: ["level", "scope", "status", "endangerment_status"] },
+      {
+        title: "Resource availability",
+        keys: ["joshi_rating", "huggingface_dataset_count", "wikipedia_article_count", "wikipedia_active_users"],
+      },
       { title: "Geography", keys: ["latitude", "longitude", "speaker_count"] },
-      { title: "Wikipedia", keys: ["wikipedia_code", "wikipedia_url", "wikipedia_article_count", "wikipedia_active_users"] },
       { title: "Internal", keys: ["id"] },
     ],
     script: [
@@ -475,17 +493,6 @@
     }
 
     entityWarningEl.appendChild(box);
-  }
-
-  function copyText(text, button) {
-    navigator.clipboard.writeText(text).then(function () {
-      button.dataset.copied = "true";
-      button.textContent = "Copied";
-      window.setTimeout(function () {
-        button.dataset.copied = "false";
-        button.textContent = "Copy";
-      }, 1000);
-    });
   }
 
   function appendHighlightedText(parent, text, normalizedQuery) {
@@ -864,10 +871,11 @@
       });
     }
     if (detail.p.wikipedia_url) {
+      const wikipediaDisplayUrl = detail.p.wikipedia_url.replace(/^https?:\/\//, "").replace(/\/$/, "");
       resources.push({
-        group: "Reference",
+        group: "Datasets",
         label: "Wikipedia",
-        links: [{ href: detail.p.wikipedia_url, text: detail.p.wikipedia_code + " ↗" }],
+        links: [{ href: detail.p.wikipedia_url, text: wikipediaDisplayUrl + " ↗" }],
       });
     }
 
@@ -948,9 +956,16 @@
     }
 
     RESOURCE_GROUPS.forEach(function (groupName) {
-      const groupLinks = links.filter(function (resource) {
-        return resource.group === groupName;
-      });
+      const groupLinks = links
+        .filter(function (resource) {
+          return resource.group === groupName;
+        })
+        .sort(function (a, b) {
+          if (a.label === b.label) return 0;
+          if (a.label === "Wikipedia") return 1;
+          if (b.label === "Wikipedia") return -1;
+          return 0;
+        });
       if (groupLinks.length === 0) {
         return;
       }
@@ -963,7 +978,9 @@
       title.textContent = groupName;
       group.appendChild(title);
 
-      nHFDatasets = groupLinks.filter(i => i.label === "Hugging Face").length;
+      const nHFDatasets = groupLinks.filter(function (resource) {
+        return resource.label === "Hugging Face";
+      }).length;
 
       groupLinks.forEach(function (resource) {
         const row = document.createElement("div");
@@ -1019,6 +1036,42 @@
     });
   }
 
+  function sourceExportDate(urlPrefix) {
+    const sources = (data.meta.counts && data.meta.counts.sources) || [];
+    const source = sources.find(function (item) {
+      return item.source_url && item.source_url.indexOf(urlPrefix) === 0;
+    });
+    return source && source.last_updated ? source.last_updated : "an unknown date";
+  }
+
+  function addPropertyHint(label, key) {
+    let tooltip = "";
+    if (key === "joshi_rating") {
+      tooltip =
+        "Joshi et al. resource levels: 0 Left-Behinds, 1 Scraping-Bys, 2 Hopefuls, " +
+        "3 Rising Stars, 4 Underdogs, and 5 Winners.";
+    } else if (key === "huggingface_dataset_count") {
+      tooltip =
+        "QQ uses the largest matching language-tag count to avoid double-counting datasets with equivalent tags. " +
+        "Hugging Face export: " +
+        sourceExportDate("https://huggingface.co/api/datasets") +
+        ".";
+    } else if (key === "wikipedia_article_count" || key === "wikipedia_active_users") {
+      tooltip = "Wikistats export: " + sourceExportDate("https://wikistats.wmcloud.org/") + ".";
+    }
+    if (!tooltip) {
+      return;
+    }
+
+    const hint = document.createElement("button");
+    hint.type = "button";
+    hint.className = "resource-hint";
+    hint.textContent = "?";
+    hint.dataset.tooltip = tooltip;
+    hint.setAttribute("aria-label", tooltip);
+    label.appendChild(hint);
+  }
+
   function renderProperties(summary, detail) {
     propertiesEl.replaceChildren();
     propertySections[summary.t].forEach(function (section) {
@@ -1036,7 +1089,19 @@
 
         const label = document.createElement("div");
         label.className = "property-label";
-        label.textContent = propertyLabels[key] || key;
+        if (key === "joshi_rating") {
+          const paper = document.createElement("a");
+          paper.className = "property-link";
+          paper.href = "https://aclanthology.org/2020.acl-main.560/";
+          paper.target = "_blank";
+          paper.rel = "noreferrer noopener";
+          paper.textContent = "Joshi";
+          label.appendChild(paper);
+          label.appendChild(document.createTextNode(" Rating"));
+        } else {
+          label.textContent = propertyLabels[key] || key;
+        }
+        addPropertyHint(label, key);
         row.appendChild(label);
 
         const value = document.createElement("div");
@@ -1045,14 +1110,8 @@
         if (propertyValue === "") {
           value.classList.add("is-empty");
           value.textContent = " ";
-        } else if (key === WIKIPEDIA_URL_KEY) {
-          const link = document.createElement("a");
-          link.className = "property-link";
-          link.href = propertyValue;
-          link.target = "_blank";
-          link.rel = "noreferrer noopener";
-          link.textContent = propertyValue + " ↗";
-          value.appendChild(link);
+        } else if (key === "joshi_rating") {
+          value.textContent = propertyValue + " / 5";
         } else if (PROPERTY_NUMBER_KEYS[key]) {
           value.textContent = formatNumberValue(propertyValue);
         } else if (
@@ -1067,25 +1126,12 @@
           value.textContent = propertyValue;
         }
         row.appendChild(value);
-
-        const copy = document.createElement("button");
-        copy.type = "button";
-        copy.className = "copy-button";
-        copy.setAttribute("aria-label", propertyValue === "" ? "Empty value" : "Copy value");
-        if (propertyValue === "") {
-          copy.textContent = "Empty";
-          copy.disabled = true;
-        } else {
-          copy.textContent = "Copy";
-          copy.addEventListener("click", function () {
-            copyText(propertyValue, copy);
-          });
-        }
-        row.appendChild(copy);
-
         wrapper.appendChild(row);
       });
 
+      if (section.title === "Identifiers" && entityWarningEl.childElementCount > 0) {
+        wrapper.appendChild(entityWarningEl);
+      }
       propertiesEl.appendChild(wrapper);
     });
   }

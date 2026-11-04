@@ -96,3 +96,11 @@ for iso, entries in sorted(grouped.items()):
     grand_total += total
     parts = " + ".join(f"{c} {fmt(n)}" for c, n in entries)
     print(f"  {iso} ({lang}):{' ' * (12 - len(lang))} {parts}  =  {fmt(total)}")
+
+# Inspect resource coverage
+dutch = db.get("nl")
+print("\nResource availability for Dutch:")
+print(f"  Joshi rating: {dutch.joshi_rating} / 5")
+print(f"  Hugging Face datasets: {dutch.huggingface_dataset_count:,}")
+print(f"  Wikipedia articles: {dutch.wikipedia_article_count:,}")
+print(f"  Active Wikipedia editors: {dutch.wikipedia_active_users:,}")

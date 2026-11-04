@@ -270,9 +270,15 @@ class TestSourceProviderMetadata:
         provider._save_metadata()
 
         provider2 = DirectorySourceProvider(
-            name="test_source", sources_dir=temp_sources_dir, local_path=local_dir, license="MIT"
+            name="test_source",
+            sources_dir=temp_sources_dir,
+            local_path=local_dir,
+            license="CC BY 4.0",
+            notes="Updated configuration",
         )
 
+        assert provider2.metadata.license == "CC BY 4.0"
+        assert provider2.metadata.notes == "Updated configuration"
         assert provider2.metadata._version == "1.0.0"
         assert provider2.metadata._last_updated == datetime(2024, 1, 1, 12, 0, 0)
         assert provider2.metadata._checksum == "abc123"

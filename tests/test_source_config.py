@@ -9,6 +9,11 @@ def test_importer_paths_are_resolved_from_configured_sources_dir(tmp_path):
     assert paths["linguameta"] == sources_dir / "linguameta"
     assert paths["wikidata_iso6395"] == sources_dir / "wikidata_iso6395/iso6395.json"
     assert paths["wikidata_script_metadata"] == sources_dir / "wikidata_script_metadata/scripts.json"
+    assert paths["joshi"] == sources_dir / "joshi"
+    joshi = next(config for config in importers if config.source_name == "joshi")
+    assert joshi.kwargs["glottolog_data_path"] == sources_dir / "glottolog"
+    assert joshi.kwargs["wals_data_path"] == sources_dir / "wals_2020"
+    assert joshi.kwargs["wikipedia_data_path"] == sources_dir / "wikipedia"
 
     names = [config.source_name for config in importers]
     assert names.index("glotscript") < names.index("wikidata_script_metadata") < names.index("sil_iso6393")

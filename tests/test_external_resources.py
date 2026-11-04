@@ -151,6 +151,7 @@ def test_applies_huggingface_tag_resource_links(tmp_path):
     hf_resources = [resource for resource in lang.external_resources if resource.label == "Hugging Face"]
 
     assert {(resource.code, resource.count) for resource in hf_resources} == {("nl", 53), ("nld", 17)}
+    assert lang.huggingface_dataset_count == 53
     assert {(resource.match_value, resource.match_id_type) for resource in hf_resources} == {
         ("nl", IdType.BCP_47),
         ("nld", IdType.ISO_639_3),

@@ -80,8 +80,8 @@ print(f"  'simple' (Simple English): {simple_en.name} ({simple_en.bcp_47})")
 
 # Wikipedia edition info is also available on the Languoid itself
 dutch = db.get("nl")
-if dutch.wikipedia:
-    print(f"  Dutch Wikipedia: {dutch.wikipedia.url} (code: {dutch.wikipedia.code})")
+if dutch.wikipedia_url:
+    print(f"  Dutch Wikipedia: {dutch.wikipedia_url} (code: {dutch.wikipedia_code})")
 print()
 
 # Retired (deprecated) codes

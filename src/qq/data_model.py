@@ -19,6 +19,7 @@ class DataSource(Enum):
     LOC = 50
     UNICODE = 55
     WIKIPEDIA = 60
+    JOSHI = 65
     SIL = 70
     IANA = 80
     EXTERNAL_RESOURCES = 90

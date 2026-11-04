@@ -30,7 +30,7 @@ print(f"  ISO 639-3:      {dutch.iso_639_3}")
 print(f"  ISO 639-5:      {dutch.iso_639_5}")
 print(f"  Glottocode:     {dutch.glottocode}")
 print(f"  Wikidata ID:    {dutch.wikidata_id}")
-print(f"  Wikipedia Code: {dutch.wikipedia.code}")
+print(f"  Wikipedia Code: {dutch.wikipedia_code}")
 print()
 
 # Speaker information
