@@ -125,26 +125,28 @@ class SourceProvider(ABC):
         notes: str | None = None,
     ) -> SourceMetadata:
         """Load metadata from file"""
-        if self.metadata_file.exists():
-            data = json.loads(self.metadata_file.read_bytes())
-            # Convert datetime strings back to datetime objects
-            if data.get("_last_updated"):
-                data["_last_updated"] = datetime.fromisoformat(data["_last_updated"])
-            if data.get("_last_checked"):
-                data["_last_checked"] = datetime.fromisoformat(data["_last_checked"])
-            if st := data.get("source_type"):
-                data["source_type"] = SourceType[st.upper()]
-            return SourceMetadata(**data)
-        else:
-            return SourceMetadata(
-                name=name,
-                license=license,
-                source_type=source_type,
-                source_url=source_url,
-                website_url=website_url,
-                paper_url=paper_url,
-                notes=notes,
-            )
+        metadata = SourceMetadata(
+            name=name,
+            license=license,
+            source_type=source_type,
+            source_url=source_url,
+            website_url=website_url,
+            paper_url=paper_url,
+            notes=notes,
+        )
+        if not self.metadata_file.exists():
+            return metadata
+
+        stored = json.loads(self.metadata_file.read_bytes())
+        # Configuration remains authoritative for descriptive metadata. Only
+        # restore fields learned while fetching the source from the cache.
+        metadata._version = stored.get("_version")
+        metadata._checksum = stored.get("_checksum")
+        if value := stored.get("_last_updated"):
+            metadata._last_updated = datetime.fromisoformat(value)
+        if value := stored.get("_last_checked"):
+            metadata._last_checked = datetime.fromisoformat(value)
+        return metadata
 
     def _save_metadata(self):
         """Save metadata to file"""

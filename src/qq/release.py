@@ -72,6 +72,7 @@ def format_languoid_structure(languoid):
     add(f"- **Scope**: {fmt(languoid.scope)}")
     add(f"- **Type**: {fmt(languoid.status)}")
     add(f"- **Is Macrolanguage**: {fmt(languoid.is_macrolanguage)}")
+    add(f"- **Joshi Resource Rating**: {fmt(languoid.joshi_rating)}")
     add()
 
     if languoid.endangerment_status:

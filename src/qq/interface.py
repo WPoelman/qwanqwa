@@ -38,7 +38,7 @@ class Languoid(TraversableEntity):
         >>> dutch.iso_639_1        # "nl"
         >>> dutch.glottocode       # "dutc1256"
         >>> dutch.wikidata_id      # "Q7411"
-        >>> dutch.wikipedia.code   # "nl"  (Wikipedia language edition code)
+        >>> dutch.wikipedia_code   # "nl"  (Wikipedia language edition code)
 
     Looking up by Wikipedia code:
         >>> access.get("nl", IdType.WIKIPEDIA)       # Dutch (standard code)
@@ -77,7 +77,12 @@ class Languoid(TraversableEntity):
         scope: ISO 639-3 scope (I/M/S)
         status: ISO 639-3 type (L/H/A/C/E/S)
         endangerment_status: UNESCO endangerment classification
-        wikipedia: WikipediaInfo with edition metadata (code, url, article_count, active_users)
+        wikipedia_code: Wikipedia language edition code
+        wikipedia_url: URL of this languoid's Wikipedia edition
+        wikipedia_article_count: Number of articles in this languoid's Wikipedia edition
+        wikipedia_active_users: Active users in this languoid's Wikipedia edition
+        joshi_rating: NLP resource class from Joshi et al. (2020), from 0 (least resourced) to 5
+        huggingface_dataset_count: Conservative count of Hugging Face datasets for this languoid
         external_resources: ExternalResource that lists dataset / resources that contain this languoid
         description: Textual description
     """
@@ -107,8 +112,14 @@ class Languoid(TraversableEntity):
         scope: LanguageScope | str | None = None,
         status: LanguageStatus | str | None = None,
         endangerment_status: EndangermentStatus | str | None = None,
-        # Wikipedia metadata (grouped)
+        # Wikipedia metadata. The grouped value supports older stored databases.
         wikipedia: WikipediaInfo | None = None,
+        wikipedia_code: str | None = None,
+        wikipedia_url: str | None = None,
+        wikipedia_article_count: int | None = None,
+        wikipedia_active_users: int | None = None,
+        # NLP resource class from Joshi et al. (2020), 0 (least resourced) through 5
+        joshi_rating: int | None = None,
         # Links to external resources that include this languoid
         external_resources: list[ExternalResource] | None = None,
         # Description
@@ -146,8 +157,29 @@ class Languoid(TraversableEntity):
         self.status: LanguageStatus | None = self._to_enum(status, LanguageStatus)
         self.endangerment_status: EndangermentStatus | None = self._to_enum(endangerment_status, EndangermentStatus)
 
-        # Wikipedia metadata (grouped)
-        self.wikipedia: WikipediaInfo | None = wikipedia
+        # Read old grouped metadata while loading databases created before the
+        # Wikipedia fields became flat Languoid properties.
+        if wikipedia is not None:
+            wikipedia_code = wikipedia_code if wikipedia_code is not None else wikipedia.code
+            wikipedia_url = wikipedia_url if wikipedia_url is not None else wikipedia.url
+            wikipedia_article_count = (
+                wikipedia_article_count if wikipedia_article_count is not None else wikipedia.article_count
+            )
+            wikipedia_active_users = (
+                wikipedia_active_users if wikipedia_active_users is not None else wikipedia.active_users
+            )
+
+        self.wikipedia_code = wikipedia_code
+        self.wikipedia_url = wikipedia_url
+        self.wikipedia_article_count = wikipedia_article_count
+        self.wikipedia_active_users = wikipedia_active_users
+
+        # NLP resource class from Joshi et al. (2020)
+        if joshi_rating is not None and (isinstance(joshi_rating, bool) or not isinstance(joshi_rating, int)):
+            raise TypeError("joshi_rating must be an integer or None")
+        if joshi_rating is not None and not 0 <= joshi_rating <= 5:
+            raise ValueError("joshi_rating must be between 0 and 5")
+        self.joshi_rating: int | None = joshi_rating
 
         # Links to external resources that include this languoid
         self.external_resources: list[ExternalResource] = external_resources or []
@@ -162,6 +194,20 @@ class Languoid(TraversableEntity):
     def iso_639_2t(self) -> str | None:
         """ISO 639-2T (terminological) code. Always identical to iso_639_3."""
         return self.iso_639_3
+
+    @property
+    def huggingface_dataset_count(self) -> int | None:
+        """Conservative Hugging Face dataset count for this languoid.
+
+        A languoid can match multiple equivalent language tags. The largest
+        matching tag count is returned to avoid double-counting datasets.
+        """
+        counts = [
+            resource.count
+            for resource in self.external_resources
+            if resource.label == "Hugging Face" and resource.count is not None
+        ]
+        return max(counts, default=None)
 
     @property
     def parent(self) -> "Languoid | None":

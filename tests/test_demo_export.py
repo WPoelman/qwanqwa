@@ -1,7 +1,9 @@
-from qq.data_model import RelationType
-from qq.explorer.export import export_region_detail
+from qq import Database
+from qq.data_model import ExternalResource, ExternalResourceGroup, RelationType
+from qq.explorer.export import export_languoid_detail, export_region_detail
 from qq.interface import GeographicRegion, Languoid, Script
 from qq.internal.data_store import DataStore
+from qq.internal.entity_resolution import EntityResolver
 
 
 def relation_items(detail, label):
@@ -9,6 +11,36 @@ def relation_items(detail, label):
         if group["l"] == label:
             return group["i"]
     return []
+
+
+def test_languoid_demo_export_includes_resource_availability():
+    store = DataStore()
+    resolver = EntityResolver()
+    languoid = Languoid(
+        "lang:nld",
+        store,
+        name="Dutch",
+        joshi_rating=4,
+        external_resources=[
+            ExternalResource(
+                label="Hugging Face",
+                group=ExternalResourceGroup.DATASETS,
+                url="https://huggingface.co/datasets?filter=language:nl",
+                count=53,
+            ),
+            ExternalResource(
+                label="Hugging Face",
+                group=ExternalResourceGroup.DATASETS,
+                url="https://huggingface.co/datasets?filter=language:nld",
+                count=17,
+            ),
+        ],
+    )
+    store.add(languoid)
+    detail = export_languoid_detail(Database(store, resolver), languoid, {}, {})
+
+    assert detail["p"]["joshi_rating"] == "4"
+    assert detail["p"]["huggingface_dataset_count"] == "53"
 
 
 def test_region_demo_export_includes_languoids_and_scripts():

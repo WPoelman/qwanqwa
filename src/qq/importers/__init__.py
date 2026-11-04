@@ -3,6 +3,7 @@ from qq.importers.external_resource_importer import ExternalResourceImporter
 from qq.importers.glotscript_importer import GlotscriptImporter
 from qq.importers.glottolog_importer import GlottologImporter
 from qq.importers.iana_importer import IANAImporter
+from qq.importers.joshi_importer import JoshiImporter
 from qq.importers.linguameta_importer import LinguaMetaImporter
 from qq.importers.loc_importer import LOCImporter
 from qq.importers.sil_importer import SILImporter
@@ -16,6 +17,7 @@ __all__ = [
     "GlotscriptImporter",
     "GlottologImporter",
     "IANAImporter",
+    "JoshiImporter",
     "LinguaMetaImporter",
     "LOCImporter",
     "SILImporter",

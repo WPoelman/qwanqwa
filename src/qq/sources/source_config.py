@@ -9,6 +9,7 @@ from qq.importers import (
     GlotscriptImporter,
     GlottologImporter,
     IANAImporter,
+    JoshiImporter,
     LinguaMetaImporter,
     LOCImporter,
     SILImporter,
@@ -244,6 +245,35 @@ class SourceConfig:
                 license="UNICODE LICENSE V3",
                 website_url="https://www.unicode.org/ucd/",
                 notes="Unicode Scripts.txt and PropertyValueAliases.txt used to add script code point ranges.",
+            ),
+            FileDownloadSourceProvider(
+                name="wals_2020",
+                display_name="WALS language table (2020 snapshot)",
+                sources_dir=sources_dir,
+                source_url=(
+                    "https://raw.githubusercontent.com/cldf-datasets/wals/"
+                    "6833b645a5f57c32616a1293564abe2cf89c4b8f/cldf/languages.csv"
+                ),
+                filename="languages.csv",
+                cache_duration_hours=ONE_MONTH,
+                license="CC BY 4.0",
+                website_url="https://wals.info/",
+                notes="Historical WALS language identifiers used to resolve names in the Joshi taxonomy.",
+            ),
+            FileDownloadSourceProvider(
+                name="joshi",
+                display_name="Joshi language resource taxonomy",
+                sources_dir=sources_dir,
+                source_url="https://microsoft.github.io/linguisticdiversity/assets/lang2tax.txt",
+                filename="lang2tax.txt",
+                cache_duration_hours=ONE_MONTH,
+                license="Not specified",
+                paper_url="https://aclanthology.org/2020.acl-main.560/",
+                website_url="https://microsoft.github.io/linguisticdiversity/",
+                notes=(
+                    "Language resource classes from 0 (least resourced) to 5 (most resourced). "
+                    "Names are resolved through the WALS snapshot and Wikipedia edition identifiers."
+                ),
             ),
             FileDownloadSourceProvider(
                 name="wikipedia",
@@ -567,6 +597,15 @@ class SourceConfig:
             ImporterConfig("loc", LOCImporter),
             ImporterConfig("unicode_ucd", UnicodeImporter),
             ImporterConfig("wikipedia", WikipediaImporter),
+            ImporterConfig(
+                "joshi",
+                JoshiImporter,
+                kwargs={
+                    "glottolog_data_path": self.sources_dir / "glottolog",
+                    "wals_data_path": self.sources_dir / "wals_2020",
+                    "wikipedia_data_path": self.sources_dir / "wikipedia",
+                },
+            ),
             ImporterConfig("iana", IANAImporter),
             ImporterConfig(
                 "external_resources",

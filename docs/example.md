@@ -21,6 +21,7 @@
 - **Scope**: LanguageScope.INDIVIDUAL
 - **Type**: LanguageStatus.LIVING
 - **Is Macrolanguage**: False
+- **Joshi Resource Rating**: 2
 
 ## Endangerment
 - **Status**: Not endangered

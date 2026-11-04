@@ -1,6 +1,6 @@
 # Qwanqwa (`qq`): Language Metadata
 
-A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geographic data, and traversable relationships across ~27,312 languoids.
+A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geographic data, and traversable relationships across ~27,315 languoids.
 
 **Name**: **Q**wan**q**wa is a phonetic spelling of 'ቋንቋ', which means *language* in Amharic; `qq` is short to type.
 
@@ -14,12 +14,15 @@ A unified language metadata toolkit for NLP: identifiers, scripts, speakers, geo
 > Paper (EMNLP 2026 System Demo): https://arxiv.org/abs/2603.00620
 >
 > Zenodo: https://doi.org/10.5281/zenodo.21219618
+>
+> [Acknowledgements](docs/acknowledgements.md)
 
 ## Features
 
 - **Identifiers**: BCP-47, ISO 639-1, ISO 639-3, ISO 639-2B, ISO 639-2T, ISO 639-5, Glottocode, Wikidata ID, Wikipedia ID, NLLB-style codes
 - **Geographic information**: Countries and territories, which can be traversed from languoids and back
 - **Speaker information**: Population counts, UNESCO endangerment status
+- **Resource availability**: Joshi et al. (2020) NLP resource ratings, Hugging Face dataset counts, and Wikipedia coverage
 - **Writing systems**: ISO 15924 codes and names, script types and families, native-script examples, canonical/historical metadata, and Unicode ranges
 - **Multilingual names**: Language names in 500+ languages
 - **Relationships**: Traversable graph of language families, scripts, and geographic regions
@@ -51,6 +54,7 @@ dutch = db.get("nl")
 print(dutch.name)          # "Dutch"
 print(dutch.iso_639_3)     # "nld"
 print(dutch.speaker_count) # 24085200
+print(dutch.joshi_rating)  # 4 (on the 0–5 Joshi resource scale)
 
 # Also works with ISO 639-3, Glottocode, etc.
 dutch2 = db.get("nld", id_type=IdType.ISO_639_3)

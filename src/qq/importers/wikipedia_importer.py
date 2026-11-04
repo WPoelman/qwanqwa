@@ -4,7 +4,7 @@ from pathlib import Path
 
 from qq.data_model import CanonicalId, DataSource, IdType, NameEntry
 from qq.importers.base_importer import BaseImporter
-from qq.interface import Languoid, WikipediaInfo
+from qq.interface import Languoid
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +24,7 @@ class WikipediaImporter(BaseImporter):
         "cbk-zam": (IdType.ISO_639_3, "cbk"),  # Chavacano de Zamboanga
         "fiu-vro": (IdType.ISO_639_3, "vro"),  # Võro
         "nds-nl": (IdType.ISO_639_3, "nds"),  # Dutch Low Saxon -> Low German
+        "nrm": (IdType.GLOTTOCODE, "norm1245"),  # Norman (Wikipedia code conflicts with ISO Narom)
         "roa-rup": (IdType.ISO_639_3, "rup"),  # Aromanian
         "simple": (IdType.BCP_47, "en"),  # Simple English
         "zh-classical": (IdType.ISO_639_3, "lzh"),  # Classical Chinese
@@ -77,15 +78,13 @@ class WikipediaImporter(BaseImporter):
         languoid = self._find_languoid_for_wikipedia_code(wikipedia_code)
 
         if languoid:
-            # Only set WikipediaInfo if not already set: prefer the primary edition
-            # over variant editions (e.g. don't let "simple" overwrite "en" for English).
-            if languoid.wikipedia is None:
-                languoid.wikipedia = WikipediaInfo(
-                    url=url,
-                    code=wikipedia_code,
-                    article_count=article_count,
-                    active_users=active_users,
-                )
+            # Prefer the primary edition over variants (for example, do not let
+            # "simple" overwrite "en" for English).
+            if languoid.wikipedia_code is None:
+                languoid.wikipedia_url = url
+                languoid.wikipedia_code = wikipedia_code
+                languoid.wikipedia_article_count = article_count
+                languoid.wikipedia_active_users = active_users
             # Always register the alias so both "en" and "simple" resolve to English.
             self.resolver.register_alias(IdType.WIKIPEDIA, wikipedia_code, languoid.id)
 
@@ -120,6 +119,13 @@ class WikipediaImporter(BaseImporter):
 
     def _find_languoid_for_wikipedia_code(self, wikipedia_code: str) -> Languoid | None:
         """Find languoid entity for a Wikipedia language code."""
+        # Resolve known exceptions first, including codes that collide with an
+        # unrelated ISO language (for example, Wikipedia nrm vs ISO 639-3 nrm).
+        if special := self._SPECIAL_CODES.get(wikipedia_code):
+            id_type, std_code = special
+            if languoid := self.resolve_languoid(id_type, std_code):
+                return languoid
+
         # Try as BCP-47 code (handles most two-letter codes like "en", "nl", "zh-Hans")
         if languoid := self.resolve_languoid(IdType.BCP_47, wikipedia_code):
             return languoid
@@ -135,12 +141,6 @@ class WikipediaImporter(BaseImporter):
         # Try as ISO 639-5 code (e.g. "nah" family codes)
         if languoid := self.resolve_languoid(IdType.ISO_639_5, wikipedia_code):
             return languoid
-
-        # Try compound/non-standard codes that have known standard equivalents
-        if special := self._SPECIAL_CODES.get(wikipedia_code):
-            id_type, std_code = special
-            if languoid := self.resolve_languoid(id_type, std_code):
-                return languoid
 
         logger.warning(f"Could not find Languoid for Wikipedia code {wikipedia_code}")
         return None

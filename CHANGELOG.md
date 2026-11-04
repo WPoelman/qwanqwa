@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-03
+
+### Added
+- Added the Joshi et al. (2020) language resource taxonomy as `Languoid.joshi_rating`
+- Added `Languoid.wikipedia_article_count`, `Languoid.wikipedia_active_users`, and `Languoid.huggingface_dataset_count` resource properties
+- Acknowledgements file
+
+### Changed
+- Refreshed upstream sources and rebuilt database and website.
+- Cleaned up the interface a bit.
+
 ## [1.2.1] - 2026-08-25
 
 ### Added

@@ -19,6 +19,7 @@ from qq.importers.glotscript_importer import GlotscriptImporter
 from qq.importers.glottolog_importer import GlottologImporter
 from qq.importers.linguameta_importer import LinguaMetaImporter
 from qq.importers.iana_importer import IANAImporter
+from qq.importers.joshi_importer import JoshiImporter
 from qq.importers.loc_importer import LOCImporter
 from qq.importers.sil_importer import SILImporter
 from qq.importers.wikipedia_importer import WikipediaImporter
@@ -38,6 +39,122 @@ class DummyImporter(BaseImporter):
 
     def import_data(self, data_path: Path) -> None:
         raise NotImplementedError
+
+
+class TestJoshiImporter:
+    def test_prefers_unique_language_but_does_not_choose_between_language_matches(self):
+        levels = {"family": "family", "language-a": "language", "language-b": "language"}
+
+        assert JoshiImporter._select_glottocode({"family"}, {"language-a"}, levels) == "language-a"
+        assert JoshiImporter._select_glottocode({"family"}, {"language-a", "language-b"}, levels) == "family"
+
+    def test_uses_wals_and_wikipedia_identifiers_before_generic_name_matching(self, resolver, tmp_path):
+        glottolog = tmp_path / "glottolog"
+        glottolog.mkdir()
+        (glottolog / "languages.csv").write_text(
+            "ID,Name,Glottocode,ISO639P3code,Level\n"
+            "gree1276,Greek,gree1276,,family\n"
+            "mode1248,Modern Greek,mode1248,ell,language\n"
+            "wara1300,Waray (Philippines),wara1300,war,language\n",
+            encoding="utf-8",
+        )
+
+        wals = tmp_path / "wals_2020"
+        wals.mkdir()
+        (wals / "languages.csv").write_text(
+            "ID,Name,Glottocode,ISO639P3code\nwwy,Waray-Waray,wara1300,war\n",
+            encoding="utf-8",
+        )
+
+        wikipedia = tmp_path / "wikipedia"
+        wikipedia.mkdir()
+        (wikipedia / "wikipedia.csv").write_text(
+            "prefix,lang\nwar,Waray\nel,Greek\n",
+            encoding="utf-8",
+        )
+
+        source = tmp_path / "joshi"
+        source.mkdir()
+        (source / "lang2tax.txt").write_text("waray-waray,0\nwaray,1\ngreek,3\n", encoding="utf-8")
+
+        waray_id = resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "wara1300", IdType.ISO_639_3: "war"})
+        greek_id = resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "mode1248", IdType.ISO_639_3: "ell"})
+        resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "gree1276"})
+        resolver.register_alias(IdType.WIKIPEDIA, "war", waray_id)
+        resolver.register_alias(IdType.WIKIPEDIA, "el", greek_id)
+
+        importer = JoshiImporter(
+            resolver,
+            glottolog_data_path=glottolog,
+            wals_data_path=wals,
+            wikipedia_data_path=wikipedia,
+        )
+        importer.import_data(source)
+
+        waray = importer.resolve_languoid(IdType.ISO_639_3, "war")
+        modern_greek = importer.resolve_languoid(IdType.ISO_639_3, "ell")
+        greek_family = importer.resolve_languoid(IdType.GLOTTOCODE, "gree1276")
+        assert waray is not None and waray.joshi_rating == 1
+        assert modern_greek is not None and modern_greek.joshi_rating == 3
+        assert greek_family is not None and greek_family.joshi_rating is None
+
+    def test_joshi_rating_must_be_an_integer_from_zero_to_five(self):
+        entity_set = EntitySet()
+
+        with pytest.raises(TypeError):
+            Languoid("lang:float", entity_set, joshi_rating=1.5)  # type: ignore[arg-type]
+        with pytest.raises(ValueError):
+            Languoid("lang:high", entity_set, joshi_rating=6)
+
+    def test_imports_ratings_by_primary_and_alternative_glottolog_names(self, resolver, tmp_path):
+        glottolog = tmp_path / "glottolog"
+        glottolog.mkdir()
+        (glottolog / "languages.csv").write_text(
+            "ID,Name,Glottocode,ISO639P3code,Level\n"
+            "dutc1256,Dutch,dutc1256,nld,language\n"
+            "mand1415,Mandarin Chinese,mand1415,cmn,language\n"
+            "bela1254,Belarusian,bela1254,bel,language\n"
+            "broad123,Broad,broad123,,family\n"
+            "speci123,Specific,speci123,xyz,language\n",
+            encoding="utf-8",
+        )
+        (glottolog / "names.csv").write_text(
+            "ID,Language_ID,Name,Provider,lang\n"
+            "1,mand1415,Mandarin,,\n"
+            "2,dutc1256,Nederlands,,\n"
+            "3,bela1254,Belorussian,,\n"
+            "4,speci123,Broad,,\n",
+            encoding="utf-8",
+        )
+        source = tmp_path / "joshi"
+        source.mkdir()
+        (source / "lang2tax.txt").write_text(
+            "dutch,4\nnederlands,4\nmandarin,5\n"
+            "belarusian,3\nbelorussian,0\nbroad,2\n"
+            "conflicted,0\nconflicted,1\ninvalid,7\n",
+            encoding="utf-8",
+        )
+
+        resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "dutc1256", IdType.ISO_639_3: "nld"})
+        resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "mand1415", IdType.ISO_639_3: "cmn"})
+        resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "bela1254", IdType.ISO_639_3: "bel"})
+        resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "broad123"})
+        resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "speci123", IdType.ISO_639_3: "xyz"})
+
+        importer = JoshiImporter(resolver, glottolog_data_path=glottolog)
+        importer.import_data(source)
+
+        dutch = importer.resolve_languoid(IdType.ISO_639_3, "nld")
+        mandarin = importer.resolve_languoid(IdType.ISO_639_3, "cmn")
+        belarusian = importer.resolve_languoid(IdType.ISO_639_3, "bel")
+        broad_family = importer.resolve_languoid(IdType.GLOTTOCODE, "broad123")
+        specific_language = importer.resolve_languoid(IdType.ISO_639_3, "xyz")
+        assert dutch is not None and dutch.joshi_rating == 4
+        assert mandarin is not None and mandarin.joshi_rating == 5
+        assert belarusian is not None and belarusian.joshi_rating == 3
+        assert broad_family is not None and broad_family.joshi_rating is None
+        assert specific_language is not None and specific_language.joshi_rating == 2
+        assert sum(lang.joshi_rating is not None for lang in importer.entity_set.entities_of_type(Languoid)) == 4
 
 
 class TestBaseImporter:
@@ -354,6 +471,15 @@ class TestGlotscriptImporter:
 
 
 class TestWikipediaImporter:
+    def test_special_wikipedia_code_takes_precedence_over_colliding_iso_code(self, resolver):
+        norman_id = resolver.find_or_create_canonical_id({IdType.GLOTTOCODE: "norm1245"})
+        resolver.find_or_create_canonical_id({IdType.ISO_639_3: "nrm"})
+        importer = WikipediaImporter(resolver)
+
+        result = importer._find_languoid_for_wikipedia_code("nrm")
+
+        assert result is not None and result.id == norman_id
+
     @pytest.fixture
     def importer(self, resolver):
         """Run LinguaMeta first so resolver knows about nl/frr."""
@@ -368,20 +494,19 @@ class TestWikipediaImporter:
         dutch_id = importer.resolver.resolve(IdType.BCP_47, "nl")
         dutch = importer.entity_set.get(dutch_id)
         assert dutch is not None
-        assert dutch.wikipedia is not None
-        assert dutch.wikipedia.url == "https://nl.wikipedia.org"
-        assert dutch.wikipedia.code == "nl"
-        assert dutch.wikipedia.article_count == 2150000
-        assert dutch.wikipedia.active_users == 4500
+        assert dutch.wikipedia_url == "https://nl.wikipedia.org"
+        assert dutch.wikipedia_code == "nl"
+        assert dutch.wikipedia_article_count == 2150000
+        assert dutch.wikipedia_active_users == 4500
 
     def test_imports_article_counts(self, importer):
         """Article count and active users should be populated from Wikistats data."""
         frr_id = importer.resolver.resolve(IdType.BCP_47, "frr")
         frr = importer.entity_set.get(frr_id)
         assert frr is not None
-        assert frr.wikipedia is not None
-        assert frr.wikipedia.article_count == 15600
-        assert frr.wikipedia.active_users == 20
+        assert frr.wikipedia_code == "frr"
+        assert frr.wikipedia_article_count == 15600
+        assert frr.wikipedia_active_users == 20
 
     def test_collects_name_data(self, importer):
         """Wikipedia importer should collect name data with English and local names."""

@@ -128,8 +128,8 @@ class TestMergeIntegration:
         store, resolver = merged_store
         dutch_id = resolver.resolve(IdType.ISO_639_3, "nld")
         dutch = store.get(dutch_id)
-        assert dutch.wikipedia is not None
-        assert dutch.wikipedia.article_count == 2150000
+        assert dutch.wikipedia_code == "nl"
+        assert dutch.wikipedia_article_count == 2150000
 
     def test_region_enriched_by_iana(self, merged_store):
         """Netherlands region should be available from IANA region subtags."""
